@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="Windows-1252"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="jcapimin.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcapistd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jccoefct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jccolor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcdctmgr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jchuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcinit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcmainct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcmarker.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcmaster.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcomapi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcparam.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcphuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcprepct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcsample.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jctrans.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdapimin.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdapistd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdatadst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdatasrc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdcoefct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdcolor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jddctmgr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdhuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdinput.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdmainct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdmarker.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdmaster.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdmerge.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdphuff.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdpostct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdsample.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdtrans.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jerror.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jfdctflt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jfdctfst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jfdctint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jidctflt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jidctfst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jidctint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jidctred.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jquant1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jquant2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jutils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jmemmgr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jmemnobs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jaricom.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jcarith.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdarith.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="simd\jsimd_i386.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="turbojpeg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="transupp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdatadst-tj.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jdatasrc-tj.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="simd\$(Configuration)\jsimdcpu.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jccolmmx.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcgrammx.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jdcolmmx.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcsammmx.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jdsammmx.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jdmermmx.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcqntmmx.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jfmmxfst.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jfmmxint.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jimmxred.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jimmxint.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jimmxfst.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcqnt3dn.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jf3dnflt.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\ji3dnflt.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcqntsse.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jfsseflt.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jisseflt.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jccolss2.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcgrass2.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jdcolss2.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcsamss2.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jdsamss2.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jdmerss2.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcqnts2i.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jfss2fst.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jfss2int.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jiss2red.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jiss2int.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jiss2fst.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jcqnts2f.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="simd\$(Configuration)\jiss2flt.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{0194ED41-0B77-444A-8198-A038EB103E7A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object Files">
+      <UniqueIdentifier>{F55E22F2-0DD4-4343-ABC0-842CA4F62346}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
