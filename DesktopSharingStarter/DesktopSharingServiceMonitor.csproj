@@ -79,12 +79,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DesktopSharing_Server\DesktopSharing_Server.csproj">
-      <Project>{f1b0f688-0745-4f46-b06d-30392c625444}</Project>
-      <Name>DesktopSharing_Server</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>

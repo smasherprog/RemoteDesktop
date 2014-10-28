@@ -8,15 +8,13 @@
 namespace RemoteDesktop{
 	class BaseServer : public IServer{
 		void Reset();
-		int _OnReceiveBegin(SocketHandler& sh);//this function is responsible for collecting a full message of data
-		void _OnReceiveEnd(SocketHandler& sh);//after OnReceive is called, this is called to do any neccessary cleanup
+		void _OnReceive(SocketHandler& sh);//this function is responsible for collecting a full message of data
+		void _OnDisconnect(int index);
+		void _OnConnect(SOCKET listensocket);
+		bool _Listen(unsigned short port);
+		void _ListenWrapper(unsigned short port);
 
-		int _ProcessPacketHeader(SocketHandler& sh);
-		int _ProcessPacketBody(SocketHandler& sh);
-		int _OnConnect(SOCKET listensocket);
-		void _Listen(unsigned short port);
-
-		std::thread _BackGroundWorker;
+		std::thread _BackGroundNetworkWorker;
 		std::vector<WSAEVENT> EventArray;
 
 	protected:
@@ -29,10 +27,10 @@ namespace RemoteDesktop{
 		virtual ~BaseServer() override;
 		
 		virtual void Stop() override;
-		virtual void OnConnect(OnConnectCB callback) override{ _OnConnectCB = callback; }
-		virtual void OnConnect() override;
-		virtual void OnReceive(SocketHandler sh) = 0;
+		virtual void SetOnConnectCallback(OnConnectCB callback) override{ _OnConnectCB = callback; }
 		virtual void Listen(unsigned short port) override;	
+		virtual void Send(SOCKET s, NetworkMessages m, NetworkMsg& msg)override;
+		virtual void SendToAll(NetworkMessages m, NetworkMsg& msg )override;
 	};
 
 };

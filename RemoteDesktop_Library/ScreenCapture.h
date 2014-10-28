@@ -16,6 +16,7 @@ namespace RemoteDesktop{
 	public:
 		~ScreenCapture();
 		Image GetPrimary();
+		Image GetPrimary(std::vector<unsigned char>& buffer);
 		void ReleaseHandles();
 	};
 };

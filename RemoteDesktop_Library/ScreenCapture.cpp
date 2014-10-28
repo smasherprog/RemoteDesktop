@@ -13,7 +13,12 @@ void RemoteDesktop::ScreenCapture::ReleaseHandles(){
 	nDest = nullptr;
 	nBmp = nullptr;
 }
+
 RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(){
+	return GetPrimary(WorkingBuffer);
+}
+//use the buffer passed in
+RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(std::vector<unsigned char>& buffer){
 
 	auto screenw(GetSystemMetrics(SM_CXSCREEN)), screenh(GetSystemMetrics(SM_CYSCREEN));
 	if (nDesk == nullptr)
@@ -26,10 +31,8 @@ RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(){
 		nBmp = CreateCompatibleBitmap(nSrce, screenw, screenh);
 
 	auto hOldBmp = SelectObject(nDest, nBmp);
-	auto t = Timer(true);
+
 	auto b = BitBlt(nDest, 0, 0, screenw, screenh, nSrce, 0, 0, SRCCOPY | CAPTUREBLT);
-	t.Stop();
-	DEBUG_MSG("Time Taken BitBlt %", std::to_string(t.Elapsed()));
 
 	BITMAPINFOHEADER   bi;
 
@@ -46,12 +49,9 @@ RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(){
 	bi.biClrImportant = 0;
 
 	auto dwBmpSize = ((screenw * bi.biBitCount + 31) / 32) * 4 * screenh;
-	WorkingBuffer.resize(dwBmpSize);
+	buffer.reserve(dwBmpSize);
 
-	t.Start();
-	GetDIBits(nSrce, nBmp, 0, (UINT)screenh, WorkingBuffer.data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-	t.Stop();
-	
-	DEBUG_MSG("Time Taken GetDIBits %", std::to_string(t.Elapsed()));
-	return Image(WorkingBuffer.data(), dwBmpSize, screenh, screenw, false);
+	GetDIBits(nSrce, nBmp, 0, (UINT)screenh, buffer.data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
+
+	return Image(buffer.data(), dwBmpSize, screenh, screenw, false);
 }

@@ -14,6 +14,7 @@ namespace RemoteDesktopServer
             {
                 s.Listen();
                 Debug.WriteLine("Running Server");
+                var k = Console.ReadKey();
             }
 
         }

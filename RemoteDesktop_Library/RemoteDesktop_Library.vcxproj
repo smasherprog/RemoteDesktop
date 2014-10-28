@@ -91,10 +91,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommonNetwork.h" />
+    <ClInclude Include="Console.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ImageCompression.h" />
     <ClInclude Include="IServer.h" />
     <ClInclude Include="Networking.h" />
+    <ClInclude Include="Rect.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="NetworkSetup.h" />
@@ -105,6 +107,7 @@
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Console.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -113,6 +116,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="ImageCompression.cpp" />
     <ClCompile Include="Networking.cpp" />
     <ClCompile Include="RemoteDesktop_Library.cpp" />

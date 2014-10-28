@@ -16,6 +16,6 @@ void DestroyServer(void* server){
 void SetOnConnectCallback(void* server, OnConnectCB callback){
 	if (server != NULL) {
 		auto s = (RemoteDesktop::IServer*)server;
-		s->OnConnect(callback);
+		s->SetOnConnectCallback(callback);
 	}
 }

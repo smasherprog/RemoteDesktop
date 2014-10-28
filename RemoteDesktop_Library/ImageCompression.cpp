@@ -10,6 +10,7 @@ RemoteDesktop::ImageCompression::~ImageCompression(){
 }
 
 RemoteDesktop::Image RemoteDesktop::ImageCompression::Compress(Image& input, int quality){
+	if (input.size_in_bytes<1024 * 10) return Image(input.data, input.size_in_bytes, input.height, input.width, false);
 	if (JpegCompressor == nullptr)
 		JpegCompressor = tjInitCompress();
 	long unsigned int _jpegSize = 0;
