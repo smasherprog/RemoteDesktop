@@ -24,7 +24,7 @@ namespace RemoteDesktop{
 
 	public:
 		Server();
-		virtual ~Server();
+		virtual ~Server() override;
 		virtual void Stop() override;
 		virtual void OnDisconnect(SocketHandler& sh) override;
 		virtual void OnConnect(SocketHandler& sh) override;

@@ -7,7 +7,7 @@
 
 namespace RemoteDesktop{
 	class BaseServer : public IServer{
-		void Reset();
+
 		void _OnReceive(SocketHandler& sh);//this function is responsible for collecting a full message of data
 		void _OnDisconnect(int index);
 		void _OnConnect(SOCKET listensocket);

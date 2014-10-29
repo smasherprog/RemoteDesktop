@@ -16,7 +16,14 @@ namespace RemoteDesktop{
 		FOLDER,
 		FILE
 	};
+	class NetworkMsg;
+	struct SocketHandler;
 
+	void Send(SOCKET s, NetworkMessages m, NetworkMsg& msg);
+	void _SendLoop(SOCKET s, char* data, int len);
+	int _ProcessPacketHeader(RemoteDesktop::SocketHandler& sh);
+	int _ProcessPacketBody(RemoteDesktop::SocketHandler& sh);
+	void RecevieEnd(RemoteDesktop::SocketHandler& sh);
 }
 
 

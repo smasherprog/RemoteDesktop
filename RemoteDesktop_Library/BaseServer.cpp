@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BaseServer.h"
 #include "NetworkSetup.h"
+#include "CommonNetwork.h"
 
 #define STARTBUFFERSIZE 1024 *1024 *4
 
@@ -13,37 +14,27 @@ RemoteDesktop::BaseServer::BaseServer(){
 RemoteDesktop::BaseServer::~BaseServer(){
 	Running = false;
 	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
-	Reset();
+	Stop();
 	ShutDownNetwork();
 	DEBUG_MSG("Stopping Server");
 }
 void RemoteDesktop::BaseServer::Stop(){
 	Running = false;
 	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
+	for (auto& x : EventArray) {
+		if (x != NULL) WSACloseEvent(x);
+	}
+	EventArray.resize(0);
+	SocketArray.resize(0);
 }
 
 void RemoteDesktop::BaseServer::Listen(unsigned short port){
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port);
 }
-void _SendLoop(SOCKET s, char* data, int len){
-	while (len > 0){
-		auto sentamount = send(s, data, len, 0);
-		if (sentamount == SOCKET_ERROR) 
-			return DEBUG_MSG("send failed with error = %d\n", WSAGetLastError());
-		len -= sentamount;
-	}
-}
+
 void RemoteDesktop::BaseServer::Send(SOCKET s, NetworkMessages m, NetworkMsg& msg){
-	if (s != INVALID_SOCKET){
-		auto payloadlen = msg.payloadlength();
-		_SendLoop(s, (char*)&payloadlen, sizeof(payloadlen));//send the lenth first
-		auto header = (char)m;
-		_SendLoop(s, &header, sizeof(header)); // send header
-		for (auto i = 0; i < msg.data.size(); i++){
-			_SendLoop(s, msg.data[i], msg.lens[i]);//send the payload
-		}
-	}
+	Send(s, m, msg);
 }
 void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
 	for (auto i = 0; i<SocketArray.size(); i++){
@@ -74,18 +65,6 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 	service.sin_port = htons(port);
 	service.sin_addr.s_addr = INADDR_ANY;
 
-
-	//otherwise, try to get the 
-	/*	struct addrinfo hints, *res;
-		if (getaddrinfo(host, NULL, &hints, &res) != 0) {
-		DEBUG_MSG("gethostbyname failed with error = %d\n", WSAGetLastError());
-		closesocket(ListenSocket);
-		ShutDownNetwork();
-		return false;
-		}
-
-		service.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-		*/
 	if (bind(listensocket, (SOCKADDR *)& service, sizeof(SOCKADDR)) != 0) {
 		closesocket(listensocket);
 		return false;
@@ -130,7 +109,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 			}
 		}
 	}
-	Reset();
+	Stop();
 	return true;
 }
 
@@ -142,63 +121,8 @@ void RemoteDesktop::BaseServer::_OnDisconnect(int index){
 	EventArray.erase(EventArray.begin() + index);
 
 }
-void RemoteDesktop::BaseServer::Reset(){
-	Running = false;
-	for (auto& x : EventArray) {
-		if (x!= NULL) WSACloseEvent(x);
-	}
-	EventArray.resize(0);
-	SocketArray.resize(0);
-}
 
-int _ProcessPacketHeader(RemoteDesktop::SocketHandler& sh){
 
-	if (sh.msgtype == RemoteDesktop::NetworkMessages::INVALID){//new message, read the header
-		if (sh.bytecounter < NETWORKHEADERSIZE){//only read more if any is needed
-			auto amtrec = recv(sh.socket.get()->socket , sh.Buffer.data() + sh.bytecounter, NETWORKHEADERSIZE - sh.bytecounter, 0);
-			if (amtrec > 0){//received data.. yay!
-				sh.bytecounter += amtrec;
-			}
-			else return -1;//let the caller know to stop processing
-		}//check if there is enough data in to complete the header 
-		if (sh.bytecounter >= NETWORKHEADERSIZE){//msg length and type received
-			memcpy(&sh.msglength, sh.Buffer.data(), sizeof(int));//copy length over
-			unsigned char msgtype = 0;
-			memcpy(&msgtype, sh.Buffer.data() + sizeof(int), sizeof(msgtype));//copy msg type over
-			sh.msgtype = (RemoteDesktop::NetworkMessages)msgtype;
-			sh.bytecounter -= NETWORKHEADERSIZE;
-			if (sh.bytecounter > 0){//extra data was received some how........ make sure to move it back in the array
-				memmove(sh.Buffer.data(), sh.Buffer.data() + NETWORKHEADERSIZE, sh.bytecounter);//use memove in case of overlapping copy
-			}
-			if (sh.msgtype == RemoteDesktop::NetworkMessages::PING) {//reset the packet.. this is just a dummy to trigger disconnect events
-				sh.msglength = 0;
-				sh.msgtype = RemoteDesktop::NetworkMessages::INVALID;
-				//there is no payload with a PING packet, so it just needs to be reset
-				return _ProcessPacketHeader(sh);//keep proccessing in case there is more data to go
-			}
-			return 1;// keep processing the packet
-		}
-		else return -1;// header not done and no data to build it.. stop processing
-	}
-	return 1;
-}
-int _ProcessPacketBody(RemoteDesktop::SocketHandler& sh){
-	auto amtrec = recv(sh.socket.get()->socket, sh.Buffer.data() + sh.bytecounter, sh.msglength - sh.bytecounter, 0);
-	if (amtrec > 0){
-		sh.bytecounter += amtrec;
-		if (sh.bytecounter >= sh.msglength) return 1;// message complete
-	}
-	return -1;// not done..
-}
-void RecevieEnd(RemoteDesktop::SocketHandler& sh){
-	if (sh.bytecounter > sh.msglength){// more data in the buffer than was in the message
-		memmove(sh.Buffer.data(), sh.Buffer.data() + sh.msglength, sh.bytecounter - sh.msglength);
-		sh.bytecounter -= sh.msglength;
-	}
-	else sh.bytecounter = 0;
-	sh.msglength = 0;
-	sh.msgtype = RemoteDesktop::NetworkMessages::INVALID;
-}
 void RemoteDesktop::BaseServer::_OnReceive(SocketHandler& sh){
 	while (true){
 		auto result = _ProcessPacketHeader(sh);// assemble header info
