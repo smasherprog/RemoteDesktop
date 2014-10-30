@@ -2,15 +2,22 @@
 #include "CommonNetwork.h"
 #include "SocketHandler.h"
 
-int RemoteDesktop::_ProcessPacketHeader(RemoteDesktop::SocketHandler& sh){
-
+int RemoteDesktop::_INTERNAL::_ProcessPacketHeader(RemoteDesktop::SocketHandler& sh){
 	if (sh.msgtype == RemoteDesktop::NetworkMessages::INVALID){//new message, read the header
 		if (sh.bytecounter < NETWORKHEADERSIZE){//only read more if any is needed
+
 			auto amtrec = recv(sh.socket.get()->socket, sh.Buffer.data() + sh.bytecounter, NETWORKHEADERSIZE - sh.bytecounter, 0);
 			if (amtrec > 0){//received data.. yay!
 				sh.bytecounter += amtrec;
 			}
-			else return -1;//let the caller know to stop processing
+			else if (amtrec == 0){
+				DEBUG_MSG("_ProcessPacketHeader Disconnect");
+				return 0;
+			}
+			else {
+				if (WSAGetLastError() == WSAEWOULDBLOCK) return -1;
+				return 0;//disconnect!
+			}
 		}//check if there is enough data in to complete the header 
 		if (sh.bytecounter >= NETWORKHEADERSIZE){//msg length and type received
 			memcpy(&sh.msglength, sh.Buffer.data(), sizeof(int));//copy length over
@@ -33,15 +40,21 @@ int RemoteDesktop::_ProcessPacketHeader(RemoteDesktop::SocketHandler& sh){
 	}
 	return 1;
 }
-int RemoteDesktop::_ProcessPacketBody(RemoteDesktop::SocketHandler& sh){
+int RemoteDesktop::_INTERNAL::_ProcessPacketBody(RemoteDesktop::SocketHandler& sh){
 	auto amtrec = recv(sh.socket.get()->socket, sh.Buffer.data() + sh.bytecounter, sh.msglength - sh.bytecounter, 0);
 	if (amtrec > 0){
 		sh.bytecounter += amtrec;
-		if (sh.bytecounter >= sh.msglength) return 1;// message complete
+		if (sh.bytecounter >= sh.msglength) {
+			return 1;// message complete
+		}
+	}
+	else {
+		if (WSAGetLastError() == WSAEWOULDBLOCK) return -1;
+		return 0;//disconnect.. Bad error
 	}
 	return -1;// not done..
 }
-void RemoteDesktop::RecevieEnd(RemoteDesktop::SocketHandler& sh){
+void RemoteDesktop::_INTERNAL::_RecevieEnd(RemoteDesktop::SocketHandler& sh){
 	if (sh.bytecounter > sh.msglength){// more data in the buffer than was in the message
 		memmove(sh.Buffer.data(), sh.Buffer.data() + sh.msglength, sh.bytecounter - sh.msglength);
 		sh.bytecounter -= sh.msglength;
@@ -50,15 +63,17 @@ void RemoteDesktop::RecevieEnd(RemoteDesktop::SocketHandler& sh){
 	sh.msglength = 0;
 	sh.msgtype = RemoteDesktop::NetworkMessages::INVALID;
 }
-void RemoteDesktop::_SendLoop(SOCKET s, char* data, int len){
+void RemoteDesktop::_INTERNAL::_SendLoop(SOCKET s, char* data, int len){
 	while (len > 0){
 		auto sentamount = send(s, data, len, 0);
-		if (sentamount == SOCKET_ERROR)
-			return DEBUG_MSG("send failed with error = %d\n", WSAGetLastError());
+		if (sentamount == SOCKET_ERROR){
+			return DEBUG_MSG("send failed with error = %", WSAGetLastError());
+		}
+			
 		len -= sentamount;
 	}
 }
-void RemoteDesktop::Send(SOCKET s, RemoteDesktop::NetworkMessages m, RemoteDesktop::NetworkMsg& msg){
+void RemoteDesktop::_INTERNAL::_Send(SOCKET s, RemoteDesktop::NetworkMessages m, RemoteDesktop::NetworkMsg& msg){
 	if (s != INVALID_SOCKET){
 		auto payloadlen = msg.payloadlength();
 		_SendLoop(s, (char*)&payloadlen, sizeof(payloadlen));//send the lenth first
@@ -68,4 +83,5 @@ void RemoteDesktop::Send(SOCKET s, RemoteDesktop::NetworkMessages m, RemoteDeskt
 			_SendLoop(s, msg.data[i], msg.lens[i]);//send the payload
 		}
 	}
+	else return DEBUG_MSG("send failed with error = %", WSAGetLastError());
 }

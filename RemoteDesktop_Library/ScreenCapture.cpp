@@ -30,7 +30,7 @@ RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(std::vector<unsign
 	if (nBmp == nullptr)
 		nBmp = CreateCompatibleBitmap(nSrce, screenw, screenh);
 
-	auto hOldBmp = SelectObject(nDest, nBmp);
+	SelectObject(nDest, nBmp);
 
 	auto b = BitBlt(nDest, 0, 0, screenw, screenh, nSrce, 0, 0, SRCCOPY | CAPTUREBLT);
 

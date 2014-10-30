@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Networking.h"
 #include "Server.h"
+#include "Client.h"
 
 void* CreateServer(){
 	return new RemoteDesktop::Server();
@@ -18,4 +19,11 @@ void SetOnConnectCallback(void* server, OnConnectCB callback){
 		auto s = (RemoteDesktop::IServer*)server;
 		s->SetOnConnectCallback(callback);
 	}
+}
+void* CreateClient(){
+	return new RemoteDesktop::Client();
+
+}
+void DestroyClient(void* client){
+	if (client != NULL) delete client;
 }

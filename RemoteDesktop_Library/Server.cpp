@@ -14,6 +14,7 @@ RemoteDesktop::Server::Server(){
 
 }
 RemoteDesktop::Server::~Server(){
+	Running = false;
 	if (_BackGroundCapturingWorker.joinable()) _BackGroundCapturingWorker.join();
 }
 
@@ -48,7 +49,7 @@ void RemoteDesktop::Server::_HandleNewClients(NetworkMsg& msg, std::vector<Socke
 	msg.lens.push_back(sizeof(int) * 2);
 	msg.data.push_back((char*)imgdif.data);
 	msg.lens.push_back(imgdif.size_in_bytes);
-
+	
 	for (auto& a : newclients){
 		Send(a.socket.get()->socket, NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
@@ -92,7 +93,7 @@ void RemoteDesktop::Server::_Run(){
 		msg.lens.push_back(sizeof(rect));
 		msg.data.push_back((char*)imgdif.data);
 		msg.lens.push_back(imgdif.size_in_bytes);
-
+		
 		SendToAll(NetworkMessages::UPDATEREGION, msg);
 		_LastImage = img;
 		t.Stop();

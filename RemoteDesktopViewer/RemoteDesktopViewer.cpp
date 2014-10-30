@@ -3,6 +3,9 @@
 
 #include "stdafx.h"
 #include "RemoteDesktopViewer.h"
+#include <memory>
+#include "..\RemoteDesktop_Library\Client.h"
+#include "..\RemoteDesktop_Library\Networking.h"
 
 #define MAX_LOADSTRING 100
 
@@ -16,6 +19,8 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+
+RemoteDesktop::Client* _Client = nullptr;
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -51,7 +56,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-
+	if (_Client != nullptr) DestroyClient(_Client);
 	return (int) msg.wParam;
 }
 
@@ -137,6 +142,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Parse the menu selections:
 		switch (wmId)
 		{
+		case ID_FILE_CONNECT:
+			if (_Client != nullptr) DestroyClient(_Client);
+			_Client = (RemoteDesktop::Client*)CreateClient();
+			_Client->Connect("127.0.0.1", "443");
+			_Client->_HWND = hWnd;
+			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
@@ -148,9 +159,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);
-		// TODO: Add any drawing code here...
-		EndPaint(hWnd, &ps);
+		//hdc = BeginPaint(hWnd, &ps);
+		//// TODO: Add any drawing code here...
+		//EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);

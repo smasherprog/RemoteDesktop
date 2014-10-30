@@ -1,11 +1,13 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktopViewer", "RemoteDesktopViewer\RemoteDesktopViewer.vcxproj", "{02BCCAAD-CF8A-4FA9-A5CB-4947F2FD472A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37} = {D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_Library", "..\RemoteDesktop_Library\RemoteDesktop_Library.vcxproj", "{D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_Library", "RemoteDesktop_Library\RemoteDesktop_Library.vcxproj", "{D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

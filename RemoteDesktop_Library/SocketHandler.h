@@ -6,6 +6,7 @@
 #include <vector>
 #include "CommonNetwork.h"
 #include <memory>
+#define STARTBUFFERSIZE 1024 *1024 *4
 
 namespace RemoteDesktop{
 	class socket_wrapper{
@@ -15,12 +16,16 @@ namespace RemoteDesktop{
 		~socket_wrapper()
 		{
 			if (socket != INVALID_SOCKET){
-				shutdown(socket, SD_BOTH);
+				shutdown(socket, SD_RECEIVE);
 				closesocket(socket);
 			}
 		}
 	};
-	struct SocketHandler{
+	class SocketHandler{
+	public:
+		SocketHandler(){
+			Buffer.reserve(STARTBUFFERSIZE);
+		}
 		std::shared_ptr<socket_wrapper> socket;
 		sockaddr_in addr;
 		std::vector<char> Buffer;

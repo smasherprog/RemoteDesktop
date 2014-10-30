@@ -4,9 +4,9 @@
 
 typedef void(__stdcall *OnConnectCB)();
 namespace RemoteDesktop{
-	#define NETWORKHEADERSIZE sizeof(int) + sizeof(unsigned char)
+#define NETWORKHEADERSIZE sizeof(int) + sizeof(unsigned char)
 	enum NetworkMessages{
-		INVALID=-1,
+		INVALID = -1,
 		RESOLUTIONCHANGE,
 		UPDATEREGION,
 		MOUSEEVENT,
@@ -17,13 +17,15 @@ namespace RemoteDesktop{
 		FILE
 	};
 	class NetworkMsg;
-	struct SocketHandler;
+	class SocketHandler;
+	namespace _INTERNAL{
+		void _Send(SOCKET s, NetworkMessages m, NetworkMsg& msg);
+		void _SendLoop(SOCKET s, char* data, int len);
+		int _ProcessPacketHeader(RemoteDesktop::SocketHandler& sh);
+		int _ProcessPacketBody(RemoteDesktop::SocketHandler& sh);
+		void _RecevieEnd(RemoteDesktop::SocketHandler& sh);
+	};
 
-	void Send(SOCKET s, NetworkMessages m, NetworkMsg& msg);
-	void _SendLoop(SOCKET s, char* data, int len);
-	int _ProcessPacketHeader(RemoteDesktop::SocketHandler& sh);
-	int _ProcessPacketBody(RemoteDesktop::SocketHandler& sh);
-	void RecevieEnd(RemoteDesktop::SocketHandler& sh);
 }
 
 

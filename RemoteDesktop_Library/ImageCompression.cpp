@@ -17,33 +17,32 @@ RemoteDesktop::Image RemoteDesktop::ImageCompression::Compress(Image& input, int
 	auto maxsize = input.width * input.height * 4;
 	if (CompressBuffer.capacity() < maxsize) CompressBuffer.reserve(maxsize);
 	auto t = Timer(true);
-	
-	if (tjCompress2(JpegCompressor, CompressBuffer.data(), input.width, ((input.width * 32 + 31) / 32) * 4, input.height, TJPF_BGRX,
-		&input.data, &_jpegSize, TJSAMP_444, quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) DEBUG_MSG("Err msg %", tjGetErrorStr());
+	auto ptr = (unsigned char*)CompressBuffer.data();
+	if (tjCompress2(JpegCompressor, input.data , input.width, ((input.width * 32 + 31) / 32) * 4, input.height, TJPF_BGRX,
+		&ptr, &_jpegSize, TJSAMP_444, quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) DEBUG_MSG("Err msg %", tjGetErrorStr());
 	t.Stop();
-	DEBUG_MSG("Time Taken Compress %", std::to_string(t.Elapsed()));
+	//DEBUG_MSG("Time Taken Compress %", std::to_string(t.Elapsed()));
 	return Image(CompressBuffer.data(), _jpegSize, input.height, input.width,  true);
 
 }
 RemoteDesktop::Image RemoteDesktop::ImageCompression::Decompress(Image input){
 	if (JpegDecompressor == nullptr)
-		JpegDecompressor = tjInitCompress();
-	long unsigned int _jpegSize = 0;
+		JpegDecompressor = tjInitDecompress();
 	int jpegSubsamp = 0;
 	auto width = 0; 
 	auto height = 0;
 	auto t = Timer(true);
 
-	if (tjDecompressHeader2(JpegDecompressor, input.data, _jpegSize, &width, &height, &jpegSubsamp) == -1) DEBUG_MSG("Err msg %", tjGetErrorStr());	
+	if (tjDecompressHeader2(JpegDecompressor, input.data, input.size_in_bytes, &width, &height, &jpegSubsamp) == -1) DEBUG_MSG("Err msg %", tjGetErrorStr());
 	
 	auto maxsize = input.width * input.height * 4;
 	if (DecompressBuffer.capacity() < maxsize) DecompressBuffer.reserve(maxsize);
 
-	if (tjDecompress2(JpegDecompressor, input.data, _jpegSize, DecompressBuffer.data(), width, ((width * 32 + 31) / 32) * 4, height, TJPF_BGRX, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1)
+	if (tjDecompress2(JpegDecompressor, input.data, input.size_in_bytes, DecompressBuffer.data(), width, ((width * 32 + 31) / 32) * 4, height, TJPF_BGRX, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1)
 		DEBUG_MSG("Err msg %", tjGetErrorStr());
 
 
 	t.Stop();
-	DEBUG_MSG("Time Taken Decompress %", std::to_string(t.Elapsed()));
-	return Image(DecompressBuffer.data(), _jpegSize, input.height, input.width, true);
+	//DEBUG_MSG("Time Taken Decompress %", std::to_string(t.Elapsed()));
+	return Image(DecompressBuffer.data(), maxsize, input.height, input.width, true);
 }

@@ -3,7 +3,7 @@
 #include "NetworkSetup.h"
 #include "CommonNetwork.h"
 
-#define STARTBUFFERSIZE 1024 *1024 *4
+
 
 RemoteDesktop::BaseServer::BaseServer(){
 	DEBUG_MSG("Starting Server");
@@ -34,10 +34,10 @@ void RemoteDesktop::BaseServer::Listen(unsigned short port){
 }
 
 void RemoteDesktop::BaseServer::Send(SOCKET s, NetworkMessages m, NetworkMsg& msg){
-	Send(s, m, msg);
+	RemoteDesktop::_INTERNAL::_Send(s, m, msg);
 }
 void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
-	for (auto i = 0; i<SocketArray.size(); i++){
+	for (auto i = 1; i<SocketArray.size(); i++){
 		auto tmp = SocketArray[i].socket;// get a copy to hold the lock and prevent closing the socket
 		auto sock = tmp.get()->socket;
 		Send(sock, m, msg);
@@ -100,7 +100,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
 				_OnReceive(SocketArray[Index]);
 			}
-			else if (NetworkEvents.lNetworkEvents == FD_CLOSE){
+			else if (NetworkEvents.lNetworkEvents == FD_CLOSE && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				if (Index == 0) {//stop all processing, set running to false and next loop will fail and cleanup
 					Running = false;
 					continue;
@@ -114,32 +114,36 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 }
 
 void RemoteDesktop::BaseServer::_OnDisconnect(int index){
+	DEBUG_MSG("_OnDisconnect Called");
 	auto& sh = SocketArray[index];
 	OnDisconnect(sh);
 	SocketArray.erase(SocketArray.begin() + index);
 	if (EventArray[index] != NULL) WSACloseEvent(EventArray[index]);
 	EventArray.erase(EventArray.begin() + index);
-
+	DEBUG_MSG("_OnDisconnect Finished");
 }
 
 
 void RemoteDesktop::BaseServer::_OnReceive(SocketHandler& sh){
+	DEBUG_MSG("_OnReceive Called");
 	while (true){
-		auto result = _ProcessPacketHeader(sh);// assemble header info
+		auto result = RemoteDesktop::_INTERNAL::_ProcessPacketHeader(sh);// assemble header info
 		if (result == 1){//if there is header info...
-			result = _ProcessPacketBody(sh);//process the body of the message
+			result = RemoteDesktop::_INTERNAL::_ProcessPacketBody(sh);//process the body of the message
 			if (result == 1) {//if the message is complete, then call on receive
 				OnReceive(sh);
-				RecevieEnd(sh);
+				RemoteDesktop::_INTERNAL::_RecevieEnd(sh);
 			}
 			else break;
 		}
 		else break;//get out done  no more data to process here
-	}
+	}	
+	DEBUG_MSG("_OnReceive Finished");
 }
 
 
 void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
+	DEBUG_MSG("OnConnect Called");
 	int sockaddrlen = sizeof(sockaddr_in);
 	SocketHandler so;
 	so.socket = std::make_shared<socket_wrapper>(accept(listensocket, (struct sockaddr*)&so.addr, &sockaddrlen));
@@ -150,11 +154,11 @@ void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 	u_long iMode = 1;
 	ioctlsocket(so.socket.get()->socket, FIONBIO, &iMode);
 
-	so.Buffer.reserve(STARTBUFFERSIZE);//reserve space for data
 	SocketArray.push_back(so);
 	WSAEventSelect(so.socket.get()->socket, newevent, FD_READ | FD_CLOSE);
 	EventArray.push_back(newevent);
 	auto ind = EventArray.size() - 1;
-	OnConnect(SocketArray[ind]);
+	OnConnect(SocketArray[ind]); 
+	DEBUG_MSG("OnConnect Success");
 	if (_OnConnectCB != nullptr) _OnConnectCB();
 }
