@@ -98,6 +98,7 @@
     <ClInclude Include="Image.h" />
     <ClInclude Include="ImageCompression.h" />
     <ClInclude Include="IServer.h" />
+    <ClInclude Include="Mouse.h" />
     <ClInclude Include="Networking.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="ScreenCapture.h" />
@@ -124,6 +125,7 @@
     </ClCompile>
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ImageCompression.cpp" />
+    <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Networking.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="BaseServer.cpp" />
