@@ -41,14 +41,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)libjpeg-turbo;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)libjpeg-turbo\$(Configuration)\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)libjpeg-turbo;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)libjpeg-turbo\$(Configuration)\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -63,7 +63,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

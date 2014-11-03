@@ -19,6 +19,7 @@ namespace RemoteDesktop{
 				shutdown(socket, SD_RECEIVE);
 				closesocket(socket);
 			}
+			socket = INVALID_SOCKET;
 		}
 	};
 	class SocketHandler{
@@ -32,6 +33,13 @@ namespace RemoteDesktop{
 		int bytecounter = 0;
 		int msglength = 0;
 		NetworkMessages msgtype = NetworkMessages::INVALID;
+		void clear(){
+			socket = std::make_shared<socket_wrapper>(INVALID_SOCKET);//reset the socket 
+			memset(&addr, 0, sizeof(addr));
+			bytecounter = msglength = 0;
+			msgtype = NetworkMessages::INVALID;
+		}
+
 	};
 	class NetworkMsg{
 	public: 
@@ -39,6 +47,7 @@ namespace RemoteDesktop{
 		int payloadlength()const{ auto l = 0; for (auto& a : lens) l += a; return l; }
 		std::vector<char*> data;
 		std::vector<int> lens;
+		template<class T>void push_back(const T& x){ data.push_back((char*)&x); lens.push_back(sizeof(x)); }
 	};
 };
 

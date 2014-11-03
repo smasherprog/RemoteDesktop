@@ -20,8 +20,8 @@ void SetOnConnectCallback(void* server, OnConnectCB callback){
 		s->SetOnConnectCallback(callback);
 	}
 }
-void* CreateClient(){
-	return new RemoteDesktop::Client();
+void* CreateClient(HWND hwnd){
+	return new RemoteDesktop::Client(hwnd);
 
 }
 void DestroyClient(void* client){

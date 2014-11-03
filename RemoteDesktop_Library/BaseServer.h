@@ -29,8 +29,10 @@ namespace RemoteDesktop{
 		virtual void Stop() override;
 		virtual void SetOnConnectCallback(OnConnectCB callback) override{ _OnConnectCB = callback; }
 		virtual void Listen(unsigned short port) override;	
-		virtual void Send(SOCKET s, NetworkMessages m, NetworkMsg& msg)override;
+		virtual int Send(SOCKET s, NetworkMessages m, NetworkMsg& msg)override;
 		virtual void SendToAll(NetworkMessages m, NetworkMsg& msg )override;
+
+
 	};
 
 };

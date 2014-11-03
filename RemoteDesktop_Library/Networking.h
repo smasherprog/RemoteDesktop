@@ -12,7 +12,7 @@ extern "C"
 	DECLDIR void Listen(void* server, unsigned short port);
 	DECLDIR void SetOnConnectCallback(void* server, OnConnectCB onconnect);
 
-	DECLDIR void* CreateClient();
+	DECLDIR void* CreateClient(HWND hwnd);
 	DECLDIR void DestroyClient(void* client);
 }
 

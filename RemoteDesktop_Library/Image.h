@@ -3,6 +3,19 @@
 #include "Rect.h"
 
 namespace RemoteDesktop{
+	class HBITMAP_wrapper{
+	public:
+		HBITMAP Bitmap = nullptr;	
+		int height = 0;
+		int width = 0;
+		unsigned char* raw_data = nullptr;
+		explicit HBITMAP_wrapper(HBITMAP s) : Bitmap(s) { }
+		~HBITMAP_wrapper()
+		{
+			if (Bitmap != nullptr)DeleteObject(Bitmap);
+		}
+
+	};
 	class Image{
 	public:
 		Image() {}
@@ -14,7 +27,8 @@ namespace RemoteDesktop{
 		bool compressed = false;
 		static Rect Difference(Image first, Image second, int horz_jump = 4);
 		static Image Copy(Image src_img, Rect r, std::vector<unsigned char>& buffer);
-
+		static void Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst);
+		
 	};
 };
 #endif

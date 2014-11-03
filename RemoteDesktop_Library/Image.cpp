@@ -78,21 +78,33 @@ RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image first, Image second, 
 
 }
 
-RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect r, std::vector<unsigned char>& buffer)
+RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_region, std::vector<unsigned char>& buffer)
 {
-	auto size = r.width * r.height * 4;
-	buffer.reserve(r.width * r.height * 4);
+	auto size = src_copy_region.width * src_copy_region.height * 4;
+	buffer.reserve(size);
 	auto src = src_img.data;
 	auto dst = buffer.data();
 
 	auto srcrowstride = src_img.width * 4;
-	auto dstrowstride = r.width * 4;
-	for (int y = 0; y < r.height; y++)
+	auto dstrowstride = src_copy_region.width * 4;
+	for (int y = 0; y <src_copy_region.height; y++)
 	{
-		auto srcrow = (int*)(src + (srcrowstride * (y + r.top)));
-		srcrow += r.left;
+		auto srcrow = (int*)(src + (srcrowstride * (y + src_copy_region.top)));
+		srcrow += src_copy_region.left;
 		auto dstrow = dst + (dstrowstride * y);
 		memcpy(dstrow, srcrow, dstrowstride);
 	}
-	return Image(buffer.data(), size, r.height, r.width, false);
+	return Image(buffer.data(), size, src_copy_region.height, src_copy_region.width, false);
+}
+void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst)
+{
+	auto src = src_img.data;
+	auto srcrowstride = src_img.width * 4;
+	for (int y = 0; y <src_img.height; y++)
+	{
+		auto dstrow = (int*)(dst + (dst_stride * (y + dst_top)));
+		dstrow += dst_left;
+		auto srcrow = src + (srcrowstride * y);
+		memcpy(dstrow, srcrow, srcrowstride);
+	}
 }

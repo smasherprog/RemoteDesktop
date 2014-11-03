@@ -4,6 +4,8 @@
 #include "Console.h"
 #include "ImageCompression.h"
 
+#define FRAME_CAPTURE_INTERVAL 100
+
 RemoteDesktop::Server::Server(){
 
 
@@ -15,44 +17,97 @@ RemoteDesktop::Server::Server(){
 }
 RemoteDesktop::Server::~Server(){
 	Running = false;
-	if (_BackGroundCapturingWorker.joinable()) _BackGroundCapturingWorker.join();
+	if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
 }
 
 void RemoteDesktop::Server::OnConnect(SocketHandler& sh){
 	std::lock_guard<std::mutex> lock(_NewClientLock);
 	_NewClients.push_back(sh);
 }
+void _HandleKeyEvent(RemoteDesktop::SocketHandler& sh){
+	RemoteDesktop::KeyEvent_Header h;
+	memcpy(&h, sh.Buffer.data(), sizeof(h));
+	auto scan = MapVirtualKey(h.VK, 0);
+//	DEBUG_MSG("Received % in state   scan code is %, down %", scan, h.VK, (int)h.down);
+	keybd_event(h.VK, scan, h.down ? 0 : KEYEVENTF_KEYUP, 0);
+}
 void RemoteDesktop::Server::OnReceive(SocketHandler& sh) {
-
+	switch (sh.msgtype){
+	case NetworkMessages::KEYEVENT:
+		_HandleKeyEvent(sh);
+		break;
+	default:
+		break;
+	}
 }
 void RemoteDesktop::Server::OnDisconnect(SocketHandler& sh) {
 
 }
 void RemoteDesktop::Server::Listen(unsigned short port) {
 	RemoteDesktop::BaseServer::Listen(port);//start the lower service first
-	_BackGroundCapturingWorker = std::thread(&Server::_Run, this);
+	_BackGroundWorker = std::thread(&Server::_Run, this);
 }
 
 void RemoteDesktop::Server::Stop(){
 	RemoteDesktop::BaseServer::Stop();//stop the lower service first,
-	if (_BackGroundCapturingWorker.joinable()) _BackGroundCapturingWorker.join();
+	if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
 }
-void RemoteDesktop::Server::_HandleNewClients(NetworkMsg& msg, std::vector<SocketHandler>& newclients, Image& img, const std::unique_ptr<ImageCompression>& imagecompression){
+void RemoteDesktop::Server::_HandleNewClients(std::vector<SocketHandler>& newclients, Image& img, const std::unique_ptr<ImageCompression>& imagecompression){
 	if (newclients.empty()) return;
+	NetworkMsg msg;
 	int sz[2];
 	sz[0] = img.height;
 	sz[1] = img.width;
-	msg.data.resize(0);
-	msg.lens.resize(0);
+
 	auto imgdif = imagecompression->Compress(img);
 	msg.data.push_back((char*)&sz);
 	msg.lens.push_back(sizeof(int) * 2);
 	msg.data.push_back((char*)imgdif.data);
 	msg.lens.push_back(imgdif.size_in_bytes);
-	
+	DEBUG_MSG("Servicing new Client!");
 	for (auto& a : newclients){
-		Send(a.socket.get()->socket, NetworkMessages::RESOLUTIONCHANGE, msg);
+		Send(a.socket->socket, NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
+}
+void RemoteDesktop::Server::_HandleNewClients_and_ResolutionUpdates(Image& img, Image& _lastimg, const std::unique_ptr<ImageCompression>& imagecompression){
+	std::vector<SocketHandler> tmpnewclients;
+	{
+		std::lock_guard<std::mutex> lock(_NewClientLock);
+		for (auto& a : _NewClients) tmpnewclients.push_back(a);
+		_NewClients.resize(0);
+	}
+	//if there was a resolution change add those clients to receive the update as well
+	if (img.height != _lastimg.height || img.width != _lastimg.width){
+		for (auto i = 1; i < SocketArray.size(); i++){
+			auto found = false;
+			for (auto& s : tmpnewclients){
+				if (SocketArray[i].socket->socket == s.socket->socket) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) tmpnewclients.push_back(SocketArray[i]);
+		}
+	}
+	_HandleNewClients(tmpnewclients, img, imagecompression);//<----new clients handled here, also resolution changes here as well since its the same code
+}
+
+
+void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, const std::unique_ptr<ImageCompression>& imagecompression, std::vector<unsigned char>& buffer){
+	if (rect.width > 0 && rect.height > 0){
+		NetworkMsg msg;
+		auto imgdif = imagecompression->Compress(Image::Copy(img, rect, buffer));
+		Image_Diff_Header imgdif_network;
+		imgdif_network.rect = rect;
+		imgdif_network.compressed = imgdif.compressed == true ? 0 : -1;
+		msg.push_back(imgdif_network);
+
+		msg.data.push_back((char*)imgdif.data);
+		msg.lens.push_back(imgdif.size_in_bytes);
+
+		SendToAll(NetworkMessages::UPDATEREGION, msg);
+	}
+
 }
 void RemoteDesktop::Server::_Run(){
 	//VARIABLES DEFINED HERE TO ACHIVE THREAD LOCAL STORAGE.
@@ -61,45 +116,33 @@ void RemoteDesktop::Server::_Run(){
 	auto imagecompression = std::make_unique<ImageCompression>();
 	std::vector<unsigned char> lastimagebuffer;
 	std::vector<unsigned char> sendimagebuffer;
-	Image _LastImage = screencapture->GetPrimary(lastimagebuffer);
+	Image _LastImage = screencapture->GetPrimary(lastimagebuffer);//<---Seed the image
 	auto pingpong = true;
-	NetworkMsg msg;
-	std::vector<SocketHandler> tmpnewclients;
+
 	while (Running){
-		if (SocketArray.size() <= 1) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep is there are no clients connected. The first is the server
+
+		if (SocketArray.size() <= 1) { //The first is the server so check for <=1
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep if there are no clients connected.
 			continue;
 		}
+
 		pingpong = !pingpong;
 		Image img;
 		auto t = Timer(true);
 		if (!pingpong) img = screencapture->GetPrimary();
 		else img = screencapture->GetPrimary(lastimagebuffer);
-
-		{
-			std::lock_guard<std::mutex> lock(_NewClientLock);
-			for (auto& a : _NewClients) tmpnewclients.push_back(a);
-			_NewClients.resize(0);
-		}
-		_HandleNewClients(msg, tmpnewclients, img, imagecompression);//<----new clients handled here
-		tmpnewclients.resize(0);
-
+		_HandleNewClients_and_ResolutionUpdates(img, _LastImage, imagecompression);
+		//get difference with last screenshot
 		auto rect = Image::Difference(_LastImage, img);
-		auto imgdif = imagecompression->Compress(Image::Copy(img, rect, sendimagebuffer));
-		msg.data.resize(0);
-		msg.lens.resize(0);
+		//send out any screen updates that have changed
+		_Handle_ScreenUpdates(img, rect, imagecompression, sendimagebuffer);
 
-		msg.data.push_back((char*)&rect);
-		msg.lens.push_back(sizeof(rect));
-		msg.data.push_back((char*)imgdif.data);
-		msg.lens.push_back(imgdif.size_in_bytes);
-		
-		SendToAll(NetworkMessages::UPDATEREGION, msg);
 		_LastImage = img;
 		t.Stop();
-		DEBUG_MSG("Time Taken _Run %, rect % % %", t.Elapsed(), imgdif.size_in_bytes, imgdif.height, imgdif.width);
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		auto elapsed = t.Elapsed();
+		//DEBUG_MSG("Time Taken _Run %", elapsed);
+		elapsed = FRAME_CAPTURE_INTERVAL - elapsed;
+		if (elapsed > 0) std::this_thread::sleep_for(std::chrono::milliseconds(elapsed));//sleep if there is time to sleep
 	}
 
 }

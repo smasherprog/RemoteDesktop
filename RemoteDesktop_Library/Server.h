@@ -19,8 +19,11 @@ namespace RemoteDesktop{
 		std::mutex _NewClientLock;
 
 		void _Run();
-		std::thread _BackGroundCapturingWorker;
-		void _HandleNewClients(NetworkMsg& msg, std::vector<SocketHandler>& newclients, Image& img, const std::unique_ptr<ImageCompression>& imagecompression);
+		std::thread _BackGroundWorker;
+		void _HandleNewClients(std::vector<SocketHandler>& newclients, Image& img, const std::unique_ptr<ImageCompression>& imagecompression);
+		void _HandleNewClients_and_ResolutionUpdates(Image& img, Image& _lastimg, const std::unique_ptr<ImageCompression>& imagecompression);
+		void _Handle_ScreenUpdates(Image& img, Rect& rect, const std::unique_ptr<ImageCompression>& imagecompression, std::vector<unsigned char>& buffer);
+
 
 	public:
 		Server();

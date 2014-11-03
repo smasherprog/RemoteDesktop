@@ -13,7 +13,7 @@ namespace RemoteDesktop{
 		virtual void SetOnConnectCallback(OnConnectCB onconnectcb) = 0;
 		virtual void OnReceive(SocketHandler& sh) = 0;
 
-		virtual void Send(SOCKET s, NetworkMessages m, NetworkMsg& msg) = 0;
+		virtual int Send(SOCKET s, NetworkMessages m, NetworkMsg& msg) = 0;
 		virtual void SendToAll(NetworkMessages m, NetworkMsg& msgs) = 0;
 
 		virtual void Stop() = 0;
