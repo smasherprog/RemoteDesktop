@@ -1,62 +1,7 @@
-========================================================================
-    WIN32 APPLICATION : RemoteDesktopViewer Project Overview
-========================================================================
-
-AppWizard has created this RemoteDesktopViewer application for you.
-
-This file contains a summary of what you will find in each of the files that
-make up your RemoteDesktopViewer application.
-
-
-RemoteDesktopViewer.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
-
-RemoteDesktopViewer.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
-
-RemoteDesktopViewer.cpp
-    This is the main application source file.
-
-/////////////////////////////////////////////////////////////////////////////
-AppWizard has created the following resources:
-
-RemoteDesktopViewer.rc
-    This is a listing of all of the Microsoft Windows resources that the
-    program uses.  It includes the icons, bitmaps, and cursors that are stored
-    in the RES subdirectory.  This file can be directly edited in Microsoft
-    Visual C++.
-
-Resource.h
-    This is the standard header file, which defines new resource IDs.
-    Microsoft Visual C++ reads and updates this file.
-
-RemoteDesktopViewer.ico
-    This is an icon file, which is used as the application's icon (32x32).
-    This icon is included by the main resource file RemoteDesktopViewer.rc.
-
-small.ico
-    This is an icon file, which contains a smaller version (16x16)
-    of the application's icon. This icon is included by the main resource
-    file RemoteDesktopViewer.rc.
-
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
-
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named RemoteDesktopViewer.pch and a precompiled types file named StdAfx.obj.
-
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
-
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
-
-/////////////////////////////////////////////////////////////////////////////
+Remote Dekstop Viewer, similiar to VNC.<br/>
+This is my own creation of a VNC-Like application written in c++. <br/>
+<br/>
+I originally wrote this in c#, but the performance was pretty bad and unreliable. So, I am rewriting it in c++.
+For the c# version you can check my other projects. It is a stable project, but does not deliver the performance that I needed.
+<br/>
+the difference in performance so far is staggering with the c++ version of the server running about 4-10X as fast and the veiwer even moreso.
