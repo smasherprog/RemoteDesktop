@@ -145,8 +145,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_FILE_CONNECT:
 			if (_Client != nullptr) DestroyClient(_Client);
 			_Client = (RemoteDesktop::Client*)CreateClient(hWnd);
-_Client->Connect("127.0.0.1", "443");
-//_Client->Connect("192.168.207.128", "443");
+			//_Client->Connect("127.0.0.1", "443");
+			_Client->Connect("192.168.221.128", "443");
 			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -170,6 +170,20 @@ _Client->Connect("127.0.0.1", "443");
 		break;
 	case WM_KEYDOWN:
 		if (_Client != nullptr) _Client->KeyEvent(wParam, true);
+		break;
+
+	case WM_MOUSEMOVE:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_MBUTTONDBLCLK:
+		//case WM_MOUSEWHEEL:
+		if (_Client != nullptr) _Client->MouseEvent(message, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), 0);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);

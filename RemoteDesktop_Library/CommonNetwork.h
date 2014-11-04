@@ -17,6 +17,12 @@ namespace RemoteDesktop{
 	struct KeyEvent_Header{
 		int VK;
 		char down = 0;
+	};	
+	struct MouseEvent_Header{
+		Point pos;
+		int HandleID;
+		unsigned int Action;
+		int wheel;
 	};
 #pragma pack(pop)
 #define NETWORKHEADERSIZE sizeof(Packet_Header)
@@ -25,7 +31,6 @@ namespace RemoteDesktop{
 		RESOLUTIONCHANGE,
 		UPDATEREGION,
 		MOUSEEVENT,
-		MOUSEIMAGEEVENT,
 		PING,
 		KEYEVENT,
 		FOLDER,

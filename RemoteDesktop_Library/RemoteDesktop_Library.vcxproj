@@ -94,11 +94,13 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="CommonNetwork.h" />
     <ClInclude Include="Console.h" />
+    <ClInclude Include="Display.h" />
     <ClInclude Include="IClient.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ImageCompression.h" />
     <ClInclude Include="IServer.h" />
-    <ClInclude Include="Mouse.h" />
+    <ClInclude Include="MouseCapture.h" />
+    <ClInclude Include="MouseCommon.h" />
     <ClInclude Include="Networking.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="ScreenCapture.h" />
@@ -115,6 +117,7 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="CommonNetwork.cpp" />
     <ClCompile Include="Console.cpp" />
+    <ClCompile Include="Display.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -125,7 +128,7 @@
     </ClCompile>
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ImageCompression.cpp" />
-    <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="Networking.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="BaseServer.cpp" />

@@ -19,15 +19,36 @@
     <Filter Include="Source Files\Network">
       <UniqueIdentifier>{7cc09a20-7661-414c-83a1-04285a73e6a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Network\Server">
+      <UniqueIdentifier>{3a4d2fbf-1165-458c-895b-1d6fc8c12771}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Network\Client">
+      <UniqueIdentifier>{e866fc2d-06dd-4b0d-b37e-46df83b7a609}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Server">
+      <UniqueIdentifier>{ecd7d0be-9b69-4521-9885-c81b307617e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Client">
+      <UniqueIdentifier>{ffd43ca6-eb70-484e-befd-aa186ed96564}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Network\Server">
+      <UniqueIdentifier>{96e956f5-251d-4497-b37c-2f46fa4a4ab6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Network\Client">
+      <UniqueIdentifier>{78a70a65-8fd7-4363-95dc-5bb27b573234}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Client">
+      <UniqueIdentifier>{09f98b70-3da8-46ad-8018-42aa590c2578}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Server">
+      <UniqueIdentifier>{86d26db5-b332-4cb8-9e44-e225c675910c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ScreenCapture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utilities.h">
@@ -42,9 +63,6 @@
     <ClInclude Include="Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IServer.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
     <ClInclude Include="NetworkSetup.h">
       <Filter>Header Files\Network</Filter>
     </ClInclude>
@@ -54,13 +72,7 @@
     <ClInclude Include="SocketHandler.h">
       <Filter>Header Files\Network</Filter>
     </ClInclude>
-    <ClInclude Include="BaseServer.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
     <ClInclude Include="CommonNetwork.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Server.h">
       <Filter>Header Files\Network</Filter>
     </ClInclude>
     <ClInclude Include="Console.h">
@@ -69,17 +81,35 @@
     <ClInclude Include="Rect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IClient.h">
-      <Filter>Header Files\Network</Filter>
+    <ClInclude Include="BaseServer.h">
+      <Filter>Header Files\Network\Server</Filter>
     </ClInclude>
-    <ClInclude Include="BaseClient.h">
-      <Filter>Header Files\Network</Filter>
+    <ClInclude Include="IServer.h">
+      <Filter>Header Files\Network\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Header Files\Network\Server</Filter>
     </ClInclude>
     <ClInclude Include="Client.h">
-      <Filter>Header Files\Network</Filter>
+      <Filter>Header Files\Network\Client</Filter>
     </ClInclude>
-    <ClInclude Include="Mouse.h">
+    <ClInclude Include="BaseClient.h">
+      <Filter>Header Files\Network\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="IClient.h">
+      <Filter>Header Files\Network\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseCapture.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="ScreenCapture.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseCommon.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Display.h">
+      <Filter>Header Files\Client</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -87,9 +117,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ScreenCapture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ImageCompression.cpp">
@@ -101,29 +128,35 @@
     <ClCompile Include="Networking.cpp">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="BaseServer.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Server.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
     <ClCompile Include="Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BaseClient.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
     <ClCompile Include="CommonNetwork.cpp">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="Client.cpp">
-      <Filter>Source Files\Network</Filter>
+    <ClCompile Include="BaseServer.cpp">
+      <Filter>Source Files\Network\Server</Filter>
     </ClCompile>
-    <ClCompile Include="Mouse.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Server.cpp">
+      <Filter>Source Files\Network\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseClient.cpp">
+      <Filter>Source Files\Network\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Client.cpp">
+      <Filter>Source Files\Network\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="MouseCapture.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="ScreenCapture.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Display.cpp">
+      <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

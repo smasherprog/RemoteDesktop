@@ -126,7 +126,7 @@ void RemoteDesktop::BaseServer::_OnDisconnect(int index){
 void RemoteDesktop::BaseServer::_OnReceive(SocketHandler& sh){
 	
 	while (true){
-		DEBUG_MSG("_OnReceive Called");
+		//DEBUG_MSG("_OnReceive Called");
 		auto result = RemoteDesktop::_INTERNAL::_ProcessPacketHeader(sh);// assemble header info
 		if (result == 1){//if there is header info...
 			result = RemoteDesktop::_INTERNAL::_ProcessPacketBody(sh);//process the body of the message
@@ -138,7 +138,7 @@ void RemoteDesktop::BaseServer::_OnReceive(SocketHandler& sh){
 		}
 		else break;//get out done  no more data to process here
 	}
-	DEBUG_MSG("_OnReceive Finished");
+	//DEBUG_MSG("_OnReceive Finished");
 }
 
 

@@ -3,6 +3,7 @@
 #include "ScreenCapture.h"
 #include "Console.h"
 #include "ImageCompression.h"
+#include "MouseCapture.h"
 
 #define FRAME_CAPTURE_INTERVAL 100
 
@@ -13,7 +14,8 @@ RemoteDesktop::Server::Server(){
 	_DebugConsole = std::make_unique<CConsole>();
 #endif
 	_NewClients = std::vector<SocketHandler>();
-
+	imagecompression = std::make_unique<ImageCompression>();
+	mousecapturing = std::make_unique<MouseCapture>();
 }
 RemoteDesktop::Server::~Server(){
 	Running = false;
@@ -27,14 +29,41 @@ void RemoteDesktop::Server::OnConnect(SocketHandler& sh){
 void _HandleKeyEvent(RemoteDesktop::SocketHandler& sh){
 	RemoteDesktop::KeyEvent_Header h;
 	memcpy(&h, sh.Buffer.data(), sizeof(h));
-	auto scan = MapVirtualKey(h.VK, 0);
-//	DEBUG_MSG("Received % in state   scan code is %, down %", scan, h.VK, (int)h.down);
-	keybd_event(h.VK, scan, h.down ? 0 : KEYEVENTF_KEYUP, 0);
+	INPUT inp;
+
+	inp.type = INPUT_KEYBOARD;
+	inp.ki.wVk = h.VK;
+	inp.ki.dwFlags = h.down == 0 ? 0 : KEYEVENTF_KEYUP;
+	SendInput(1, &inp, sizeof(INPUT));
+	//keybd_event(h.VK, scan, h.down ? KEYEVENTF_EXTENDEDKEY : KEYEVENTF_KEYUP, 0);
+}
+
+void  RemoteDesktop::Server::_Handle_MouseUpdate(SocketHandler& sh){
+	MouseEvent_Header h;
+	memcpy(&h, sh.Buffer.data(), sizeof(h));
+	mousecapturing->Last_ScreenPos = mousecapturing->Current_ScreenPos = h.pos;
+	INPUT inp;
+	inp.type = INPUT_MOUSE;
+	inp.mi.mouseData = 0;
+	auto scx = (float)GetSystemMetrics(SM_CXSCREEN);
+	auto scy = (float)GetSystemMetrics(SM_CYSCREEN);
+
+	auto divl = (float)h.pos.left;
+	auto divt = (float)h.pos.top;
+	inp.mi.dx = (65536.0f / scx)*divl;//x being coord in pixels
+	inp.mi.dy = (65536.0f / scy)*divt;//y being coord in pixels
+	inp.mi.dwFlags = h.Action == WM_MOUSEMOVE ? MOUSEEVENTF_ABSOLUTE : h.Action;
+
+	SendInput(1, &inp, sizeof(inp));
+
 }
 void RemoteDesktop::Server::OnReceive(SocketHandler& sh) {
 	switch (sh.msgtype){
 	case NetworkMessages::KEYEVENT:
 		_HandleKeyEvent(sh);
+		break;
+	case NetworkMessages::MOUSEEVENT:
+		_Handle_MouseUpdate(sh);
 		break;
 	default:
 		break;
@@ -52,7 +81,7 @@ void RemoteDesktop::Server::Stop(){
 	RemoteDesktop::BaseServer::Stop();//stop the lower service first,
 	if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
 }
-void RemoteDesktop::Server::_HandleNewClients(std::vector<SocketHandler>& newclients, Image& img, const std::unique_ptr<ImageCompression>& imagecompression){
+void RemoteDesktop::Server::_HandleNewClients(std::vector<SocketHandler>& newclients, Image& img){
 	if (newclients.empty()) return;
 	NetworkMsg msg;
 	int sz[2];
@@ -69,7 +98,7 @@ void RemoteDesktop::Server::_HandleNewClients(std::vector<SocketHandler>& newcli
 		Send(a.socket->socket, NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
 }
-void RemoteDesktop::Server::_HandleNewClients_and_ResolutionUpdates(Image& img, Image& _lastimg, const std::unique_ptr<ImageCompression>& imagecompression){
+void RemoteDesktop::Server::_HandleNewClients_and_ResolutionUpdates(Image& img, Image& _lastimg){
 	std::vector<SocketHandler> tmpnewclients;
 	{
 		std::lock_guard<std::mutex> lock(_NewClientLock);
@@ -89,11 +118,11 @@ void RemoteDesktop::Server::_HandleNewClients_and_ResolutionUpdates(Image& img, 
 			if (!found) tmpnewclients.push_back(SocketArray[i]);
 		}
 	}
-	_HandleNewClients(tmpnewclients, img, imagecompression);//<----new clients handled here, also resolution changes here as well since its the same code
+	_HandleNewClients(tmpnewclients, img);//<----new clients handled here, also resolution changes here as well since its the same code
 }
 
 
-void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, const std::unique_ptr<ImageCompression>& imagecompression, std::vector<unsigned char>& buffer){
+void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, std::vector<unsigned char>& buffer){
 	if (rect.width > 0 && rect.height > 0){
 		NetworkMsg msg;
 		auto imgdif = imagecompression->Compress(Image::Copy(img, rect, buffer));
@@ -109,11 +138,27 @@ void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, const 
 	}
 
 }
+void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing){
+	mousecapturing->Update();
+
+	if ((mousecapturing->Last_ScreenPos != mousecapturing->Current_ScreenPos) ||
+		mousecapturing->Last_Mouse != mousecapturing->Current_Mouse){
+		NetworkMsg msg;
+		MouseEvent_Header h;
+		h.pos = mousecapturing->Current_ScreenPos;
+		h.HandleID = mousecapturing->Current_Mouse;
+		msg.push_back(h);
+		SendToAll(NetworkMessages::MOUSEEVENT, msg);
+		mousecapturing->Last_ScreenPos = mousecapturing->Current_ScreenPos;
+		mousecapturing->Last_Mouse = mousecapturing->Current_Mouse;
+	}
+}
+
 void RemoteDesktop::Server::_Run(){
 	//VARIABLES DEFINED HERE TO ACHIVE THREAD LOCAL STORAGE.
 
 	auto screencapture = std::make_unique<ScreenCapture>();
-	auto imagecompression = std::make_unique<ImageCompression>();
+
 	std::vector<unsigned char> lastimagebuffer;
 	std::vector<unsigned char> sendimagebuffer;
 	Image _LastImage = screencapture->GetPrimary(lastimagebuffer);//<---Seed the image
@@ -125,17 +170,17 @@ void RemoteDesktop::Server::_Run(){
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep if there are no clients connected.
 			continue;
 		}
-
+		_Handle_MouseUpdates(mousecapturing);
 		pingpong = !pingpong;
 		Image img;
 		auto t = Timer(true);
 		if (!pingpong) img = screencapture->GetPrimary();
 		else img = screencapture->GetPrimary(lastimagebuffer);
-		_HandleNewClients_and_ResolutionUpdates(img, _LastImage, imagecompression);
+		_HandleNewClients_and_ResolutionUpdates(img, _LastImage);
 		//get difference with last screenshot
 		auto rect = Image::Difference(_LastImage, img);
 		//send out any screen updates that have changed
-		_Handle_ScreenUpdates(img, rect, imagecompression, sendimagebuffer);
+		_Handle_ScreenUpdates(img, rect, sendimagebuffer);
 
 		_LastImage = img;
 		t.Stop();

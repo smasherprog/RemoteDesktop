@@ -85,7 +85,7 @@ int RemoteDesktop::_INTERNAL::_SendLoop(SOCKET s, char* data, int len){
 				return -1;//disconnect client!!
 			}
 			DEBUG_MSG("Yeilding time: %    %", len, sockerr);
-			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			std::this_thread::yield();
 			continue;//go back and try again
 		}
 		len -= sentamount;
