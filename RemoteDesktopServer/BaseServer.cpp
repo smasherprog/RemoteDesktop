@@ -162,5 +162,4 @@ void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 	SocketArray[ind].Buffer.reserve(STARTBUFFERSIZE);// the copy into the array does not preserve capacity
 	OnConnect(SocketArray[ind]);
 	DEBUG_MSG("OnConnect Success");
-	if (_OnConnectCB != nullptr) _OnConnectCB();
 }

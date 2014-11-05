@@ -5,22 +5,23 @@
 
 #pragma once
 
-#include "targetver.h"
 
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN
 
 #include <winsock2.h>
 #include <Ws2tcpip.h>
-// Windows Header Files:
-#include <windows.h>
-#include "Windowsx.h"
-#include <tchar.h>
 
 #pragma comment(lib, "Ws2_32.lib")
 
+#include <windows.h>
 #include "Timer.h"
 #include "Utilities.h"
 #include <vector>
 #include <string>
+
+#include <stdio.h>
+#include <tchar.h>
+
+
 
 // TODO: reference additional headers your program requires here

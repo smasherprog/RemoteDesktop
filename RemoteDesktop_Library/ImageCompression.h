@@ -12,7 +12,7 @@ namespace RemoteDesktop{
 		void* JpegDecompressor = nullptr;
 	public:
 		~ImageCompression();
-		Image Compress(Image& input, int quality=60);
+		Image Compress(Image& input, int quality=70);
 		Image Decompress(Image input);
 	};
 };

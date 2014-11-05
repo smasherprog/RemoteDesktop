@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "MouseCapture.h"
+#include <algorithm>
 
 RemoteDesktop::MouseCapture::MouseCapture(){
 	memset(&_LastCursorInfo, 0, sizeof(_LastCursorInfo));

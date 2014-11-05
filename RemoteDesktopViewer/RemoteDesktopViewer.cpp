@@ -4,8 +4,7 @@
 #include "stdafx.h"
 #include "RemoteDesktopViewer.h"
 #include <memory>
-#include "..\RemoteDesktop_Library\Client.h"
-#include "..\RemoteDesktop_Library\Networking.h"
+#include "Client.h"
 
 #define MAX_LOADSTRING 100
 
@@ -20,7 +19,7 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
-RemoteDesktop::Client* _Client = nullptr;
+std::unique_ptr<RemoteDesktop::Client> _Client;
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -56,7 +55,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-	if (_Client != nullptr) DestroyClient(_Client);
+	_Client.release();
 	return (int)msg.wParam;
 }
 
@@ -143,10 +142,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wmId)
 		{
 		case ID_FILE_CONNECT:
-			if (_Client != nullptr) DestroyClient(_Client);
-			_Client = (RemoteDesktop::Client*)CreateClient(hWnd);
-			//_Client->Connect("127.0.0.1", "443");
-			_Client->Connect("192.168.221.128", "443");
+			_Client = std::make_unique<RemoteDesktop::Client>(hWnd);
+			_Client->Connect("127.0.0.1", "443");
+			//_Client->Connect("192.168.221.128", "443");
 			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -171,7 +169,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		if (_Client != nullptr) _Client->KeyEvent(wParam, true);
 		break;
-
+	case WM_SETCURSOR:
+		if (_Client != nullptr)
+			if (_Client->SetCursor()) return true;
+		return DefWindowProc(hWnd, message, wParam, lParam);
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -182,8 +183,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONDOWN:
 	case WM_MBUTTONUP:
 	case WM_MBUTTONDBLCLK:
-		//case WM_MOUSEWHEEL:
-		if (_Client != nullptr) _Client->MouseEvent(message, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), 0);
+	case WM_MOUSEWHEEL:
+		if (_Client != nullptr) _Client->MouseEvent(message, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);

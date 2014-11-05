@@ -1,6 +1,7 @@
 #ifndef MOUSECOMMON_H
 #define MOUSECOMMON_H
 #include <Windows.h>
+#include <vector>
 
 namespace RemoteDesktop{
 	enum Mouse_Types{

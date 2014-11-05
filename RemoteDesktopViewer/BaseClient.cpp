@@ -7,7 +7,7 @@ RemoteDesktop::BaseClient::BaseClient(){
 
 }
 RemoteDesktop::BaseClient::~BaseClient(){
-	Running = false;
+	Stop();//ensure threads have been stopped
 	ShutDownNetwork();
 	DEBUG_MSG("Stopping Client");
 }
@@ -120,8 +120,7 @@ void RemoteDesktop::BaseClient::_Run(){
 		}
 	}
 	WSACloseEvent(newevent);
-	_OnDisconnect(_Socket);
-
+	_Socket.clear();//shut down socket
 	DEBUG_MSG("Ending Loop");
 }
 

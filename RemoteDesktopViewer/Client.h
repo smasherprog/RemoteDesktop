@@ -18,6 +18,7 @@ namespace RemoteDesktop{
 		std::unique_ptr<Display> _Display;
 
 		std::vector<int> _DownKeys;
+		HWND _HWND;
 
 	public:
 		Client(HWND hwnd);
@@ -29,6 +30,7 @@ namespace RemoteDesktop{
 		virtual void Draw(HDC hdc) override;
 		virtual void KeyEvent(int VK, bool down)  override;
 		virtual void MouseEvent(unsigned int action, int x, int y, int wheel=0)  override;
+		virtual bool SetCursor()  override;
 	};
 
 };

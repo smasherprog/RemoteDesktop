@@ -45,6 +45,7 @@ void  RemoteDesktop::Server::_Handle_MouseUpdate(SocketHandler& sh){
 	INPUT inp;
 	inp.type = INPUT_MOUSE;
 	inp.mi.mouseData = 0;
+
 	auto scx = (float)GetSystemMetrics(SM_CXSCREEN);
 	auto scy = (float)GetSystemMetrics(SM_CYSCREEN);
 
@@ -52,9 +53,27 @@ void  RemoteDesktop::Server::_Handle_MouseUpdate(SocketHandler& sh){
 	auto divt = (float)h.pos.top;
 	inp.mi.dx = (65536.0f / scx)*divl;//x being coord in pixels
 	inp.mi.dy = (65536.0f / scy)*divt;//y being coord in pixels
-	inp.mi.dwFlags = h.Action == WM_MOUSEMOVE ? MOUSEEVENTF_ABSOLUTE : h.Action;
+	if (h.Action == WM_MOUSEMOVE) inp.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+	else if (h.Action == WM_LBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+	else if (h.Action == WM_LBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+
+	else if (h.Action == WM_RBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+
+	else if (h.Action == WM_RBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+
+	else if (h.Action == WM_MBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
+
+	else if (h.Action == WM_MBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
+
+	else if (h.Action == WM_MOUSEWHEEL) {
+		inp.mi.dwFlags = MOUSEEVENTF_WHEEL;
+		inp.mi.mouseData = h.wheel;
+	}
+	else return;
+	
 
 	SendInput(1, &inp, sizeof(inp));
+
 
 }
 void RemoteDesktop::Server::OnReceive(SocketHandler& sh) {
@@ -149,6 +168,7 @@ void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapt
 		h.HandleID = mousecapturing->Current_Mouse;
 		msg.push_back(h);
 		SendToAll(NetworkMessages::MOUSEEVENT, msg);
+		if (mousecapturing->Last_Mouse != mousecapturing->Current_Mouse) DEBUG_MSG("Sending mouse Iconchange %", mousecapturing->Current_Mouse);
 		mousecapturing->Last_ScreenPos = mousecapturing->Current_ScreenPos;
 		mousecapturing->Last_Mouse = mousecapturing->Current_Mouse;
 	}

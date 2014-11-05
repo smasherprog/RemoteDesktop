@@ -1,6 +1,7 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 #include "Rect.h"
+#include <vector>
 
 namespace RemoteDesktop{
 	class HBITMAP_wrapper{

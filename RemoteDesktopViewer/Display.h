@@ -19,7 +19,7 @@ namespace RemoteDesktop{
 		std::mutex _DrawLock;
 
 		std::vector<Cursor_Type> _System_Cursors;
-		Cursor_Type HCursor;
+
 		Point _MousePos;
 	
 	public:
@@ -29,7 +29,8 @@ namespace RemoteDesktop{
 		void UpdateImage(Image& img, Image_Diff_Header& h);
 		void UpdateMouse(MouseEvent_Header& h);
 		void Draw(HDC hdc);
-	
+
+		Cursor_Type HCursor;
 	};
 
 };

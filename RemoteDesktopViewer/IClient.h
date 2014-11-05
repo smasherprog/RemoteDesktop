@@ -18,6 +18,8 @@ namespace RemoteDesktop{
 		virtual void Draw(HDC hdc) = 0;
 		virtual void KeyEvent(int VK, bool down) = 0;
 		virtual void MouseEvent(unsigned int action, int x, int y, int wheel) = 0;
+		virtual bool SetCursor() = 0;
+		
 	};
 
 };

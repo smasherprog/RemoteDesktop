@@ -2,6 +2,7 @@
 #include "Display.h"
 #include "Image.h"
 #include "CommonNetwork.h"
+#include <algorithm>
 
 RemoteDesktop::Display::Display(HWND hwnd) : _HWND(hwnd){
 
@@ -31,7 +32,7 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	auto ptr = _HBITMAP_wrapper.get();
 	if (ptr == nullptr) return;
 	RECT rect;
-	if (!GetClientRect(_HWND, &rect)) return;
+	if (!GetWindowRect(_HWND, &rect)) return;
 	if (rect.bottom == 0 && rect.left == 0 && rect.right == 0 && rect.top == 0) {
 		DEBUG_MSG("Exiting cannot see window");
 		return;
@@ -47,7 +48,9 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	std::lock_guard<std::mutex> lock(_DrawLock);
 	auto hMemDC = CreateCompatibleDC(hdc);
 	_Draw(hdc, hMemDC, ptr->Bitmap, ptr->width, ptr->height);
+
 	if (inwindow && (GetFocus() == _HWND)) {
+		DEBUG_MSG("Setting cursor %", HCursor.ID);
 		SetCursor(HCursor.HCursor);
 	}
 	else {
@@ -89,7 +92,6 @@ void RemoteDesktop::Display::UpdateImage(Image& img, Image_Diff_Header& h){
 }
 void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 	_MousePos = h.pos;
-	DEBUG_MSG("Mouse update to   %  %", h.pos.left, h.pos.top);
 
 	CURSORINFO cinfo;
 	cinfo.cbSize = sizeof(cinfo);
@@ -103,10 +105,11 @@ void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 	});
 
 	if (f != _System_Cursors.end()){
-		HCursor = *f;
 		if (f->ID != HCursor.ID){
-			InvalidateRect(_HWND, NULL, false);
+			DEBUG_MSG("Cursor Changed");
 		}
+		HCursor = *f;
 	}
+	InvalidateRect(_HWND, NULL, false);
 }
 
