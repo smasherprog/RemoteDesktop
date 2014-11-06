@@ -68,27 +68,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -107,7 +107,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static_debug.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,7 +125,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static_debug.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,7 +148,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -171,15 +171,13 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="CommonNetwork.h" />
     <ClInclude Include="Console.h" />
+    <ClInclude Include="Encryption.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ImageCompression.h" />
     <ClInclude Include="MouseCommon.h" />
@@ -193,6 +191,7 @@
   <ItemGroup>
     <ClCompile Include="CommonNetwork.cpp" />
     <ClCompile Include="Console.cpp" />
+    <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ImageCompression.cpp" />
     <ClCompile Include="NetworkSetup.cpp" />
@@ -202,6 +201,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\cryptopp\cryptlib.vcxproj">
+      <Project>{3423ec9a-52e4-4a4d-9753-edebc38785ef}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
