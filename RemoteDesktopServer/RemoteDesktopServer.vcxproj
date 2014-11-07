@@ -163,18 +163,26 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseServer.h" />
+    <ClInclude Include="Desktop_Monitor.h" />
     <ClInclude Include="IServer.h" />
     <ClInclude Include="MouseCapture.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="ServerService.h" />
+    <ClInclude Include="ServiceBase.h" />
+    <ClInclude Include="ServiceInstaller.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseServer.cpp" />
+    <ClCompile Include="DesktopMonitor.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="RemoteDesktopServer.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="ServerService.cpp" />
+    <ClCompile Include="ServiceBase.cpp" />
+    <ClCompile Include="ServiceInstaller.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

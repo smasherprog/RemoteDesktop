@@ -12,15 +12,15 @@ RemoteDesktop::BaseServer::BaseServer(){
 }
 
 RemoteDesktop::BaseServer::~BaseServer(){
-	Running = false;
-	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
-	Stop();
+	BaseServer::Stop();
 	ShutDownNetwork();
 	DEBUG_MSG("Stopping Server");
 }
 void RemoteDesktop::BaseServer::Stop(){
 	Running = false;
-	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
+	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
+		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
+	}
 	for (auto& x : EventArray) {
 		if (x != NULL) WSACloseEvent(x);
 	}
@@ -109,7 +109,8 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 			}
 		}
 	}
-	Stop();
+	Stop(); 
+	DEBUG_MSG("_Listen Exiting");
 	return true;
 }
 
@@ -124,7 +125,7 @@ void RemoteDesktop::BaseServer::_OnDisconnect(int index){
 
 
 void RemoteDesktop::BaseServer::_OnReceive(SocketHandler& sh){
-	
+
 	while (true){
 		//DEBUG_MSG("_OnReceive Called");
 		auto result = RemoteDesktop::_INTERNAL::_ProcessPacketHeader(sh);// assemble header info

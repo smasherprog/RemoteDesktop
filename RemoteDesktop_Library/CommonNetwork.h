@@ -36,7 +36,14 @@ namespace RemoteDesktop{
 		FOLDER,
 		FILE
 	};
-	class NetworkMsg;
+	class NetworkMsg{
+	public:
+		NetworkMsg(){}
+		int payloadlength()const{ auto l = 0; for (auto& a : lens) l += a; return l; }
+		std::vector<char*> data;
+		std::vector<int> lens;
+		template<class T>void push_back(const T& x){ data.push_back((char*)&x); lens.push_back(sizeof(x)); }
+	};
 	class SocketHandler;
 	namespace _INTERNAL{
 		int _Send(SOCKET s, NetworkMessages m, NetworkMsg& msg);

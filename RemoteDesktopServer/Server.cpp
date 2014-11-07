@@ -4,6 +4,9 @@
 #include "Console.h"
 #include "ImageCompression.h"
 #include "MouseCapture.h"
+#include "Desktop_Monitor.h"
+#include <fstream>
+
 
 #define FRAME_CAPTURE_INTERVAL 100
 
@@ -16,6 +19,26 @@ RemoteDesktop::Server::Server(){
 	_NewClients = std::vector<SocketHandler>();
 	imagecompression = std::make_unique<ImageCompression>();
 	mousecapturing = std::make_unique<MouseCapture>();
+
+
+
+	//_RunningAsService = false;
+	//auto SessionID = -1;
+	//DWORD Size = 0;
+	//HANDLE hToken = NULL;
+	//if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+	//	wprintf(L"OpenProcessToken error 0x%08lx\n", GetLastError());
+
+	//if (GetTokenInformation(hToken, TokenSessionId, &SessionID, sizeof(SessionID), &Size) || !Size){
+	//if (SessionID == 0)
+		_RunningAsService = true;
+	/*}
+	
+
+	CloseHandle(hToken);
+
+*/
+
 }
 RemoteDesktop::Server::~Server(){
 	Running = false;
@@ -98,7 +121,9 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 
 void RemoteDesktop::Server::Stop(){
 	RemoteDesktop::BaseServer::Stop();//stop the lower service first,
-	if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
+	if (std::this_thread::get_id() != _BackGroundWorker.get_id()){
+		if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
+	}
 }
 void RemoteDesktop::Server::_HandleNewClients(std::vector<SocketHandler>& newclients, Image& img){
 	if (newclients.empty()) return;
@@ -183,13 +208,31 @@ void RemoteDesktop::Server::_Run(){
 	std::vector<unsigned char> sendimagebuffer;
 	Image _LastImage = screencapture->GetPrimary(lastimagebuffer);//<---Seed the image
 	auto pingpong = true;
+	_DesktopMonitor = std::make_unique<DesktopMonitor>();
+	std::ofstream my_file("c:\\example.txt", std::ios::app);
 
+	my_file << "startup.";
+	my_file << _DesktopMonitor->Current_Desktop << std::endl;
+	my_file.close();
 	while (Running){
 
 		if (SocketArray.size() <= 1) { //The first is the server so check for <=1
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep if there are no clients connected.
 			continue;
 		}
+		std::ofstream myfile("c:\\example.txt", std::ios::app);
+		auto d = _DesktopMonitor->GetActiveDesktop();
+		myfile << "GetActiveDesktop ";
+		myfile << d << std::endl;
+		if (d != _DesktopMonitor->Current_Desktop)
+		{
+			myfile << "GetActiveDesktop Current_Desktop \n";
+			screencapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
+			myfile << "GetActiveDesktop ReleaseHandles \n";
+			if(_DesktopMonitor->SwitchDesktop(d)) myfile << "GetActiveDesktop SwitchDesktop==TRUE \n";
+			else myfile << "GetActiveDesktop SwitchDesktop==FALSE \n";
+		}
+		else myfile << "GetActiveDesktop Not Needed \n";
 		_Handle_MouseUpdates(mousecapturing);
 		pingpong = !pingpong;
 		Image img;
@@ -207,7 +250,8 @@ void RemoteDesktop::Server::_Run(){
 		auto elapsed = t.Elapsed();
 		//DEBUG_MSG("Time Taken _Run %", elapsed);
 		elapsed = FRAME_CAPTURE_INTERVAL - elapsed;
+		myfile.close();
 		if (elapsed > 0) std::this_thread::sleep_for(std::chrono::milliseconds(elapsed));//sleep if there is time to sleep
 	}
-
+	DEBUG_MSG("Exiting Server Loop");
 }

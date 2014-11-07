@@ -9,6 +9,8 @@ namespace RemoteDesktop{
 	class ScreenCapture;
 	class ImageCompression;
 	class MouseCapture;
+	class DesktopMonitor;
+
 #if defined _DEBUG
 	class CConsole;
 #endif
@@ -19,6 +21,7 @@ namespace RemoteDesktop{
 		std::vector<SocketHandler> _NewClients;
 		std::unique_ptr<ImageCompression> imagecompression;
 		std::unique_ptr<MouseCapture> mousecapturing;
+		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
 
 		std::mutex _NewClientLock;
 
@@ -30,6 +33,8 @@ namespace RemoteDesktop{
 		void _Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing);
 
 		void _Handle_MouseUpdate(SocketHandler& sh);
+
+		bool _RunningAsService = false;
 
 	public:
 		Server();
