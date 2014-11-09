@@ -46,7 +46,7 @@ void InstallService(PWSTR pszServiceName,
 		wprintf(L"OpenSCManager failed w/err 0x%08lx\n", GetLastError());
 		goto Cleanup;
 	}
-
+	wcscat_s(szPath, L" -service_mon");
 	// Install the service into SCM by calling CreateService
 	schService = CreateService(
 		schSCManager,                   // SCManager database

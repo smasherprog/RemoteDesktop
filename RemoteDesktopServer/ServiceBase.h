@@ -55,6 +55,7 @@ public:
 	// system shutting down.
 	virtual void OnShutdown();
 
+	virtual void OnSessionChange();
 	// Set the service status and report the status to the SCM.
 	void SetServiceStatus(DWORD dwCurrentState,
 		DWORD dwWin32ExitCode = NO_ERROR,
@@ -75,7 +76,12 @@ private:
 
 	// The function is called by the SCM whenever a control code is sent to 
 	// the service.
-	static void WINAPI ServiceCtrlHandler(DWORD dwCtrl);
+	static DWORD WINAPI ServiceCtrlHandler(_In_  DWORD dwControl,
+		_In_  DWORD dwEventType,
+		_In_  LPVOID lpEventData,
+		_In_  LPVOID lpContext
+		);
+
 
 	// Start the service.
 	void Start(DWORD dwArgc, PWSTR *pszArgv);
@@ -89,6 +95,7 @@ private:
 	// Execute when the system is shutting down.
 	void Shutdown();
 
+	void SessionChange();
 	// The singleton service instance.
 	static CServiceBase *s_service;
 

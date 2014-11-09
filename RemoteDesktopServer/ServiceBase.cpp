@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ServiceBase.h"
+#include <fstream>
 
 // Initialize the singleton service instance.
 CServiceBase *CServiceBase::s_service = NULL;
@@ -24,7 +25,6 @@ CServiceBase *CServiceBase::s_service = NULL;
 BOOL CServiceBase::Run(CServiceBase &service)
 {
 	s_service = &service;
-
 	SERVICE_TABLE_ENTRY serviceTable[] =
 	{
 		{ service.m_name, ServiceMain },
@@ -54,8 +54,8 @@ void WINAPI CServiceBase::ServiceMain(DWORD dwArgc, PWSTR *pszArgv)
 	assert(s_service != NULL);
 
 	// Register the handler function for the service
-	s_service->m_statusHandle = RegisterServiceCtrlHandler(
-		s_service->m_name, ServiceCtrlHandler);
+	s_service->m_statusHandle = RegisterServiceCtrlHandlerEx(
+		s_service->m_name, ServiceCtrlHandler, NULL);
 	if (s_service->m_statusHandle == NULL)
 	{
 		throw GetLastError();
@@ -89,17 +89,24 @@ void WINAPI CServiceBase::ServiceMain(DWORD dwArgc, PWSTR *pszArgv)
 //   This parameter can also be a user-defined control code ranges from 128 
 //   to 255.
 //
-void WINAPI CServiceBase::ServiceCtrlHandler(DWORD dwCtrl)
+
+DWORD WINAPI CServiceBase::ServiceCtrlHandler(_In_  DWORD dwControl,
+	_In_  DWORD dwEventType,
+	_In_  LPVOID lpEventData,
+	_In_  LPVOID lpContext)
 {
-	switch (dwCtrl)
+	switch (dwControl)
 	{
 	case SERVICE_CONTROL_STOP: s_service->Stop(); break;
 	case SERVICE_CONTROL_PAUSE: s_service->Pause(); break;
 	case SERVICE_CONTROL_CONTINUE: s_service->Continue(); break;
 	case SERVICE_CONTROL_SHUTDOWN: s_service->Shutdown(); break;
+	case SERVICE_CONTROL_SESSIONCHANGE: s_service->OnSessionChange(); break;
+
 	case SERVICE_CONTROL_INTERROGATE: break;
 	default: break;
 	}
+	return NO_ERROR;
 }
 
 
@@ -142,6 +149,7 @@ CServiceBase::CServiceBase(PWSTR pszServiceName,
 		dwControlsAccepted |= SERVICE_ACCEPT_SHUTDOWN;
 	if (fCanPauseContinue)
 		dwControlsAccepted |= SERVICE_ACCEPT_PAUSE_CONTINUE;
+	dwControlsAccepted |= SERVICE_ACCEPT_SESSIONCHANGE;
 	m_status.dwControlsAccepted = dwControlsAccepted;
 
 	m_status.dwWin32ExitCode = NO_ERROR;
@@ -426,6 +434,12 @@ void CServiceBase::Shutdown()
 //
 void CServiceBase::OnShutdown()
 {
+}
+
+void CServiceBase::OnSessionChange()
+{
+	std::ofstream myfile("c:\\example.txt", std::ios::app);
+	myfile << "OnSessionChange base";
 }
 
 

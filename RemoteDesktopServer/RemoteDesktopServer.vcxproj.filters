@@ -19,27 +19,18 @@
     <Filter Include="Source Files\Service">
       <UniqueIdentifier>{bd207d27-58d6-4a86-b0a7-30943bea89ca}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Server">
+      <UniqueIdentifier>{a1fc9848-1f01-4a1e-ae57-22f79ebb3e0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Server">
+      <UniqueIdentifier>{08388162-7190-4f84-a024-b46101efd16b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Server.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MouseCapture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ScreenCapture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ServiceInstaller.h">
@@ -51,27 +42,33 @@
     <ClInclude Include="ServerService.h">
       <Filter>Header Files\Service</Filter>
     </ClInclude>
+    <ClInclude Include="ServiceMonitor.h">
+      <Filter>Header Files\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseServer.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
     <ClInclude Include="Desktop_Monitor.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="IServer.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseCapture.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="ScreenCapture.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceHelpers.h">
+      <Filter>Header Files\Service</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RemoteDesktopServer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Server.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BaseServer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MouseCapture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ScreenCapture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ServiceInstaller.cpp">
@@ -83,8 +80,29 @@
     <ClCompile Include="ServerService.cpp">
       <Filter>Source Files\Service</Filter>
     </ClCompile>
+    <ClCompile Include="ServiceMonitor.cpp">
+      <Filter>Source Files\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseServer.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
     <ClCompile Include="DesktopMonitor.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="MouseCapture.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="ScreenCapture.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceHelpers.cpp">
+      <Filter>Source Files\Service</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

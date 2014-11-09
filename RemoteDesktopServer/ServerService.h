@@ -4,7 +4,7 @@
 #include <memory>
 #include "ServiceBase.h"
 namespace RemoteDesktop{
-	class Server;
+	class ServiceMonitor;
 }
 class ServerService : public CServiceBase
 {
@@ -16,10 +16,11 @@ public:
 		BOOL fCanPauseContinue = FALSE);
 	virtual ~ServerService(void);
 
-	virtual void OnStart(DWORD dwArgc, PWSTR *pszArgv);
-	virtual void OnStop();
+	virtual void OnStart(DWORD dwArgc, PWSTR *pszArgv) override;
+	virtual void OnStop() override;
+	virtual void OnSessionChange() override;
 
-	std::unique_ptr<RemoteDesktop::Server> _Server;
+	std::unique_ptr<RemoteDesktop::ServiceMonitor> _ServiceMonitor;
 
 };
 

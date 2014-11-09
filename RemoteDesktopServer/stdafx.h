@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 #include <tchar.h>
-
+#include "Shellapi.h"
 #include <strsafe.h>
 
 template<typename charT>

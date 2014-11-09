@@ -25,8 +25,6 @@ namespace RemoteDesktop{
 
 		std::mutex _NewClientLock;
 
-		void _Run();
-		std::thread _BackGroundWorker;
 		void _HandleNewClients(std::vector<SocketHandler>& newclients, Image& img);
 		void _HandleNewClients_and_ResolutionUpdates(Image& img, Image& _lastimg);
 		void _Handle_ScreenUpdates(Image& img, Rect& rect, std::vector<unsigned char>& buffer);

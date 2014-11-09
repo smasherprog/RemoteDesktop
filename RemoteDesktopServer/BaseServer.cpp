@@ -29,6 +29,7 @@ void RemoteDesktop::BaseServer::Stop(){
 }
 
 void RemoteDesktop::BaseServer::Listen(unsigned short port){
+	Stop();
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port);
 }
