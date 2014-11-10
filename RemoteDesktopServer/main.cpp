@@ -8,12 +8,11 @@
 #include "Server.h"
 
 // Internal name of the service
-#define SERVICE_NAME             L"CppWindowsService"
+#define SERVICE_NAME             L"RemoteDesktop_svc"
 // Displayed name of the service
-#define SERVICE_DISPLAY_NAME     L"CppWindowsService Sample Service"
+#define SERVICE_DISPLAY_NAME     L"RemoteDesktop Service"
 // Service start options.
 #define SERVICE_START_TYPE       SERVICE_DEMAND_START
-// List of service dependencies - "dep1\0dep2\0\0"
 
 #define DEFAULTPORT 443
 
@@ -34,7 +33,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			InstallService(
 				SERVICE_NAME,               // Name of service
 				SERVICE_DISPLAY_NAME,       // Name to display
-				SERVICE_DEMAND_START, 
+				SERVICE_AUTO_START, 
 				L"",
 				NULL,
 				NULL

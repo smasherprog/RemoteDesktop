@@ -3,8 +3,6 @@
 #include "NetworkSetup.h"
 #include "CommonNetwork.h"
 
-
-
 RemoteDesktop::BaseServer::BaseServer(){
 	DEBUG_MSG("Starting Server");
 	EventArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
@@ -28,7 +26,8 @@ void RemoteDesktop::BaseServer::Stop(){
 	SocketArray.resize(0);
 }
 
-void RemoteDesktop::BaseServer::Listen(unsigned short port){
+void RemoteDesktop::BaseServer::StartListening(unsigned short port, HDESK h){
+	_NetworkCurrentDesktop = _LastNetworkCurrentDesktop = h;
 	Stop();
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port);
@@ -46,6 +45,7 @@ void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
 }
 
 void RemoteDesktop::BaseServer::_ListenWrapper(unsigned short port){
+	DEBUG_MSG("_ListenWrapper threadid %", std::this_thread::get_id());
 	if (!_Listen(port)){
 		DEBUG_MSG("socket failed with error = %d\n", WSAGetLastError());
 	}
@@ -70,6 +70,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 		closesocket(listensocket);
 		return false;
 	}
+
 	auto newevent = WSACreateEvent();
 
 	WSAEventSelect(listensocket, newevent, FD_ACCEPT | FD_CLOSE);
@@ -82,6 +83,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 	SocketHandler s;
 	s.socket = std::make_shared<socket_wrapper>(listensocket);
 	SocketArray.push_back(s);
+
 	WSANETWORKEVENTS NetworkEvents;
 
 	while (Running && !EventArray.empty()) {
@@ -109,7 +111,14 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 				_OnDisconnect(Index);
 			}
 		}
+		if (_NetworkCurrentDesktop != _LastNetworkCurrentDesktop){
+			SetThreadDesktop(_NetworkCurrentDesktop);
+			_LastNetworkCurrentDesktop = _NetworkCurrentDesktop;
+		}
+			
+		
 	}
+
 	Stop(); 
 	DEBUG_MSG("_Listen Exiting");
 	return true;
@@ -117,10 +126,11 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 
 void RemoteDesktop::BaseServer::_OnDisconnect(int index){
 	DEBUG_MSG("_OnDisconnect Called");
-	OnDisconnect(SocketArray[index]);
-	SocketArray.erase(SocketArray.begin() + index);
-	if (EventArray[index] != NULL) WSACloseEvent(EventArray[index]);
+	OnDisconnect(SocketArray[index]);	
+	auto ev = EventArray[index];
 	EventArray.erase(EventArray.begin() + index);
+	SocketArray.erase(SocketArray.begin() + index);
+	if (ev != NULL) WSACloseEvent(ev);
 	DEBUG_MSG("_OnDisconnect Finished");
 }
 

@@ -18,12 +18,11 @@ RemoteDesktop::Server::Server(){
 	std::wstring uname = buff;
 	_RunningAsService = ci_find_substr(uname, std::wstring(L"system")) == 0;
 
-#if defined _DEBUG
-	_DebugConsole = std::make_unique<CConsole>();
-#endif
 	_NewClients = std::vector<SocketHandler>();
 	imagecompression = std::make_unique<ImageCompression>();
 	mousecapturing = std::make_unique<MouseCapture>();
+	_DesktopMonitor = std::make_unique<DesktopMonitor>();
+
 }
 RemoteDesktop::Server::~Server(){
 	Running = false;
@@ -42,6 +41,7 @@ void _HandleKeyEvent(RemoteDesktop::SocketHandler& sh){
 	inp.ki.wVk = h.VK;
 	inp.ki.dwFlags = h.down == 0 ? 0 : KEYEVENTF_KEYUP;
 	SendInput(1, &inp, sizeof(INPUT));
+
 	//keybd_event(h.VK, scan, h.down ? KEYEVENTF_EXTENDEDKEY : KEYEVENTF_KEYUP, 0);
 }
 
@@ -77,7 +77,6 @@ void  RemoteDesktop::Server::_Handle_MouseUpdate(SocketHandler& sh){
 		inp.mi.mouseData = h.wheel;
 	}
 	else return;
-	
 
 	SendInput(1, &inp, sizeof(inp));
 
@@ -99,10 +98,6 @@ void RemoteDesktop::Server::OnDisconnect(SocketHandler& sh) {
 
 }
 
-
-void RemoteDesktop::Server::Stop(){
-	RemoteDesktop::BaseServer::Stop();//stop the lower service first,
-}
 void RemoteDesktop::Server::_HandleNewClients(std::vector<SocketHandler>& newclients, Image& img){
 	if (newclients.empty()) return;
 	NetworkMsg msg;
@@ -115,20 +110,21 @@ void RemoteDesktop::Server::_HandleNewClients(std::vector<SocketHandler>& newcli
 	msg.lens.push_back(sizeof(int) * 2);
 	msg.data.push_back((char*)imgdif.data);
 	msg.lens.push_back(imgdif.size_in_bytes);
-	DEBUG_MSG("Servicing new Client!");
+	//DEBUG_MSG("Servicing new Client %, %", img.height, img.width);
 	for (auto& a : newclients){
 		Send(a.socket->socket, NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
 }
-void RemoteDesktop::Server::_HandleNewClients_and_ResolutionUpdates(Image& img, Image& _lastimg){
+bool RemoteDesktop::Server::_HandleNewClients_and_ResolutionUpdates(Image& img, Image& _lastimg){
 	std::vector<SocketHandler> tmpnewclients;
 	{
 		std::lock_guard<std::mutex> lock(_NewClientLock);
 		for (auto& a : _NewClients) tmpnewclients.push_back(a);
 		_NewClients.resize(0);
 	}
+	bool reschange = (img.height != _lastimg.height || img.width != _lastimg.width) && (img.height > 0 && img.width > 0);
 	//if there was a resolution change add those clients to receive the update as well
-	if (img.height != _lastimg.height || img.width != _lastimg.width){
+	if (reschange){
 		for (auto i = 1; i < SocketArray.size(); i++){
 			auto found = false;
 			for (auto& s : tmpnewclients){
@@ -141,6 +137,7 @@ void RemoteDesktop::Server::_HandleNewClients_and_ResolutionUpdates(Image& img, 
 		}
 	}
 	_HandleNewClients(tmpnewclients, img);//<----new clients handled here, also resolution changes here as well since its the same code
+	return reschange;
 }
 
 
@@ -155,7 +152,6 @@ void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, std::v
 
 		msg.data.push_back((char*)imgdif.data);
 		msg.lens.push_back(imgdif.size_in_bytes);
-
 		SendToAll(NetworkMessages::UPDATEREGION, msg);
 	}
 
@@ -177,17 +173,14 @@ void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapt
 	}
 }
 void RemoteDesktop::Server::Listen(unsigned short port) {
-	RemoteDesktop::BaseServer::Listen(port);//start the lower service first
-	//VARIABLES DEFINED HERE TO ACHIVE THREAD LOCAL STORAGE.
-
+	StartListening(port, _DesktopMonitor->m_hDesk);//start the lower service first
 	auto screencapture = std::make_unique<ScreenCapture>();
 
 	std::vector<unsigned char> lastimagebuffer;
 	std::vector<unsigned char> sendimagebuffer;
 	Image _LastImage = screencapture->GetPrimary(lastimagebuffer);//<---Seed the image
 	auto pingpong = true;
-	_DesktopMonitor = std::make_unique<DesktopMonitor>();
-	
+
 	while (Running){
 
 		if (SocketArray.size() <= 1) { //The first is the server so check for <=1
@@ -200,6 +193,7 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 		{
 			screencapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
 			_DesktopMonitor->SwitchDesktop(d);
+			_NetworkCurrentDesktop = _DesktopMonitor->m_hDesk;
 		}
 		_Handle_MouseUpdates(mousecapturing);
 		pingpong = !pingpong;
@@ -207,11 +201,14 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 		auto t = Timer(true);
 		if (!pingpong) img = screencapture->GetPrimary();
 		else img = screencapture->GetPrimary(lastimagebuffer);
-		_HandleNewClients_and_ResolutionUpdates(img, _LastImage);
-		//get difference with last screenshot
-		auto rect = Image::Difference(_LastImage, img);
-		//send out any screen updates that have changed
-		_Handle_ScreenUpdates(img, rect, sendimagebuffer);
+		if (!_HandleNewClients_and_ResolutionUpdates(img, _LastImage)){
+			//only send a diff if no res update occurs
+			//get difference with last screenshot
+			auto rect = Image::Difference(_LastImage, img);
+			//send out any screen updates that have changed
+			_Handle_ScreenUpdates(img, rect, sendimagebuffer);
+		}
+
 
 		_LastImage = img;
 		t.Stop();

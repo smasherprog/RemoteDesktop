@@ -13,21 +13,23 @@ namespace RemoteDesktop{
 		void _OnConnect(SOCKET listensocket);
 		bool _Listen(unsigned short port);
 		void _ListenWrapper(unsigned short port);
+		
 
 		std::thread _BackGroundNetworkWorker;
 		std::vector<WSAEVENT> EventArray;
+		HDESK _LastNetworkCurrentDesktop = NULL;
 
 	protected:
 		std::vector<SocketHandler> SocketArray;
 		bool Running = false;
-
+		HDESK _NetworkCurrentDesktop = NULL;
+		void StartListening(unsigned short port, HDESK h);
 	public:
 		BaseServer();
 		virtual ~BaseServer() override;
 		
 		virtual void Stop() override;
 
-		virtual void Listen(unsigned short port) override;	
 		virtual int Send(SOCKET s, NetworkMessages m, NetworkMsg& msg)override;
 		virtual void SendToAll(NetworkMessages m, NetworkMsg& msg )override;
 

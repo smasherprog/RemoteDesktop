@@ -6,11 +6,12 @@
 
 int RemoteDesktop::_INTERNAL::_ProcessPacketHeader(RemoteDesktop::SocketHandler& sh){
 	assert(sh.Buffer.data() != nullptr);
+	if (sh.socket.get() == nullptr) return 0;
 	if (sh.msgtype == RemoteDesktop::NetworkMessages::INVALID){//new message, read the header
 		if (sh.bytecounter < NETWORKHEADERSIZE){//only read more if any is needed
 			auto amtrec = recv(sh.socket->socket, sh.Buffer.data() + sh.bytecounter, STARTBUFFERSIZE, 0);//read as much as possible
 			if (amtrec > 0){//received data.. yay!
-			//	DEBUG_MSG("recv _ProcessPacketHeader = %", amtrec);
+			//DEBUG_MSG("recv _ProcessPacketHeader = %", amtrec);
 				sh.bytecounter += amtrec;
 			}
 			else if (amtrec == 0){
@@ -19,10 +20,10 @@ int RemoteDesktop::_INTERNAL::_ProcessPacketHeader(RemoteDesktop::SocketHandler&
 			}
 			else {
 				auto errmsg = WSAGetLastError(); 
-				//DEBUG_MSG("_ProcessPacketHeader %", errmsg);
+					//DEBUG_MSG("_ProcessPacketHeader %", errmsg);
 				if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE) 	return -1;
 				
-			//	DEBUG_MSG("_ProcessPacketHeader DISCONNECTING");
+			//DEBUG_MSG("_ProcessPacketHeader DISCONNECTING");
 				return 0;//disconnect!
 			}
 		}//check if there is enough data in to complete the header 
@@ -31,7 +32,7 @@ int RemoteDesktop::_INTERNAL::_ProcessPacketHeader(RemoteDesktop::SocketHandler&
 			memcpy(&packheader, sh.Buffer.data(), NETWORKHEADERSIZE);//copy the header
 			sh.msglength = packheader.PayloadLen;
 			sh.msgtype = (RemoteDesktop::NetworkMessages)packheader.Packet_Type;
-		//	DEBUG_MSG("_ProcessPacketHeader = %, %", sh.msglength, sh.msgtype);
+		//DEBUG_MSG("_ProcessPacketHeader = %, %", sh.msglength, sh.msgtype);
 			sh.bytecounter -= NETWORKHEADERSIZE;
 			if (sh.bytecounter > 0){//extra data was received some how........ make sure to move it back in the array
 				memmove(sh.Buffer.data(), sh.Buffer.data() + NETWORKHEADERSIZE, sh.bytecounter);//use memove in case of overlapping copy
@@ -49,14 +50,16 @@ int RemoteDesktop::_INTERNAL::_ProcessPacketHeader(RemoteDesktop::SocketHandler&
 	return 1;
 }
 int RemoteDesktop::_INTERNAL::_ProcessPacketBody(RemoteDesktop::SocketHandler& sh){
+	if (sh.socket.get() == nullptr) return 0;
 	auto amtrec = recv(sh.socket->socket, sh.Buffer.data() + sh.bytecounter, STARTBUFFERSIZE - sh.bytecounter, 0);
 	if (amtrec > 0){
 		sh.bytecounter += amtrec;	
-	//	DEBUG_MSG("recv _ProcessPacketBody = %", amtrec);
+		//DEBUG_MSG("recv _ProcessPacketBody = %", amtrec);
 	}
 	else {
 		if (sh.bytecounter >= sh.msglength) return 1;// message complete
-		auto errmsg = WSAGetLastError();
+		auto errmsg = WSAGetLastError();	
+		//DEBUG_MSG("_ProcessPacketHeader %", errmsg);
 		if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE) return -1;
 		return 0;//disconnect!
 	}
@@ -64,7 +67,7 @@ int RemoteDesktop::_INTERNAL::_ProcessPacketBody(RemoteDesktop::SocketHandler& s
 	return -1;//not complete..
 }
 void RemoteDesktop::_INTERNAL::_RecevieEnd(RemoteDesktop::SocketHandler& sh){
-	//DEBUG_MSG("_RecevieEnd");
+		//DEBUG_MSG("_RecevieEnd");
 	if (sh.bytecounter > sh.msglength){// more data in the buffer than was in the message
 		memmove(sh.Buffer.data(), sh.Buffer.data() + sh.msglength, sh.bytecounter - sh.msglength);
 		//DEBUG_MSG("_RecevieEnd = %, %", sh.msglength, sh.msgtype);
@@ -81,10 +84,9 @@ int RemoteDesktop::_INTERNAL::_SendLoop(SOCKET s, char* data, int len){
 		if (sentamount < 0){
 			auto sockerr = WSAGetLastError();
 			if (sockerr != WSAEMSGSIZE && sockerr != WSAEWOULDBLOCK){
-			//	DEBUG_MSG("send failed with error = %", sockerr);
 				return -1;//disconnect client!!
 			}
-			DEBUG_MSG("Yeilding time: %    %", len, sockerr);
+			//DEBUG_MSG("Yeilding time: %    %", len, sockerr);
 			std::this_thread::yield();
 			continue;//go back and try again
 		}

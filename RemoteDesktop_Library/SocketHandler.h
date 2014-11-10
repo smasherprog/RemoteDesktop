@@ -15,6 +15,7 @@ namespace RemoteDesktop{
 		SOCKET socket;
 		explicit socket_wrapper(SOCKET s) : socket(s) { }
 		~socket_wrapper();
+		
 	};
 	class SocketHandler{
 	public:
@@ -27,7 +28,6 @@ namespace RemoteDesktop{
 		int msglength = 0;
 		NetworkMessages msgtype = NetworkMessages::INVALID;
 		void clear();
-
 	};
 };
 

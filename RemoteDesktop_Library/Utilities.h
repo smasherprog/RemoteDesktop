@@ -17,6 +17,8 @@ void DEBUG_MSG(const char *s, Args... args)
 {
 	std::string result = "";
 	_INTERNAL::xsprintf(result, s, args...);
+	OutputDebugStringA(result.c_str());
+	OutputDebugStringA("\n");
 	std::cout << result << std::endl;
 }
 
@@ -121,5 +123,31 @@ inline bool FileExists(const std::string& f){
 	struct stat fileInfo;
 	return stat(f.c_str(), &fileInfo) == 0;
 }
+
+class DynamicFnBase {
+public:
+	DynamicFnBase(const char* dllName, const char* fnName) : dllHandle(0), fnPtr(0) {
+		dllHandle = LoadLibraryA(dllName);
+		if (!dllHandle) {
+			return;
+		}
+		fnPtr = (void *)GetProcAddress(dllHandle, fnName);
+	}
+	~DynamicFnBase(){
+		if (dllHandle)
+			FreeLibrary(dllHandle);
+	}
+	bool isValid() const { return fnPtr != 0; }
+protected:
+	void* fnPtr;
+	HMODULE dllHandle;
+};
+
+template<typename T> class DynamicFn : public DynamicFnBase {
+public:
+	DynamicFn(const char* dllName, const char* fnName) : DynamicFnBase(dllName, fnName) {}
+	T operator *() const { return (T)fnPtr; };
+};
+
 
 #endif

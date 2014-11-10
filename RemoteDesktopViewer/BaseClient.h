@@ -8,7 +8,7 @@
 
 namespace RemoteDesktop{
 	class BaseClient : public IClient{
-		bool _Connect(const char* host, const char* port);
+		bool _Connect();
 		void _OnReceive(SocketHandler& sh);
 		void _OnDisconnect(SocketHandler& sh);
 
@@ -16,9 +16,13 @@ namespace RemoteDesktop{
 		SocketHandler _Socket;
 
 		void _Run();
+		void _RunWrapper();
 		std::thread _BackGroundNetworkWorker;
+
+		char _Host[256], _Port[7];
 	protected:
 		bool Running = false;
+		bool DisconnectReceived = false;
 	public:
 		BaseClient();
 		virtual ~BaseClient() override;

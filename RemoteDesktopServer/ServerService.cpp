@@ -34,6 +34,5 @@ void ServerService::OnStop()
 	_ServiceMonitor.release();
 }
 void ServerService::OnSessionChange(){
-
 	_ServiceMonitor->LaunchProcess();
 }

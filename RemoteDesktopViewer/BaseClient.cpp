@@ -13,15 +13,15 @@ RemoteDesktop::BaseClient::~BaseClient(){
 }
 void RemoteDesktop::BaseClient::Connect(const char* host, const char* port){
 	Stop();//ensure threads have been stopped
-	if (!_Connect(host, port)){
-		DEBUG_MSG("socket failed with error = %\n", WSAGetLastError());
-		ShutDownNetwork();
-		Running = false;
-	}
+	strcpy_s(_Host, host);
+	strcpy_s(_Port, port);
+	Running = true;
+	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this);
 
 }
 
-bool RemoteDesktop::BaseClient::_Connect(const char* host, const char* port){
+bool RemoteDesktop::BaseClient::_Connect(){
+	DEBUG_MSG("Connecting to server . . . ");
 	if (!StartupNetwork()) return false;
 	SOCKET ConnectSocket = INVALID_SOCKET;
 	struct addrinfo *result = NULL, *ptr = NULL, hints;
@@ -32,7 +32,7 @@ bool RemoteDesktop::BaseClient::_Connect(const char* host, const char* port){
 	hints.ai_protocol = IPPROTO_TCP;
 
 	// Resolve the server address and port
-	auto iResult = getaddrinfo(host, port, &hints, &result);
+	auto iResult = getaddrinfo(_Host, _Port, &hints, &result);
 	if (iResult != 0) return false;
 
 	// Attempt to connect to an address until one succeeds
@@ -65,8 +65,6 @@ bool RemoteDesktop::BaseClient::_Connect(const char* host, const char* port){
 		DEBUG_MSG("failed to sent TCP_NODELY with error = %", errmsg);
 	}
 
-
-
 	auto newevent = WSACreateEvent();
 	WSAEventSelect(ConnectSocket, newevent, FD_CONNECT);
 	auto Index = WSAWaitForMultipleEvents(1, &newevent, TRUE, 1000, FALSE);
@@ -87,14 +85,28 @@ bool RemoteDesktop::BaseClient::_Connect(const char* host, const char* port){
 	}
 
 	WSACloseEvent(newevent);
-
 	_Socket.socket = std::make_shared<socket_wrapper>(ConnectSocket);
-	Running = true;
-	_BackGroundNetworkWorker = std::thread(&BaseClient::_Run, this);
-	OnConnect(_Socket);
 	return true;
 }
 
+void RemoteDesktop::BaseClient::_RunWrapper(){
+	static int counter = 0;
+	counter = 0;
+
+	while (Running && counter++ < 15){
+		if (!_Connect()){
+			DEBUG_MSG("socket failed with error = %\n", WSAGetLastError());
+		}
+		else {
+			counter = 0;//reset timer
+			DisconnectReceived = false;
+			OnConnect(_Socket);
+			_Run();
+		}
+	}
+	Running = false;
+
+}
 void RemoteDesktop::BaseClient::_Run(){
 	auto newevent = WSACreateEvent();
 
@@ -103,7 +115,7 @@ void RemoteDesktop::BaseClient::_Run(){
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
 
-	while (Running) {
+	while (Running && !DisconnectReceived) {
 
 		auto Index = WSAWaitForMultipleEvents(1, &newevent, FALSE, 1000, FALSE);
 
@@ -115,13 +127,15 @@ void RemoteDesktop::BaseClient::_Run(){
 				_OnReceive(_Socket);
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
-				Running = false;// loop will end and disconnect will be called
+				break;// get out of loop and try reconnecting
 			}
 		}
-	}
+	}	
+	DEBUG_MSG("Ending Loop");
 	WSACloseEvent(newevent);
 	_Socket.clear();//shut down socket
-	DEBUG_MSG("Ending Loop");
+
+
 }
 
 void RemoteDesktop::BaseClient::_OnDisconnect(SocketHandler& sh){
@@ -142,15 +156,22 @@ void RemoteDesktop::BaseClient::_OnReceive(SocketHandler& sh){
 				OnReceive(sh);
 				RemoteDesktop::_INTERNAL::_RecevieEnd(sh);
 			}
-			else break;
+			else if (result == 0){
+				DisconnectReceived = true;// this will trigger a disconnect in the main logic
+			} else 	break;
 		}
-		else break;//get out done  no more data to process here
+		else if (result == 0){
+			DisconnectReceived = true;// this will trigger a disconnect in the main logic
+		}
+		else break;
 	}
 	//DEBUG_MSG("_OnReceive Finished");
 }
 
 int RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
-	return RemoteDesktop::_INTERNAL::_Send(_Socket.socket->socket, m, msg);
+	auto ret = RemoteDesktop::_INTERNAL::_Send(_Socket.socket->socket, m, msg);
+	if (ret == -1) 	DisconnectReceived = true;// this will trigger a disconnect in the main logic
+	return ret;
 }
 
 void RemoteDesktop::BaseClient::Stop() {

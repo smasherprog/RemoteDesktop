@@ -1,6 +1,7 @@
 #ifndef SERVICE_MONITOR_H
 #define SERVICE_MONITOR_H
 #include <thread>
+#include "../RemoteDesktop_Library/Utilities.h"
 
 namespace RemoteDesktop{
 	class ServiceMonitor{
@@ -11,9 +12,12 @@ namespace RemoteDesktop{
 		STARTUPINFO          StartUPInfo;
 		PROCESS_INFORMATION ProcessInfo;
 
-		wchar_t szPath[MAX_PATH];
-
+		wchar_t szPath[MAX_PATH]; 
+		
+		typedef DWORD(*WTSGETACTIVECONSOLESESSIONID)();
+		DynamicFn<WTSGETACTIVECONSOLESESSIONID> lpfnWTSGetActiveConsoleSessionId;
 		std::thread _BackGroundNetworkWorker;
+		DWORD _CurrentSession = 0;
 	public:
 		ServiceMonitor();
 		~ServiceMonitor();

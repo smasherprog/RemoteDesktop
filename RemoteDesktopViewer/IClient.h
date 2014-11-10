@@ -14,6 +14,7 @@ namespace RemoteDesktop{
 		virtual void OnReceive(SocketHandler& sh) = 0;
 		virtual int Send(NetworkMessages m, NetworkMsg& msg) = 0;
 		virtual void Stop() = 0;
+
 		//desktop stuff
 		virtual void Draw(HDC hdc) = 0;
 		virtual void KeyEvent(int VK, bool down) = 0;

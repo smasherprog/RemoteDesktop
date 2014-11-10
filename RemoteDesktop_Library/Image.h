@@ -26,9 +26,9 @@ namespace RemoteDesktop{
 		int height = 0;
 		int width = 0;
 		bool compressed = false;
-		static Rect Difference(Image first, Image second, int horz_jump = 4);
+		static Rect Difference(Image first, Image second);
 		static Image Copy(Image src_img, Rect r, std::vector<unsigned char>& buffer);
-		static void Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst);
+			static void Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst, int dst_height, int dst_width);
 		
 	};
 };

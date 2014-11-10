@@ -11,8 +11,7 @@ namespace RemoteDesktop{
 	class DesktopMonitor{
 		HWINSTA m_hCurWinsta =NULL;
 		HWINSTA m_hWinsta = NULL;
-		HDESK m_hDesk = NULL; 
-
+	
 		Desktops GetDesktop(HDESK s);
 
 	public:
@@ -22,7 +21,8 @@ namespace RemoteDesktop{
 		bool SwitchDesktop(Desktops dname);
 
 		Desktops Current_Desktop;
-		
+
+		HDESK m_hDesk = NULL;
 	};
 };
 

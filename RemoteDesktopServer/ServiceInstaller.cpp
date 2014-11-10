@@ -79,6 +79,7 @@ Cleanup:
 	}
 	if (schService)
 	{
+		StartService(schService, 0, NULL);
 		CloseServiceHandle(schService);
 		schService = NULL;
 	}

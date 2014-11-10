@@ -5,7 +5,7 @@
 #include "CommonNetwork.h"
 #include "Display.h"
 
-RemoteDesktop::Client::Client(HWND hwnd): _HWND(hwnd) {
+RemoteDesktop::Client::Client(HWND hwnd) : _HWND(hwnd) {
 
 #if defined _DEBUG
 	_DebugConsole = std::make_unique<CConsole>();
@@ -21,8 +21,15 @@ void RemoteDesktop::Client::OnDisconnect(SocketHandler& sh){
 
 }
 bool RemoteDesktop::Client::SetCursor(){
+	static int _LastCursor = 0;
+	if (_Display->HCursor.ID == _LastCursor) return true;//nothing to see here
+	_LastCursor = _Display->HCursor.ID;
 	RECT rect;
-	if (!GetWindowRect(_HWND, &rect)) return false;
+	if (!GetClientRect(_HWND, &rect)) return false;
+
+	ClientToScreen(_HWND, (LPPOINT)&rect.left);
+	ClientToScreen(_HWND, (LPPOINT)&rect.right);
+
 	if (rect.bottom == 0 && rect.left == 0 && rect.right == 0 && rect.top == 0) {
 		DEBUG_MSG("Exiting cannot see window");
 		return false;
@@ -62,17 +69,24 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 	DEBUG_MSG("KeyEvent % in state, down %", VK, (int)h.down);
 	msg.push_back(h);
 	Send(NetworkMessages::KEYEVENT, msg);
-}	
+}
 void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wheel){
 	NetworkMsg msg;
 	MouseEvent_Header h;
+	static MouseEvent_Header _LastMouseEvent;
+	h.HandleID = 0;
 	h.Action = action;
 	h.pos.left = x;
 	h.pos.top = y;
 	h.wheel = wheel;
-	msg.push_back(h);
-	DEBUG_MSG("sendiong %   %   %", x, y, action);
-	Send(NetworkMessages::MOUSEEVENT, msg);
+	if (_LastMouseEvent.Action == action && _LastMouseEvent.pos.left == x && _LastMouseEvent.pos.top == y &&_LastMouseEvent.wheel == wheel) DEBUG_MSG("skipping mouse event, duplicate");
+	else {
+		memcpy(&_LastMouseEvent, &h, sizeof(h));
+		msg.push_back(h);
+		//DEBUG_MSG("sending %   %   %", x, y, action);
+		Send(NetworkMessages::MOUSEEVENT, msg);
+	}
+
 }
 
 void RemoteDesktop::Client::Draw(HDC hdc){
@@ -85,14 +99,17 @@ void RemoteDesktop::Client::OnReceive(SocketHandler& sh){
 	if (sh.msgtype == NetworkMessages::RESOLUTIONCHANGE){
 
 		Image img;
-		auto beg = sh.Buffer.data();
-		memcpy(&img.height, beg, sizeof(img.height));
+		auto beg = sh.Buffer.data(); 
+		memcpy(&img.height, beg, sizeof(img.height)); 
+
+	
 		beg += sizeof(img.height);
-		memcpy(&img.width, beg, sizeof(img.width));
+		memcpy(&img.width, beg, sizeof(img.width)); 
 		beg += sizeof(img.width);
 		img.compressed = true;
 		img.data = (unsigned char*)beg;
-		img.size_in_bytes = sh.msglength - sizeof(img.height) - sizeof(img.width);
+		img.size_in_bytes = sh.msglength - sizeof(img.height) - sizeof(img.width); 
+
 		_Display->NewImage(_ImageCompression->Decompress(img));
 
 	}
@@ -100,7 +117,8 @@ void RemoteDesktop::Client::OnReceive(SocketHandler& sh){
 
 		Image img;
 		auto beg = sh.Buffer.data();
-		Image_Diff_Header imgdif_network;
+		Image_Diff_Header imgdif_network; 
+
 		memcpy(&imgdif_network, beg, sizeof(imgdif_network));
 
 		beg += sizeof(imgdif_network);
@@ -109,6 +127,7 @@ void RemoteDesktop::Client::OnReceive(SocketHandler& sh){
 		img.compressed = imgdif_network.compressed == 0 ? true : false;
 		img.data = (unsigned char*)beg;
 		img.size_in_bytes = sh.msglength - sizeof(imgdif_network);
+	
 		_Display->UpdateImage(_ImageCompression->Decompress(img), imgdif_network);
 
 	}
