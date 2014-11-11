@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "ServiceMonitor.h"
 #include "ServiceHelpers.h"
+#include "Userenv.h"
 #include <fstream>
-
 RemoteDesktop::ServiceMonitor::ServiceMonitor() : lpfnWTSGetActiveConsoleSessionId("kernel32", "WTSGetActiveConsoleSessionId") {
 	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+	memset(&StartUPInfo, 0, sizeof(STARTUPINFO));
 	memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
-	if (lpfnWTSGetActiveConsoleSessionId.isValid())
-		_CurrentSession = (*lpfnWTSGetActiveConsoleSessionId)();
+
 }
 RemoteDesktop::ServiceMonitor::~ServiceMonitor(){
 	Stop();
@@ -27,48 +27,114 @@ void RemoteDesktop::ServiceMonitor::Stop(){
 }
 
 void RemoteDesktop::ServiceMonitor::LaunchProcess(){
-	StartProcess = true;
+
+}
+void wait_for_existing_process()
+{
+	HANDLE hEvent = NULL;
+	while ((hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram")) != NULL) {
+		SetEvent(hEvent); // signal to shut down if running
+		CloseHandle(hEvent);
+		Sleep(1000);
+	}
 }
 void RemoteDesktop::ServiceMonitor::_Run(){
 
+	wait_for_existing_process();//wait for any existing program to stop running
+
+	auto exitrdprogram = CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram");
+
+
 	while (Running){
+
 		Sleep(3000);
-		auto lastsession = 0;
 		if (lpfnWTSGetActiveConsoleSessionId.isValid())
-			lastsession = (*lpfnWTSGetActiveConsoleSessionId)();
-		
-		if ((lastsession != 0xFFFFFFFF) && (lastsession > 0) && (lastsession != _CurrentSession)){
-			_CurrentSession = lastsession;
-			if (ProcessInfo.hProcess != 0) TerminateProcess(ProcessInfo.hProcess, 0);//terminate the old program if running
-			StartProcess = true;// set program to restart in hew active session
-		}
-		if (StartProcess){
-			//if (ProcessInfo.hProcess != 0) TerminateProcess(ProcessInfo.hProcess, 0);
-			memset(&StartUPInfo, 0, sizeof(STARTUPINFO));
-			memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
-			StartUPInfo.lpDesktop = L"Winsta0\\default";
-			bool process_creation_successful = false;
-			StartUPInfo.cb = sizeof(STARTUPINFO);
-			HANDLE winloginhandle = NULL;
-			if (GetWinlogonHandle(&winloginhandle)){
-				SetLastError(0);
-				process_creation_successful = CreateProcessAsUser(winloginhandle, NULL, szPath, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, NULL, NULL, &StartUPInfo, &ProcessInfo) == TRUE;
-			}
-			CloseHandle(winloginhandle);
-			StartProcess = false;
-			std::ofstream myfile("c:\\example.txt", std::ios::app);
-			DWORD error = GetLastError();
-			if (!process_creation_successful){
-				
-				myfile << "process creation failed with error " << error << std::endl;
-				//try another method
-				
-				if (error ==233) CreateRemoteSessionProcess(_CurrentSession, true, winloginhandle, NULL, szPath, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &StartUPInfo, &ProcessInfo);
-			}
-			else myfile << "process creation successfull " << error << std::endl;
+			_LastSession = (*lpfnWTSGetActiveConsoleSessionId)();
+		std::ofstream myfile("c:\\example.txt", std::ios::app);
+		//myfile << "session " << _LastSession << "   " << _CurrentSession << std::endl;
 
-
+		if ((_LastSession != 0xFFFFFFFF) && (_LastSession >= 0) && (_LastSession != _CurrentSession)){
+			_CurrentSession = _LastSession;
+			DWORD exitcode = 0;
+		//	myfile << "changed needed " << std::endl;
+			SetEvent(exitrdprogram); // signal to shut down if running
+			if (ProcessInfo.hProcess == 0) {//this is the first launch of the application
+				_LaunchProcess(myfile);
+				//myfile << "first " << std::endl;
+			}
+			else if (GetExitCodeProcess(ProcessInfo.hProcess, &exitcode) != 0)
+			{//the program is running and the service will wait for it to exit
+				if (exitcode != STILL_ACTIVE)
+				{
+					//myfile << "STILL_ACTIVE " << std::endl;
+					Sleep(1000);
+					WaitForSingleObject(ProcessInfo.hProcess, 5000);
+					if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
+					if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
+					_LaunchProcess(myfile);
+				}
+				else {
+					//myfile << "NOT STILL_ACTIVE " << std::endl; 
+					TerminateProcess(ProcessInfo.hProcess, 0);
+					Sleep(3000);
+					if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
+					if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
+					_LaunchProcess(myfile);
+				}
+			}
+			else {//the application is not running, a new process can be started 
+				Sleep(3000);
+				//myfile << " else GetExitCodeProcess " << std::endl;
+				
+				if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
+				if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
+				_LaunchProcess(myfile);
+			}
 		}
 
 	}
+	if (exitrdprogram) SetEvent(exitrdprogram); // signal to shut down if running
+
+	if (ProcessInfo.hProcess)
+	{
+		WaitForSingleObject(ProcessInfo.hProcess, 5000);
+		if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
+		if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
+	}
+
+	if (exitrdprogram) CloseHandle(exitrdprogram);//close handle
+
+}
+
+void RemoteDesktop::ServiceMonitor::_LaunchProcess(std::ofstream& myfile){
+
+	memset(&StartUPInfo, 0, sizeof(STARTUPINFO));
+	memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
+
+	StartUPInfo.lpDesktop = L"Winsta0\\Winlogon";
+	StartUPInfo.cb = sizeof(STARTUPINFO);
+	HANDLE winloginhandle = NULL;
+	PVOID	lpEnvironment = NULL;
+
+	if (GetWinlogonHandle(&winloginhandle, _CurrentSession)){
+		//myfile << "GetWinlogonHandle" << std::endl;
+		if (CreateEnvironmentBlock(&lpEnvironment, winloginhandle, FALSE) == FALSE) lpEnvironment = NULL;
+		SetLastError(0);
+		//myfile << "CreateEnvironmentBlock" << lpEnvironment << std::endl;
+		if (CreateProcessAsUser(winloginhandle, NULL, szPath, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | DETACHED_PROCESS, lpEnvironment, NULL, &StartUPInfo, &ProcessInfo) == FALSE){
+			DWORD error = GetLastError();
+		//	myfile << "CreateProcessAsUser error" << error << std::endl;
+			//if (error == 233) CreateRemoteSessionProcess(_CurrentSession, true, winloginhandle, NULL, szPath, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | DETACHED_PROCESS, NULL, NULL, &StartUPInfo, &ProcessInfo);
+		}
+		else {
+			DWORD error1 = GetLastError();
+		//	myfile << "CreateProcessAsUser success" << error1 << std::endl;
+		}
+
+
+
+	}
+	if (lpEnvironment) DestroyEnvironmentBlock(lpEnvironment);
+	CloseHandle(winloginhandle);
+
 }

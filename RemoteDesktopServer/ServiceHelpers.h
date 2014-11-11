@@ -3,7 +3,7 @@
 
 unsigned int GetProcessesByName(wchar_t* process);
 
-bool GetWinlogonHandle(LPHANDLE  lphUserToken);
+bool GetWinlogonHandle(LPHANDLE  lphUserToken, DWORD sessionid);
 
 BOOL CreateRemoteSessionProcess(
 	IN DWORD        dwSessionId,

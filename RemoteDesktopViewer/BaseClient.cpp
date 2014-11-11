@@ -117,7 +117,7 @@ void RemoteDesktop::BaseClient::_Run(){
 
 	while (Running && !DisconnectReceived) {
 
-		auto Index = WSAWaitForMultipleEvents(1, &newevent, FALSE, 1000, FALSE);
+		auto Index = WaitForSingleObject(newevent, 1000);
 
 		if ((Index != WSA_WAIT_FAILED) && (Index != WSA_WAIT_TIMEOUT)) {
 

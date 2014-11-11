@@ -2,27 +2,17 @@
 #define DESKTOPMONITOR123_H
 
 namespace RemoteDesktop{
-	enum Desktops
-	{
-		ScreenSaver,
-		Winlogon,
-		Default
-	};
-	class DesktopMonitor{
-		HWINSTA m_hCurWinsta =NULL;
-		HWINSTA m_hWinsta = NULL;
-	
-		Desktops GetDesktop(HDESK s);
 
+	class DesktopMonitor{
+		HDESK threaddesktop = NULL;
 	public:
 		DesktopMonitor();
 		~DesktopMonitor();
-		Desktops GetActiveDesktop();
-		bool SwitchDesktop(Desktops dname);
+		bool Is_InputDesktopSelected() const;
+		void Switch_to_ActiveDesktop();
+		void SimulateCtrlAltDel();
 
-		Desktops Current_Desktop;
-
-		HDESK m_hDesk = NULL;
+		HDESK m_hDesk = NULL; 
 	};
 };
 

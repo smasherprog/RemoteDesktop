@@ -180,25 +180,40 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 	std::vector<unsigned char> sendimagebuffer;
 	Image _LastImage = screencapture->GetPrimary(lastimagebuffer);//<---Seed the image
 	auto pingpong = true;
+	HANDLE shutdownhandle = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram");
+	WaitForSingleObject(shutdownhandle, 100);//call this to get the first signal from the service
+	DWORD dwEvent;
+	auto lastwaittime = 0;
 
 	while (Running){
 
+		dwEvent = WaitForSingleObject(shutdownhandle, lastwaittime);
+		if (dwEvent == 0){
+			Running = false;//this will cause the entire program to exit
+			break;
+		}
+		
+	
+		auto t = Timer(true);
+		std::ofstream myfile("c:\\example.txt", std::ios::app);
+		auto d = _DesktopMonitor->Is_InputDesktopSelected();
+		if (!d)
+		{
+			myfile << "_DesktopMonitor->Current_Desktop" << std::endl;
+			screencapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
+			_DesktopMonitor->Switch_to_ActiveDesktop();
+			_NetworkCurrentDesktop = _DesktopMonitor->m_hDesk;
+		}
+		myfile.close();	
+		
 		if (SocketArray.size() <= 1) { //The first is the server so check for <=1
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep if there are no clients connected.
 			continue;
 		}
-
-		auto d = _DesktopMonitor->GetActiveDesktop();
-		if (d != _DesktopMonitor->Current_Desktop)
-		{
-			screencapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
-			_DesktopMonitor->SwitchDesktop(d);
-			_NetworkCurrentDesktop = _DesktopMonitor->m_hDesk;
-		}
 		_Handle_MouseUpdates(mousecapturing);
 		pingpong = !pingpong;
 		Image img;
-		auto t = Timer(true);
+		
 		if (!pingpong) img = screencapture->GetPrimary();
 		else img = screencapture->GetPrimary(lastimagebuffer);
 		if (!_HandleNewClients_and_ResolutionUpdates(img, _LastImage)){
@@ -212,10 +227,9 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 
 		_LastImage = img;
 		t.Stop();
-		auto elapsed = t.Elapsed();
-		//DEBUG_MSG("Time Taken _Run %", elapsed);
-		elapsed = FRAME_CAPTURE_INTERVAL - elapsed;
-		if (elapsed > 0) std::this_thread::sleep_for(std::chrono::milliseconds(elapsed));//sleep if there is time to sleep
+		lastwaittime = FRAME_CAPTURE_INTERVAL - (int)t.Elapsed();
+		if (lastwaittime < 0) lastwaittime = 0;
 	}
-
+	if (shutdownhandle) CloseHandle(shutdownhandle);
+	Stop();
 }

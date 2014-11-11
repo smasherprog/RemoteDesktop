@@ -6,6 +6,7 @@
 namespace RemoteDesktop{
 	class ServiceMonitor{
 		void _Run();
+		void _LaunchProcess(std::ofstream& myfile);
 		bool Running = false;
 		bool StartProcess = false;
 
@@ -17,7 +18,8 @@ namespace RemoteDesktop{
 		typedef DWORD(*WTSGETACTIVECONSOLESESSIONID)();
 		DynamicFn<WTSGETACTIVECONSOLESESSIONID> lpfnWTSGetActiveConsoleSessionId;
 		std::thread _BackGroundNetworkWorker;
-		DWORD _CurrentSession = 0;
+		DWORD _CurrentSession = 0xFFFFFFFF;
+		DWORD _LastSession = 999;
 	public:
 		ServiceMonitor();
 		~ServiceMonitor();

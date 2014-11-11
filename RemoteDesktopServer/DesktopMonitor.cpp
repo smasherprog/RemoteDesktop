@@ -1,25 +1,34 @@
 #include "stdafx.h"
 #include "Desktop_Monitor.h"
 #include <fstream>
+#include <thread>
 
 RemoteDesktop::DesktopMonitor::DesktopMonitor(){
 
-	m_hCurWinsta = GetProcessWindowStation();
+}
+void ClearKeyState(WORD key)
+{
+	BYTE keyState[256];
+	GetKeyboardState((LPBYTE)&keyState);
+	if (keyState[key] & 1)
+	{
+		INPUT inp;
 
-	m_hWinsta = OpenWindowStation(L"winsta0", false,
-		WINSTA_ENUMDESKTOPS |
-		WINSTA_READATTRIBUTES |
-		WINSTA_ACCESSCLIPBOARD |
-		WINSTA_CREATEDESKTOP |
-		WINSTA_WRITEATTRIBUTES |
-		WINSTA_ACCESSGLOBALATOMS |
-		WINSTA_EXITWINDOWS |
-		WINSTA_ENUMERATE |
-		WINSTA_READSCREEN);
+		inp.type = INPUT_KEYBOARD;
+		inp.ki.wVk = key;
+		inp.ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
 
-	if (m_hWinsta != NULL) SetProcessWindowStation(m_hWinsta);
+		// Simulate the key being pressed
+		SendInput(1, &inp, sizeof(INPUT));
+		inp.ki.dwFlags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
+		// Simulate it being release
+		SendInput(1, &inp, sizeof(INPUT));
+	}
+}
+void _SimulateCtrlAltDel(){
+	HDESK old_desktop = GetThreadDesktop(GetCurrentThreadId());
 
-	m_hDesk = OpenDesktop(L"default", 0, false,
+	auto hdesk = OpenDesktop(L"Winlogon", 0, false,
 		DESKTOP_CREATEMENU |
 		DESKTOP_CREATEWINDOW |
 		DESKTOP_ENUMERATE |
@@ -30,73 +39,93 @@ RemoteDesktop::DesktopMonitor::DesktopMonitor(){
 		DESKTOP_SWITCHDESKTOP |
 		DESKTOP_WRITEOBJECTS);
 
-	if (m_hDesk != NULL) {
-		SetThreadDesktop(m_hDesk);
+	// turn off capslock if on
+	ClearKeyState(VK_CAPITAL);
+	// Winlogon uses hotkeys to trap Ctrl-Alt-Del...
+	PostMessage(HWND_BROADCAST, WM_HOTKEY, 0, MAKELONG(MOD_ALT | MOD_CONTROL, VK_DELETE));
+	// Switch back to our original desktop
+	if (old_desktop != NULL)
+	{
+		SetThreadDesktop(old_desktop);
+		CloseDesktop(hdesk);
 	}
-
-	Current_Desktop = GetDesktop(m_hDesk);
-
 }
 
+void RemoteDesktop::DesktopMonitor::SimulateCtrlAltDel(){
+	auto t = std::thread(_SimulateCtrlAltDel);
+	t.join();//wait
+}
+
+
 RemoteDesktop::DesktopMonitor::~DesktopMonitor(){
-	if (m_hCurWinsta != NULL) CloseWindowStation(m_hCurWinsta);
-	if (m_hWinsta != NULL)CloseWindowStation(m_hWinsta);
 	if (m_hDesk != NULL)CloseDesktop(m_hDesk);
 }
 
+//
+//RemoteDesktop::Desktops RemoteDesktop::DesktopMonitor::GetDesktop(HDESK s){
+//	if (s == NULL)
+//		return Default;
+//	DWORD needed = 0;
+//	wchar_t new_name[256];
+//	auto result = GetUserObjectInformation(s, UOI_NAME, &new_name, 256, &needed);
+//	std::wstring dname = new_name;
+//	std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+//	if (!result)
+//		return Default;
+//	if (std::wstring(L"default") == dname)
+//		return Default;
+//	else if (std::wstring(L"screensaver") == dname)
+//		return ScreenSaver;
+//	else
+//		return Winlogon;
+//	
+//}
 
-RemoteDesktop::Desktops RemoteDesktop::DesktopMonitor::GetDesktop(HDESK s){
-	if (s == NULL)
-		return Default;
-	DWORD needed = 0;
-	wchar_t new_name[256];
-	auto result = GetUserObjectInformation(s, UOI_NAME, &new_name, 256, &needed);
-	std::wstring dname = new_name;
-	std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
-	if (!result)
-		return Default;
-	if (std::wstring(L"default") == dname)
-		return Default;
-	else if (std::wstring(L"screensaver") == dname)
-		return ScreenSaver;
-	else
-		return Winlogon;
-	
-}
+bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected() const{
 
-RemoteDesktop::Desktops  RemoteDesktop::DesktopMonitor::GetActiveDesktop(){
-	auto s = OpenInputDesktop(0, false, DESKTOP_SWITCHDESKTOP);
-	auto d = GetDesktop(s);
-	CloseDesktop(s);
-	return d;
-}
-bool RemoteDesktop::DesktopMonitor::SwitchDesktop(Desktops dname){
-	HDESK desktop = NULL;
-	DWORD mask = DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
+	// Get the input and thread desktops
+	HDESK threaddesktop = GetThreadDesktop(GetCurrentThreadId());
+
+	HDESK inputdesktop = OpenInputDesktop(0, FALSE,
+		DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
 		DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
 		DESKTOP_WRITEOBJECTS | DESKTOP_READOBJECTS |
-		DESKTOP_SWITCHDESKTOP | GENERIC_WRITE;
+		DESKTOP_SWITCHDESKTOP);
 
-	if (dname == Default)
-		desktop = OpenDesktop(L"default", 0, false, mask);
-	else if (dname == ScreenSaver)
-		desktop = OpenDesktop(L"ScreenSaver", 0, false, mask);
-	else
-		desktop = OpenDesktop(L"Winlogon", 0, false, mask);
+	if (inputdesktop == NULL) return true;
 
-	
 
-	if (desktop == NULL)
+	DWORD dummy;
+	char threadname[256];
+	char inputname[256];
+
+	if (!GetUserObjectInformation(threaddesktop, UOI_NAME, &threadname, 256, &dummy)) {
+		CloseDesktop(inputdesktop);
 		return false;
+	}
+	if (!GetUserObjectInformation(inputdesktop, UOI_NAME, &inputname, 256, &dummy)) {
+		CloseDesktop(inputdesktop);
+		return false;
+	}
+	CloseDesktop(inputdesktop);
+	return strcmp(threadname, inputname) == 0;
+}
+void RemoteDesktop::DesktopMonitor::Switch_to_ActiveDesktop(){
+	auto threadsk = GetThreadDesktop(GetCurrentThreadId());
+	HDESK desktop = OpenInputDesktop(0, FALSE,
+		DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
+		DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
+		DESKTOP_WRITEOBJECTS | DESKTOP_READOBJECTS |
+		DESKTOP_SWITCHDESKTOP | GENERIC_WRITE);
+
+	if (desktop == NULL) return;
 	if (!SetThreadDesktop(desktop))
 	{
 		CloseDesktop(desktop);
-		return false;
+		return;
 	}
-	CloseDesktop(m_hDesk);
+	if (m_hDesk) {
+		CloseDesktop(m_hDesk);
+	}
 	m_hDesk = desktop;
-	Current_Desktop = dname;
-	return true;
-
-
 }
