@@ -34,7 +34,8 @@ namespace RemoteDesktop{
 		PING,
 		KEYEVENT,
 		FOLDER,
-		FILE
+		FILE,	
+		CAD
 	};
 	class NetworkMsg{
 	public:

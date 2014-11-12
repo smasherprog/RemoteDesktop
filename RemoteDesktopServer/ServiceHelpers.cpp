@@ -71,8 +71,8 @@ bool GetWinlogonHandle(LPHANDLE  lphUserToken, DWORD sessionid)
 
 	HANDLE hAccessToken = NULL;
 	HANDLE hTokenThis = NULL;
-	DWORD Id = GetProcessesByName(L"winlogon.exe");
-	Id = Find_winlogon(sessionid);
+//	DWORD Id = GetProcessesByName(L"winlogon.exe");
+	DWORD Id = Find_winlogon(sessionid);
 
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, Id);
 	if (hProcess)

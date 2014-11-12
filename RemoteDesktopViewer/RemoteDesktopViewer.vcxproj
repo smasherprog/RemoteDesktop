@@ -193,8 +193,11 @@
     <ResourceCompile Include="RemoteDesktopViewer.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="bitmap1.bmp" />
+    <Image Include="cad.bmp" />
+    <Image Include="disconnect.bmp" />
+    <Image Include="newconnect.bmp" />
     <Image Include="RemoteDesktopViewer.ico" />
-    <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RemoteDesktop_Library\RemoteDesktop_Library.vcxproj">

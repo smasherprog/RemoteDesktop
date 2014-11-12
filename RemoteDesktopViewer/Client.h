@@ -31,6 +31,8 @@ namespace RemoteDesktop{
 		virtual void KeyEvent(int VK, bool down)  override;
 		virtual void MouseEvent(unsigned int action, int x, int y, int wheel=0)  override;
 		virtual bool SetCursor()  override;
+
+		void SendCAD();
 	};
 
 };

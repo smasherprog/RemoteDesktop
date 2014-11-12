@@ -90,6 +90,9 @@ void RemoteDesktop::Server::OnReceive(SocketHandler& sh) {
 	case NetworkMessages::MOUSEEVENT:
 		_Handle_MouseUpdate(sh);
 		break;
+	case NetworkMessages::CAD:
+		_DesktopMonitor->SimulateCtrlAltDel();
+		break;
 	default:
 		break;
 	}
@@ -192,20 +195,20 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 			Running = false;//this will cause the entire program to exit
 			break;
 		}
-		
-	
+
+
 		auto t = Timer(true);
-		std::ofstream myfile("c:\\example.txt", std::ios::app);
+
 		auto d = _DesktopMonitor->Is_InputDesktopSelected();
 		if (!d)
 		{
-			myfile << "_DesktopMonitor->Current_Desktop" << std::endl;
+		
 			screencapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
 			_DesktopMonitor->Switch_to_ActiveDesktop();
 			_NetworkCurrentDesktop = _DesktopMonitor->m_hDesk;
 		}
-		myfile.close();	
-		
+	
+
 		if (SocketArray.size() <= 1) { //The first is the server so check for <=1
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep if there are no clients connected.
 			continue;
@@ -213,7 +216,7 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 		_Handle_MouseUpdates(mousecapturing);
 		pingpong = !pingpong;
 		Image img;
-		
+
 		if (!pingpong) img = screencapture->GetPrimary();
 		else img = screencapture->GetPrimary(lastimagebuffer);
 		if (!_HandleNewClients_and_ResolutionUpdates(img, _LastImage)){

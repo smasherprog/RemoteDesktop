@@ -6,7 +6,7 @@
 namespace RemoteDesktop{
 	class ServiceMonitor{
 		void _Run();
-		void _LaunchProcess(std::ofstream& myfile);
+		void _LaunchProcess();
 		bool Running = false;
 		bool StartProcess = false;
 

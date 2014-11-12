@@ -66,10 +66,19 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
+    <Image Include="RemoteDesktopViewer.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RemoteDesktopViewer.ico">
+    <Image Include="cad.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="newconnect.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="disconnect.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
