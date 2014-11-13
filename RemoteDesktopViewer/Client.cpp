@@ -22,9 +22,6 @@ void RemoteDesktop::Client::OnDisconnect(SocketHandler& sh){
 }
 bool RemoteDesktop::Client::SetCursor(){
 
-	static int _LastCursor = -345;
-	if (_Display->HCursor.ID == _LastCursor)return true;
-	_LastCursor = _Display->HCursor.ID;
 	RECT rect;
 	if (!GetClientRect(_HWND, &rect)) return true;
 
@@ -43,6 +40,7 @@ bool RemoteDesktop::Client::SetCursor(){
 	}
 	bool inwindow = p.x > rect.left && p.x < rect.right && p.y> rect.top && p.y < rect.bottom;
 	if (inwindow && (GetFocus() == _HWND)) {
+	
 		DEBUG_MSG("Setting cursor %", _Display->HCursor.ID);
 		::SetCursor(_Display->HCursor.HCursor);
 		return true;
@@ -80,11 +78,11 @@ void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wh
 	h.pos.left = x;
 	h.pos.top = y;
 	h.wheel = wheel;
-	if (_LastMouseEvent.Action == action && _LastMouseEvent.pos.left == x && _LastMouseEvent.pos.top == y &&_LastMouseEvent.wheel == wheel) DEBUG_MSG("skipping mouse event, duplicate");
+
+	if (_LastMouseEvent.Action == action && _LastMouseEvent.pos.left == x && _LastMouseEvent.pos.top == y && wheel == 0) DEBUG_MSG("skipping mouse event, duplicate");
 	else {
 		memcpy(&_LastMouseEvent, &h, sizeof(h));
 		msg.push_back(h);
-		//DEBUG_MSG("sending %   %   %", x, y, action);
 		Send(NetworkMessages::MOUSEEVENT, msg);
 	}
 

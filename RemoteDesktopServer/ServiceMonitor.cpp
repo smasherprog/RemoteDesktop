@@ -43,11 +43,18 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 	wait_for_existing_process();//wait for any existing program to stop running
 
 	auto exitrdprogram = CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram");
-
+	auto cadrequest = CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRDCad");
 
 	while (Running){
 
-		Sleep(1000);
+		auto Index = WaitForSingleObject(cadrequest, 1000);
+		if (Index == 0){
+			typedef VOID(WINAPI *SendSas)(BOOL asUser);
+			HINSTANCE Inst = LoadLibrary(L"sas.dll");
+			SendSas sendSas = (SendSas)GetProcAddress(Inst, "SendSAS");
+			if (sendSas) sendSas(FALSE);
+			if (Inst) FreeLibrary(Inst);
+		}
 		if (lpfnWTSGetActiveConsoleSessionId.isValid())
 			_LastSession = (*lpfnWTSGetActiveConsoleSessionId)();
 

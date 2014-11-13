@@ -258,7 +258,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_CREATE:
-		Createbuttons(hWnd, 10, 50);
+		Createbuttons(hWnd, 10, 50);	
+
 		break;
 	case WM_COMMAND:
 		wmId = LOWORD(wParam);
@@ -270,12 +271,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			_Client = std::make_unique<RemoteDesktop::Client>(hWnd);
 			//_Client->Connect("127.0.0.1", "443");
 			_Client->Connect("192.168.221.128", "443");
+			SetFocus(_H_wnd);
 			break;
 		case DISCONNECT:
-			if (_Client) _Client->Stop();
+			if (_Client) _Client->Stop(); 
+			SetFocus(_H_wnd);
 			break;
 		case SENDCAD:
 			if (_Client) _Client->SendCAD();
+			SetFocus(_H_wnd);
 			break;
 			
 		case IDM_ABOUT:

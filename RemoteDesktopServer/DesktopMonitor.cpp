@@ -4,7 +4,7 @@
 #include <thread>
 
 RemoteDesktop::DesktopMonitor::DesktopMonitor(){
-
+	CADEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad");
 }
 void ClearKeyState(WORD key)
 {
@@ -25,40 +25,15 @@ void ClearKeyState(WORD key)
 		SendInput(1, &inp, sizeof(INPUT));
 	}
 }
-void _SimulateCtrlAltDel(){
-	HDESK old_desktop = GetThreadDesktop(GetCurrentThreadId());
-
-	auto hdesk = OpenDesktop(L"Winlogon", 0, false,
-		DESKTOP_CREATEMENU |
-		DESKTOP_CREATEWINDOW |
-		DESKTOP_ENUMERATE |
-		DESKTOP_HOOKCONTROL |
-		DESKTOP_JOURNALPLAYBACK |
-		DESKTOP_JOURNALRECORD |
-		DESKTOP_READOBJECTS |
-		DESKTOP_SWITCHDESKTOP |
-		DESKTOP_WRITEOBJECTS);
-
-	// turn off capslock if on
-	ClearKeyState(VK_CAPITAL);
-	// Winlogon uses hotkeys to trap Ctrl-Alt-Del...
-	PostMessage(HWND_BROADCAST, WM_HOTKEY, 0, MAKELONG(MOD_ALT | MOD_CONTROL, VK_DELETE));
-	// Switch back to our original desktop
-	if (old_desktop != NULL)
-	{
-		SetThreadDesktop(old_desktop);
-		CloseDesktop(hdesk);
-	}
-}
 
 void RemoteDesktop::DesktopMonitor::SimulateCtrlAltDel(){
-	auto t = std::thread(_SimulateCtrlAltDel);
-	t.join();//wait
+	SetEvent(CADEventHandle);
 }
 
 
 RemoteDesktop::DesktopMonitor::~DesktopMonitor(){
 	if (m_hDesk != NULL)CloseDesktop(m_hDesk);
+	if (CADEventHandle != NULL) CloseHandle(CADEventHandle);
 }
 
 //

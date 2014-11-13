@@ -5,6 +5,7 @@ namespace RemoteDesktop{
 
 	class DesktopMonitor{
 		HDESK threaddesktop = NULL;
+		HANDLE CADEventHandle = NULL;
 	public:
 		DesktopMonitor();
 		~DesktopMonitor();
