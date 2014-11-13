@@ -66,6 +66,9 @@
     <ClInclude Include="ServiceHelpers.h">
       <Filter>Header Files\Service</Filter>
     </ClInclude>
+    <ClInclude Include="DeleteMe.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -103,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="ServiceHelpers.cpp">
       <Filter>Source Files\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="DeleteMe.cpp">
+      <Filter>Source Files\Server</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

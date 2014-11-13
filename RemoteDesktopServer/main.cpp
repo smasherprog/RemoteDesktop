@@ -6,6 +6,7 @@
 #include "ServiceInstaller.h"
 #include "ServerService.h"
 #include "Server.h"
+#include "DeleteMe.h"
 
 // Internal name of the service
 #define SERVICE_NAME             L"RemoteDesktop_svc"
@@ -56,6 +57,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		auto _Server = std::make_shared<RemoteDesktop::Server>();
 		_Server->Listen(DEFAULTPORT);
 	}
+	//RemoteDesktop::DeleteMe();
 	return 0;
 }
 

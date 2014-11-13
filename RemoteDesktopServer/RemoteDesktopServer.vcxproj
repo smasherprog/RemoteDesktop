@@ -171,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseServer.h" />
+    <ClInclude Include="DeleteMe.h" />
     <ClInclude Include="Desktop_Monitor.h" />
     <ClInclude Include="IServer.h" />
     <ClInclude Include="MouseCapture.h" />
@@ -185,6 +186,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseServer.cpp" />
+    <ClCompile Include="DeleteMe.cpp" />
     <ClCompile Include="DesktopMonitor.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="main.cpp" />
