@@ -15,7 +15,7 @@ RemoteDesktop::Client::Client(HWND hwnd) : _HWND(hwnd) {
 }
 
 RemoteDesktop::Client::~Client(){
-
+	DEBUG_MSG("~Client");
 }
 void RemoteDesktop::Client::OnDisconnect(SocketHandler& sh){
 

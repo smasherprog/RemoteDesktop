@@ -5,6 +5,13 @@
 
 #pragma once
 
+#if _DEBUG
+
+	#define _CRTDBG_MAP_ALLOC
+	#include <stdlib.h>
+	#include <crtdbg.h>
+#endif
+
 #include "targetver.h"
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
@@ -22,5 +29,5 @@
 #include "Utilities.h"
 #include <vector>
 #include <string>
+#include <memory>
 
-// TODO: reference additional headers your program requires here

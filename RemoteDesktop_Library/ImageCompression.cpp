@@ -7,6 +7,7 @@ RemoteDesktop::ImageCompression::~ImageCompression(){
 		tjDestroy(JpegCompressor);
 	if (JpegDecompressor != nullptr)
 		tjDestroy(JpegDecompressor);
+	DEBUG_MSG("~ImageCompression");
 }
 
 RemoteDesktop::Image RemoteDesktop::ImageCompression::Compress(Image& input, int quality){

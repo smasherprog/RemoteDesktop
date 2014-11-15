@@ -181,6 +181,7 @@
     <ClCompile Include="BaseClient.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Display.cpp" />
+    <ClCompile Include="MainWindowHoverButtons.cpp" />
     <ClCompile Include="RemoteDesktopViewer.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

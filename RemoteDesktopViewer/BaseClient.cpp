@@ -9,7 +9,7 @@ RemoteDesktop::BaseClient::BaseClient(){
 RemoteDesktop::BaseClient::~BaseClient(){
 	Stop();//ensure threads have been stopped
 	ShutDownNetwork();
-	DEBUG_MSG("Stopping Client");
+	DEBUG_MSG("~BaseClient");
 }
 void RemoteDesktop::BaseClient::Connect(const char* host, const char* port){
 	Stop();//ensure threads have been stopped

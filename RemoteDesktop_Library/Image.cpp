@@ -11,6 +11,7 @@ RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image first, Image second){
 	auto even = (first.width % 4);
 	auto totalwidth = first.width - even; //subtract any extra bits to ensure I dont go over the array bounds
 	auto stide = (first.width * 4);
+
 	for (int y = 0; y < first.height; y++)
 	{
 		auto linea = (int*)(first.data + (stide *y));
@@ -87,7 +88,7 @@ RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_reg
 
 	auto srcrowstride = src_img.width * 4;
 	auto dstrowstride = src_copy_region.width * 4;
-	for (int y = 0; y <src_copy_region.height; y++)
+	for (int y = 0; y < src_copy_region.height; y++)
 	{
 		auto srcrow = (int*)(src + (srcrowstride * (y + src_copy_region.top)));
 		srcrow += src_copy_region.left;
@@ -106,13 +107,13 @@ void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int ds
 
 	//check that the image does not overrun the array bounds
 	auto hmod = dst_height - (src_img.height + dst_top);
-	if (hmod<0) src_img.height -= hmod;
+	if (hmod < 0) src_img.height -= hmod;
 	auto wmod = dst_width - (src_img.width + dst_left);
-	if (wmod<0) src_img.width -= wmod;
+	if (wmod < 0) src_img.width -= wmod;
 
 	auto copysrcstide = src_img.width * 4;
 
-	for (int y = 0; y <src_img.height; y++)
+	for (int y = 0; y < src_img.height; y++)
 	{
 		auto dstrow = (int*)(dst + (dst_stride * (y + dst_top)));
 		dstrow += dst_left;

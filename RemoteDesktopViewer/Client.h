@@ -22,7 +22,7 @@ namespace RemoteDesktop{
 
 	public:
 		Client(HWND hwnd);
-		virtual ~Client() override;	
+		virtual ~ Client() override;	
 		virtual void OnDisconnect(SocketHandler& sh) override;
 		virtual void OnConnect(SocketHandler& sh) override;
 		virtual void OnReceive(SocketHandler& sh)  override;

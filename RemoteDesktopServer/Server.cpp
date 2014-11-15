@@ -58,8 +58,8 @@ void  RemoteDesktop::Server::_Handle_MouseUpdate(SocketHandler& sh){
 
 	auto divl = (float)h.pos.left;
 	auto divt = (float)h.pos.top;
-	inp.mi.dx = (65536.0f / scx)*divl;//x being coord in pixels
-	inp.mi.dy = (65536.0f / scy)*divt;//y being coord in pixels
+	inp.mi.dx = (LONG)(65536.0f / scx)*divl;//x being coord in pixels
+	inp.mi.dy = (LONG)(65536.0f / scy)*divt;//y being coord in pixels
 	if (h.Action == WM_MOUSEMOVE) inp.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 	else if (h.Action == WM_LBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
 	else if (h.Action == WM_LBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_LEFTUP;
@@ -189,36 +189,38 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 	auto lastwaittime = 0;
 
 	while (Running){
-
-		dwEvent = WaitForSingleObject(shutdownhandle, lastwaittime);
-		if (dwEvent == 0){
-			Running = false;//this will cause the entire program to exit
-			break;
+		if (shutdownhandle == NULL) std::this_thread::sleep_for(std::chrono::milliseconds(lastwaittime));//sleep if there are no clients connected.
+		else {
+			dwEvent = WaitForSingleObject(shutdownhandle, lastwaittime);
+			if (dwEvent == 0){
+				Running = false;//this will cause the entire program to exit
+				break;
+			}
 		}
 
-
 		auto t = Timer(true);
-
+		auto t1 = Timer(true);
 		auto d = _DesktopMonitor->Is_InputDesktopSelected();
 		if (!d)
 		{
-		
+
 			screencapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
 			_DesktopMonitor->Switch_to_ActiveDesktop();
 			_NetworkCurrentDesktop = _DesktopMonitor->m_hDesk;
 		}
 	
-
 		if (SocketArray.size() <= 1) { //The first is the server so check for <=1
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep if there are no clients connected.
 			continue;
 		}
 		_Handle_MouseUpdates(mousecapturing);
+
 		pingpong = !pingpong;
 		Image img;
 
 		if (!pingpong) img = screencapture->GetPrimary();
 		else img = screencapture->GetPrimary(lastimagebuffer);
+	
 		if (!_HandleNewClients_and_ResolutionUpdates(img, _LastImage)){
 			//only send a diff if no res update occurs
 			//get difference with last screenshot
@@ -227,10 +229,10 @@ void RemoteDesktop::Server::Listen(unsigned short port) {
 			_Handle_ScreenUpdates(img, rect, sendimagebuffer);
 		}
 
-
 		_LastImage = img;
-		t.Stop();
-		lastwaittime = FRAME_CAPTURE_INTERVAL - (int)t.Elapsed();
+		t1.Stop();
+		auto tim = (int)t1.Elapsed_milli();
+		lastwaittime = FRAME_CAPTURE_INTERVAL - tim;
 		if (lastwaittime < 0) lastwaittime = 0;
 	}
 	if (shutdownhandle) CloseHandle(shutdownhandle);

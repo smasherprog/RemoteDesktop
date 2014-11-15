@@ -23,7 +23,9 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	_In_ int       nCmdShow)
 {
 	int argc;
-
+#if _DEBUG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
 	LPWSTR* argv = CommandLineToArgvW(GetCommandLine(), &argc);
 
 	if ((argc > 1) && ((*argv[1] == L'-' || (*argv[1] == L'/'))))
@@ -57,6 +59,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		auto _Server = std::make_shared<RemoteDesktop::Server>();
 		_Server->Listen(DEFAULTPORT);
 	}
+
 	//RemoteDesktop::DeleteMe();
 	return 0;
 }
