@@ -4,6 +4,8 @@
 #include "ImageCompression.h"
 #include "CommonNetwork.h"
 #include "Display.h"
+#include "BaseClient.h"
+#include "..\RemoteDesktop_Library\SocketHandler.h"
 
 RemoteDesktop::Client::Client(HWND hwnd) : _HWND(hwnd) {
 
@@ -12,44 +14,43 @@ RemoteDesktop::Client::Client(HWND hwnd) : _HWND(hwnd) {
 #endif
 	_ImageCompression = std::make_unique<ImageCompression>();
 	_Display = std::make_unique<Display>(hwnd);
+	SetWindowText(_HWND, L"Remote Desktop Viewer");
 }
 
 RemoteDesktop::Client::~Client(){
 	DEBUG_MSG("~Client");
 }
-void RemoteDesktop::Client::OnDisconnect(SocketHandler& sh){
-
+void RemoteDesktop::Client::OnDisconnect(std::shared_ptr<SocketHandler>& sh){
+	SetWindowText(_HWND, L"Remote Desktop Viewer");
 }
+void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port){
+	_NetworkClient = std::make_unique<BaseClient>(std::bind(&RemoteDesktop::Client::OnConnect, this, std::placeholders::_1),
+		std::bind(&RemoteDesktop::Client::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+		std::bind(&RemoteDesktop::Client::OnDisconnect, this, std::placeholders::_1));
+	std::wstring str = L"Attemping Connect to: ";
+	str += host;
+	str += L":";
+	str += port;
+	SetWindowText(_HWND, str.c_str());
+	_Host = host;
+	_Port = port;
+	_NetworkClient->Connect(host, port);
+}
+void RemoteDesktop::Client::Stop(){
+	_NetworkClient->Stop();
+}
+
 bool RemoteDesktop::Client::SetCursor(){
-
-	RECT rect;
-	if (!GetClientRect(_HWND, &rect)) return true;
-
-	ClientToScreen(_HWND, (LPPOINT)&rect.left);
-	ClientToScreen(_HWND, (LPPOINT)&rect.right);
-
-	if (rect.bottom == 0 && rect.left == 0 && rect.right == 0 && rect.top == 0) {
-		DEBUG_MSG("Exiting cannot see window");
-		return true;
-	}
-
-	POINT p;
-	if (!GetCursorPos(&p)) {
-		DEBUG_MSG("Exiting cannot GetCursorPos");
-		return true;
-	}
-	bool inwindow = p.x > rect.left && p.x < rect.right && p.y> rect.top && p.y < rect.bottom;
-	if (inwindow && (GetFocus() == _HWND)) {
-	
-		DEBUG_MSG("Setting cursor %", _Display->HCursor.ID);
-		::SetCursor(_Display->HCursor.HCursor);
-		return true;
-	}
-	return false;
+	return _Display->SetCursor();
 }
 
-void RemoteDesktop::Client::OnConnect(SocketHandler& sh){
+void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	DEBUG_MSG("Connection Successful");
+	std::wstring str = L"Connected to: ";
+	str += _Host;
+	str += L":";
+	str += _Port;
+	SetWindowText(_HWND, str.c_str());
 	_DownKeys.clear();
 }
 
@@ -67,7 +68,7 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 	h.down = down == true ? 0 : -1;
 	DEBUG_MSG("KeyEvent % in state, down %", VK, (int)h.down);
 	msg.push_back(h);
-	Send(NetworkMessages::KEYEVENT, msg);
+	_NetworkClient->Send(NetworkMessages::KEYEVENT, msg);
 }
 void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wheel){
 	NetworkMsg msg;
@@ -83,43 +84,38 @@ void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wh
 	else {
 		memcpy(&_LastMouseEvent, &h, sizeof(h));
 		msg.push_back(h);
-		Send(NetworkMessages::MOUSEEVENT, msg);
+		_NetworkClient->Send(NetworkMessages::MOUSEEVENT, msg);
 	}
 
 }
 void RemoteDesktop::Client::SendCAD(){
 	NetworkMsg msg;
-	Send(NetworkMessages::CAD, msg);
+	_NetworkClient->Send(NetworkMessages::CAD, msg);
 }
 
 void RemoteDesktop::Client::Draw(HDC hdc){
 	_Display->Draw(hdc);
 }
 
-void RemoteDesktop::Client::OnReceive(SocketHandler& sh){
+void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	auto t = Timer(true);
-
-	if (sh.msgtype == NetworkMessages::RESOLUTIONCHANGE){
+	auto beg = data;
+	if (header->Packet_Type == NetworkMessages::RESOLUTIONCHANGE){
 
 		Image img;
-		auto beg = sh.Buffer.data();
 		memcpy(&img.height, beg, sizeof(img.height));
-
-
 		beg += sizeof(img.height);
 		memcpy(&img.width, beg, sizeof(img.width));
 		beg += sizeof(img.width);
 		img.compressed = true;
 		img.data = (unsigned char*)beg;
-		img.size_in_bytes = sh.msglength - sizeof(img.height) - sizeof(img.width);
+		img.size_in_bytes = header->PayloadLen - sizeof(img.height) - sizeof(img.width);
 
 		_Display->NewImage(_ImageCompression->Decompress(img));
 
 	}
-	else if (sh.msgtype == NetworkMessages::UPDATEREGION){
-
+	else if (header->Packet_Type == NetworkMessages::UPDATEREGION){
 		Image img;
-		auto beg = sh.Buffer.data();
 		Image_Diff_Header imgdif_network;
 
 		memcpy(&imgdif_network, beg, sizeof(imgdif_network));
@@ -129,16 +125,30 @@ void RemoteDesktop::Client::OnReceive(SocketHandler& sh){
 		img.width = imgdif_network.rect.width;
 		img.compressed = imgdif_network.compressed == 0 ? true : false;
 		img.data = (unsigned char*)beg;
-		img.size_in_bytes = sh.msglength - sizeof(imgdif_network);
+		img.size_in_bytes = header->PayloadLen - sizeof(imgdif_network);
 
 		_Display->UpdateImage(_ImageCompression->Decompress(img), imgdif_network);
 
 	}
-	else if (sh.msgtype == NetworkMessages::MOUSEEVENT){
+	else if (header->Packet_Type == NetworkMessages::MOUSEEVENT){
 		MouseEvent_Header h;
-		memcpy(&h, sh.Buffer.data(), sizeof(h));
+		memcpy(&h, beg, sizeof(h));
 		_Display->UpdateMouse(h);
 	}
+	static int updatecounter = 0;
+	if (updatecounter++ > 20){
+		std::wstring str = L"Connected to: ";
+		str += _Host;
+		str += L":";
+		str += _Port;
+		str += L" Send: ";
+		str += FormatBytes(sh->Traffic.get_SendBPS());
+		str += L" Recv: ";
+		str += FormatBytes(sh->Traffic.get_RecvBPS());
+		SetWindowText(_HWND, str.c_str());
+		updatecounter = 0;
+	}
+
 
 	t.Stop();
 	//DEBUG_MSG("took: %", t.Elapsed());

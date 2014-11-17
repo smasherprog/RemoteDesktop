@@ -1,38 +1,53 @@
 #ifndef BASESERVER_H
 #define BASESERVER_H
-#include "IServer.h"
-#include "SocketHandler.h"
 #include "CommonNetwork.h"
 #include <thread>
+#include <memory>
+#include <mutex>
 
 namespace RemoteDesktop{
-	class BaseServer : public IServer{
+	class SocketHandler;
+	class BaseServer {
 
-		void _OnReceive(SocketHandler& sh);//this function is responsible for collecting a full message of data
+		void _OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s);
+		void _OnConnectHandler(SocketHandler* socket);
+		void _OnDisconnectHandler(SocketHandler* socket);
+
 		void _OnDisconnect(int index);
 		void _OnConnect(SOCKET listensocket);
 		bool _Listen(unsigned short port);
 		void _ListenWrapper(unsigned short port);
 		
+		std::mutex _DisconectClientLock;
+		std::vector<SocketHandler*> _DisconectClientList;
 
 		std::thread _BackGroundNetworkWorker;
 		std::vector<WSAEVENT> EventArray;
-		HDESK _LastNetworkCurrentDesktop = NULL;
 
 	protected:
-		std::vector<SocketHandler> SocketArray;
+		std::vector<std::shared_ptr<SocketHandler>> SocketArray;
 		bool Running = false;
 		HDESK _NetworkCurrentDesktop = NULL;
-		void StartListening(unsigned short port, HDESK h);
-	public:
-		BaseServer();
-		virtual ~BaseServer() override;
 		
-		virtual void Stop() override;
+		std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> Receive_CallBack;
+		std::function<void(std::shared_ptr<SocketHandler>&)> Connected_CallBack;
+		std::function<void(std::shared_ptr<SocketHandler>&)> Disconnect_CallBack;
 
-		virtual int Send(SOCKET s, NetworkMessages m, NetworkMsg& msg)override;
-		virtual void SendToAll(NetworkMessages m, NetworkMsg& msg )override;
+	public:
+		BaseServer(std::function<void(std::shared_ptr<SocketHandler>&)> c,
+			std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
+			std::function<void(std::shared_ptr<SocketHandler>&)> d);
+		~BaseServer();
 
+		bool Is_Running() const{ return Running; }
+
+		void SetThreadDesktop(HDESK h){ _NetworkCurrentDesktop = h; }
+		int Client_Count() const { return  SocketArray.size() - 1; }
+		void StartListening(unsigned short port, HDESK h);
+		void Stop();
+		void SendToAll(NetworkMessages m, NetworkMsg& msg );
+
+	
 
 	};
 

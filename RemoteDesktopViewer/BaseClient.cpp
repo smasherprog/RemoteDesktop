@@ -2,8 +2,14 @@
 #include "BaseClient.h"
 #include "NetworkSetup.h"
 #include "CommonNetwork.h"
+#include "..\RemoteDesktop_Library\SocketHandler.h"
 
-RemoteDesktop::BaseClient::BaseClient(){
+RemoteDesktop::BaseClient::BaseClient(std::function<void(std::shared_ptr<SocketHandler>&)> c,
+	std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
+	std::function<void(std::shared_ptr<SocketHandler>&)> d){
+	Connected_CallBack = c;
+	Receive_CallBack = r;
+	Disconnect_CallBack = d;
 
 }
 RemoteDesktop::BaseClient::~BaseClient(){
@@ -11,10 +17,10 @@ RemoteDesktop::BaseClient::~BaseClient(){
 	ShutDownNetwork();
 	DEBUG_MSG("~BaseClient");
 }
-void RemoteDesktop::BaseClient::Connect(const char* host, const char* port){
+void RemoteDesktop::BaseClient::Connect(std::wstring host, std::wstring port){
 	Stop();//ensure threads have been stopped
-	strcpy_s(_Host, host);
-	strcpy_s(_Port, port);
+	_Host = host;
+	_Port = port;
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this);
 
@@ -24,7 +30,7 @@ bool RemoteDesktop::BaseClient::_Connect(){
 	DEBUG_MSG("Connecting to server . . . ");
 	if (!StartupNetwork()) return false;
 	SOCKET ConnectSocket = INVALID_SOCKET;
-	struct addrinfo *result = NULL, *ptr = NULL, hints;
+	struct addrinfoW *result = NULL, *ptr = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -32,7 +38,8 @@ bool RemoteDesktop::BaseClient::_Connect(){
 	hints.ai_protocol = IPPROTO_TCP;
 
 	// Resolve the server address and port
-	auto iResult = getaddrinfo(_Host, _Port, &hints, &result);
+
+	auto iResult = GetAddrInfoW(_Host.c_str(), _Port.c_str(), &hints, &result);
 	if (iResult != 0) return false;
 
 	// Attempt to connect to an address until one succeeds
@@ -52,7 +59,7 @@ bool RemoteDesktop::BaseClient::_Connect(){
 		break;
 	}
 
-	freeaddrinfo(result);
+	FreeAddrInfoW(result);
 
 	if (ConnectSocket == INVALID_SOCKET) return false;
 
@@ -75,17 +82,13 @@ bool RemoteDesktop::BaseClient::_Connect(){
 		DEBUG_MSG("Connect Failed!");
 		return false;
 	}
-	else if (((NetworkEvents.lNetworkEvents & FD_CONNECT) == FD_CONNECT)
-		&& NetworkEvents.iErrorCode[FD_CONNECT_BIT] == ERROR_SUCCESS){
-		OnConnect(_Socket);
-	}
-	else {
-		DEBUG_MSG("Connect Failed!");
-		return false;
-	}
 
 	WSACloseEvent(newevent);
-	_Socket.socket = std::make_shared<socket_wrapper>(ConnectSocket);
+	_Socket = std::make_shared<SocketHandler>(ConnectSocket, true);
+	_Socket->Connected_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnConnectHandler, this, std::placeholders::_1);
+	_Socket->Receive_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnReceiveHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	_Socket->Disconnect_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnDisconnectHandler, this, std::placeholders::_1);
+	_Socket->Exchange_Keys();
 	return true;
 }
 
@@ -100,7 +103,6 @@ void RemoteDesktop::BaseClient::_RunWrapper(){
 		else {
 			counter = 0;//reset timer
 			DisconnectReceived = false;
-			OnConnect(_Socket);
 			_Run();
 		}
 	}
@@ -110,7 +112,7 @@ void RemoteDesktop::BaseClient::_RunWrapper(){
 void RemoteDesktop::BaseClient::_Run(){
 	auto newevent = WSACreateEvent();
 
-	WSAEventSelect(_Socket.socket->socket, newevent, FD_CLOSE | FD_READ);
+	WSAEventSelect(_Socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
 
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
@@ -121,10 +123,10 @@ void RemoteDesktop::BaseClient::_Run(){
 
 		if ((Index != WSA_WAIT_FAILED) && (Index != WSA_WAIT_TIMEOUT)) {
 
-			WSAEnumNetworkEvents(_Socket.socket->socket, newevent, &NetworkEvents);
+			WSAEnumNetworkEvents(_Socket->get_Socket(), newevent, &NetworkEvents);
 			if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				_OnReceive(_Socket);
+				_Socket->Receive();
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				break;// get out of loop and try reconnecting
@@ -133,49 +135,27 @@ void RemoteDesktop::BaseClient::_Run(){
 	}	
 	DEBUG_MSG("Ending Loop");
 	WSACloseEvent(newevent);
-	_Socket.clear();//shut down socket
-
-
+	_Socket.reset();
 }
 
-void RemoteDesktop::BaseClient::_OnDisconnect(SocketHandler& sh){
-	Running = false;
+void RemoteDesktop::BaseClient::_OnDisconnectHandler(SocketHandler* socket){
+	DisconnectReceived = true;
 	DEBUG_MSG("Disconnect Received");
-	OnDisconnect(sh);
-	_Socket.clear();//shut down socket
+	Disconnect_CallBack(_Socket);
 }
 
-void RemoteDesktop::BaseClient::_OnReceive(SocketHandler& sh){
-	//DEBUG_MSG("_OnReceive Called");
-	auto result = 1;
-	while (true){
-		result = RemoteDesktop::_INTERNAL::_ProcessPacketHeader(sh);// assemble header info
-		if (result == 1){//if there is header info...
-			result = RemoteDesktop::_INTERNAL::_ProcessPacketBody(sh);//process the body of the message
-			if (result == 1) {//if the message is complete, then call on receive
-				OnReceive(sh);
-				RemoteDesktop::_INTERNAL::_RecevieEnd(sh);
-			}
-			else if (result == 0){
-				DisconnectReceived = true;// this will trigger a disconnect in the main logic
-			} else 	break;
-		}
-		else if (result == 0){
-			DisconnectReceived = true;// this will trigger a disconnect in the main logic
-		}
-		else break;
-	}
-	//DEBUG_MSG("_OnReceive Finished");
+void RemoteDesktop::BaseClient::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){
+	if (Running && _Socket) Receive_CallBack(p, d, _Socket);
+}
+void RemoteDesktop::BaseClient::_OnConnectHandler(SocketHandler* socket){
+	if (Running && _Socket) Connected_CallBack(_Socket);
 }
 
-int RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
-	auto ret = RemoteDesktop::_INTERNAL::_Send(_Socket.socket->socket, m, msg);
-	if (ret == -1) 	DisconnectReceived = true;// this will trigger a disconnect in the main logic
-	return ret;
+void RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
+	if (Running && _Socket) _Socket->Send(m, msg);
 }
 
 void RemoteDesktop::BaseClient::Stop() {
 	Running = false;
 	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
-	_Socket.clear();//shut down socket
 }

@@ -57,7 +57,7 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	if (inwindow && (GetFocus() == _HWND)) {
 		if (HCursor.ID != _LastCursor){
 			DEBUG_MSG("Setting cursor %", HCursor.ID);
-			SetCursor(HCursor.HCursor);
+			::SetCursor(HCursor.HCursor);
 		}
 	}
 	else {
@@ -88,15 +88,17 @@ void RemoteDesktop::Display::NewImage(Image& img){
 	_HBITMAP_wrapper->raw_data = (unsigned char*)raw_data;
 
 	memcpy(raw_data, img.data, img.size_in_bytes);
-	ReleaseDC(_HWND, hDC);
+	ReleaseDC(_HWND, hDC); 
+	InvalidateRect(_HWND, NULL, false);
 }
 void RemoteDesktop::Display::UpdateImage(Image& img, Image_Diff_Header& h){
-	DEBUG_MSG("UpdateImage");
+	//DEBUG_MSG("UpdateImage");
 	auto ptr = _HBITMAP_wrapper.get();
 	if (ptr != nullptr) {
 		std::lock_guard<std::mutex> lock(_DrawLock);
 		Image::Copy(img, h.rect.left, h.rect.top, ptr->width * 4, ptr->raw_data, ptr->height, ptr->width);
-	}	DEBUG_MSG("UpdateImage 2");
+	}	
+	//DEBUG_MSG("UpdateImage 2");
 	if (ptr != nullptr) InvalidateRect(_HWND, NULL, false);
 }
 void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
@@ -122,3 +124,31 @@ void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 	InvalidateRect(_HWND, NULL, false);
 }
 
+bool RemoteDesktop::Display::SetCursor(){
+
+	RECT rect;
+	if (!GetClientRect(_HWND, &rect)) return true;
+
+	ClientToScreen(_HWND, (LPPOINT)&rect.left);
+	ClientToScreen(_HWND, (LPPOINT)&rect.right);
+
+	if (rect.bottom == 0 && rect.left == 0 && rect.right == 0 && rect.top == 0) {
+		DEBUG_MSG("Exiting cannot see window");
+		return true;
+	}
+
+	POINT p;
+	if (!GetCursorPos(&p)) {
+		DEBUG_MSG("Exiting cannot GetCursorPos");
+		return true;
+	}
+	bool inwindow = p.x > rect.left && p.x < rect.right && p.y> rect.top && p.y < rect.bottom;
+	if (inwindow && (GetFocus() == _HWND)) {
+
+		//DEBUG_MSG("Setting cursor %", HCursor.ID);
+		::SetCursor(HCursor.HCursor);
+		return true;
+	}
+	return false;
+
+}

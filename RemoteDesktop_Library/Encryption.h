@@ -2,26 +2,28 @@
 #define ENCRYPTION123_H
 #include <memory>
 
-#include "..\cryptopp\fhmqv.h"
-#include "..\cryptopp\eccrypto.h"
-using CryptoPP::ECP;
-using CryptoPP::FHMQV;
-
-#include "..\cryptopp\secblock.h"
-using CryptoPP::SecByteBlock;
-
 namespace RemoteDesktop{
+	class Encryption_Impl;
 	class Encryption{
+		
+		void clear();
+		void clear_keyexchange();
+		std::unique_ptr<Encryption_Impl> _Encryption_Impl;
+
 	public:
 
 		Encryption();
 		~Encryption();
-		void clear();
-		void clear_keyexchange();
+	
 		void Init(bool client);
+		bool Agree(const char *staticOtherPublicKey, const char *ephemeralOtherPublicKey);
+		bool Decrypt(char* in_data, int size, char* iv);
+		int Ecrypt(char* in_data, int size, char* iv);//size will be rounded up to nearest 16 byte chunk. Encryption is in place!
 
-		std::shared_ptr<FHMQV<ECP>::Domain> fhmqv;
-		SecByteBlock staticprivatekey, staticpublickey, ephemeralprivatekey, ephemeralpublickey, AESKey;
+		int get_StaticPublicKeyLength() const;
+		int get_EphemeralPublicKeyLength() const;
+		const char* get_Static_PublicKey() const; 
+		const char* get_Ephemeral_PublicKey() const;
 	};
 };
 

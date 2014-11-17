@@ -140,8 +140,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 		case NEWCONNECT:
 			_Client = std::make_unique<RemoteDesktop::Client>(hWnd);
-			_Client->Connect("127.0.0.1", "443");
-			//_Client->Connect("192.168.221.128", "443");
+			//_Client->Connect(L"127.0.0.1", L"443");
+			_Client->Connect(L"192.168.221.128", L"443");
 			SetFocus(_H_wnd);
 			break;
 		case DISCONNECT:

@@ -8,26 +8,54 @@
 #include <memory>
 #define STARTBUFFERSIZE 1024 *1024 *4
 #include "Encryption.h"
+#include <functional>
+#include <vector>
+#include "Traffic_Monitor.h"
+
 
 namespace RemoteDesktop{
+	enum PeerState{
+		PEER_STATE_DISCONNECTED,
+		PEER_STATE_CONNECTING,
+		PEER_STATE_CONNECTED,
+		PEER_STATE_EXCHANGING_KEYS,
+	};
 	class socket_wrapper{
 	public:
 		SOCKET socket;
+	
 		explicit socket_wrapper(SOCKET s) : socket(s) { }
 		~socket_wrapper();
 		
 	};
 	class SocketHandler{
-	public:
-		SocketHandler();
+		std::vector<char> _ReceivedBuffer, _SendBuffer;
+		int _ReceivedBufferCounter = 0;
+
+		Packet_Encrypt_Header _Encypt_Header;
 		Encryption _Encyption;
-		std::shared_ptr<socket_wrapper> socket;
-		sockaddr_in addr;
-		std::vector<char> Buffer;
-		int bytecounter = 0;
-		int msglength = 0;
-		NetworkMessages msgtype = NetworkMessages::INVALID;
-		void clear();
+		Network_Return _Encrypt_And_Send(NetworkMessages m, const NetworkMsg& msg); 
+		Network_Return _Decrypt_Received_Data();
+		Network_Return _Complete_Key_Exchange();
+		
+		std::unique_ptr<socket_wrapper> _Socket;
+		Network_Return _Disconnect();
+		
+
+	public:
+		explicit SocketHandler(SOCKET socket, bool client);
+
+		Network_Return Exchange_Keys();
+		PeerState State = PEER_STATE_DISCONNECTED;
+		Network_Return Send(NetworkMessages m, const NetworkMsg& msg);
+		Network_Return Receive();
+		SOCKET get_Socket() const { return _Socket ? _Socket->socket : INVALID_SOCKET; }
+		std::function<void(Packet_Header*, const char*, SocketHandler*)> Receive_CallBack;
+		std::function<void(SocketHandler*)> Connected_CallBack;
+		std::function<void(SocketHandler*)> Disconnect_CallBack;
+
+		Traffic_Monitor Traffic;
+
 	};
 };
 

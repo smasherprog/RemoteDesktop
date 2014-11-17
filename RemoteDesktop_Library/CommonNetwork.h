@@ -1,6 +1,9 @@
 #ifndef COMMONNETWORK_H
 #define COMMONNETWORK_H
 #include "Rect.h"
+#include <vector>
+
+#define IVSIZE 16
 
 typedef void(__stdcall *OnConnectCB)();
 namespace RemoteDesktop{
@@ -9,6 +12,10 @@ namespace RemoteDesktop{
 	struct Packet_Header{
 		int PayloadLen = 0;
 		char Packet_Type = -1;
+	};	
+	struct Packet_Encrypt_Header{
+		int PayloadLen = IVSIZE;//should include the IV size 
+		char IV[IVSIZE];
 	};
 	struct Image_Diff_Header{
 		Rect rect;
@@ -25,34 +32,37 @@ namespace RemoteDesktop{
 		int wheel;
 	};
 #pragma pack(pop)
-#define NETWORKHEADERSIZE sizeof(Packet_Header)
+#define NETWORKHEADERSIZE sizeof(Packet_Encrypt_Header)
+#define MAXMESSAGESIZE 1024*1024 *50  //50 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
 	enum NetworkMessages{
 		INVALID = -1,
 		RESOLUTIONCHANGE,
 		UPDATEREGION,
 		MOUSEEVENT,
-		PING,
 		KEYEVENT,
 		FOLDER,
 		FILE,	
-		CAD
+		CAD,
+		INIT_ENCRYPTION
+	};
+	enum Network_Return{
+		FAILED,
+		COMPLETED,
+		PARTIALLY_COMPLETED
+	};
+	struct DataPackage{
+		DataPackage(char*d, int l) : data(d), len(l) {}
+		char* data = nullptr;
+		int len = 0;
 	};
 	class NetworkMsg{
 	public:
 		NetworkMsg(){}
-		int payloadlength()const{ auto l = 0; for (auto& a : lens) l += a; return l; }
-		std::vector<char*> data;
-		std::vector<int> lens;
-		template<class T>void push_back(const T& x){ data.push_back((char*)&x); lens.push_back(sizeof(x)); }
+		int payloadlength()const{ auto l = 0; for (auto& a : data) l += a.len; return l; }
+		std::vector<DataPackage> data;
+		template<class T>void push_back(const T& x){ data.push_back(DataPackage((char*)&x, sizeof(x))); }
 	};
-	class SocketHandler;
-	namespace _INTERNAL{
-		int _Send(SOCKET s, NetworkMessages m, NetworkMsg& msg);
-		int _SendLoop(SOCKET s, char* data, int len);
-		int _ProcessPacketHeader(RemoteDesktop::SocketHandler& sh);
-		int _ProcessPacketBody(RemoteDesktop::SocketHandler& sh);
-		void _RecevieEnd(RemoteDesktop::SocketHandler& sh);
-	};
+
 
 }
 

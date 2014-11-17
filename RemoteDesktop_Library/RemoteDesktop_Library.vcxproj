@@ -107,7 +107,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,7 +125,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,7 +148,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -171,7 +171,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -186,10 +186,10 @@
     <ClInclude Include="SocketHandler.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Traffic_Monitor.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CommonNetwork.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="Image.cpp" />
@@ -203,6 +203,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="Traffic_Monitor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cryptopp\cryptlib.vcxproj">

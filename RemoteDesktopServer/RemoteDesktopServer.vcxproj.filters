@@ -51,22 +51,19 @@
     <ClInclude Include="Desktop_Monitor.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
-    <ClInclude Include="IServer.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
     <ClInclude Include="MouseCapture.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
     <ClInclude Include="ScreenCapture.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
-    <ClInclude Include="Server.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
     <ClInclude Include="ServiceHelpers.h">
       <Filter>Header Files\Service</Filter>
     </ClInclude>
     <ClInclude Include="DeleteMe.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="RD_Server.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
   </ItemGroup>
@@ -98,9 +95,6 @@
     <ClCompile Include="ScreenCapture.cpp">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
-    <ClCompile Include="Server.cpp">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -108,6 +102,9 @@
       <Filter>Source Files\Service</Filter>
     </ClCompile>
     <ClCompile Include="DeleteMe.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="RD_Server.cpp">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
   </ItemGroup>

@@ -76,6 +76,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\RemoteDesktop_Library;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -87,6 +88,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\RemoteDesktop_Library;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -173,10 +175,9 @@
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="DeleteMe.h" />
     <ClInclude Include="Desktop_Monitor.h" />
-    <ClInclude Include="IServer.h" />
     <ClInclude Include="MouseCapture.h" />
     <ClInclude Include="ScreenCapture.h" />
-    <ClInclude Include="Server.h" />
+    <ClInclude Include="RD_Server.h" />
     <ClInclude Include="ServerService.h" />
     <ClInclude Include="ServiceBase.h" />
     <ClInclude Include="ServiceHelpers.h" />
@@ -191,7 +192,7 @@
     <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
-    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="RD_Server.cpp" />
     <ClCompile Include="ServerService.cpp" />
     <ClCompile Include="ServiceBase.cpp" />
     <ClCompile Include="ServiceHelpers.cpp" />

@@ -1,35 +1,43 @@
 #ifndef BASECLIENT_H
 #define BASECLIENT_H
-#include "IClient.h"
-#include "SocketHandler.h"
 #include "CommonNetwork.h"
-#include "SocketHandler.h"
 #include <thread>
+#include <memory>
 
 namespace RemoteDesktop{
-	class BaseClient : public IClient{
+	class SocketHandler;
+
+	class BaseClient{
 		bool _Connect();
-		void _OnReceive(SocketHandler& sh);
-		void _OnDisconnect(SocketHandler& sh);
 
+		void _OnDisconnectHandler(SocketHandler* socket);
+		void _OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s);
+		void _OnConnectHandler(SocketHandler* socket);
 
-		SocketHandler _Socket;
+		std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> Receive_CallBack;
+		std::function<void(std::shared_ptr<SocketHandler>&)> Connected_CallBack;
+		std::function<void(std::shared_ptr<SocketHandler>&)> Disconnect_CallBack;
+
+		std::shared_ptr<SocketHandler> _Socket;
 
 		void _Run();
 		void _RunWrapper();
 		std::thread _BackGroundNetworkWorker;
 
-		char _Host[256], _Port[7];
+		std::wstring _Host, _Port;
 	protected:
 		bool Running = false;
 		bool DisconnectReceived = false;
 	public:
-		BaseClient();
-		virtual ~BaseClient() override;
-		virtual void Connect(const char* host, const char* port = "443") override;
+		explicit BaseClient(std::function<void(std::shared_ptr<SocketHandler>&)> c,
+			std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
+			std::function<void(std::shared_ptr<SocketHandler>&)> d);
+		~BaseClient();
 
-		virtual int Send(NetworkMessages m, NetworkMsg& msg) override;
-		virtual void Stop() override;
+		void Connect(std::wstring host, std::wstring port = L"443");
+
+		void Send(NetworkMessages m, NetworkMsg& msg);
+		void Stop();
 	};
 
 };

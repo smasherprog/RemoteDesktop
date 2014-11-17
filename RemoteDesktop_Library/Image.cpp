@@ -99,17 +99,14 @@ RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_reg
 }
 void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst, int dst_height, int dst_width)
 {
-	if (src_img.width == 1601){
-		int k = 0;
-	}
 	auto src = src_img.data;
 	auto jumpsrcrowstride = src_img.width * 4;
 
 	//check that the image does not overrun the array bounds
 	auto hmod = dst_height - (src_img.height + dst_top);
-	if (hmod < 0) src_img.height -= hmod;
+	if (hmod < 0) src_img.height += hmod;
 	auto wmod = dst_width - (src_img.width + dst_left);
-	if (wmod < 0) src_img.width -= wmod;
+	if (wmod < 0) src_img.width += wmod;
 
 	auto copysrcstide = src_img.width * 4;
 

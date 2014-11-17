@@ -11,6 +11,7 @@
 #include <locale>
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 template<typename... Args>
 void DEBUG_MSG(const char *s, Args... args)
@@ -63,7 +64,25 @@ namespace _INTERNAL{
 	}
 }
 
+inline std::wstring FormatBytes(long bytes)
+{
+	const auto scale = 1024.0;
+	static std::wstring orders[] =  { L"GB/s", L"MB/s", L"KB/s", L"Bytes/s" };
 
+	auto max = (long)pow(scale, 3.0);
+	for(auto& order : orders)
+	{
+		if (bytes > max){
+			std::wstringstream str;
+			str << std::fixed << std::setprecision(2) << ((float)bytes / (float)max);
+			return str.str() + order;
+		}
+			
+		//	return string.Format("{0:##.##} {1}", Decimal.Divide(bytes, max), order);
+		max /= scale;
+	}
+	return L"0 Bytes";
+}
 
 
 // no need to check if(x), in c++, delete always checks that before deleting
@@ -85,36 +104,36 @@ namespace _INTERNAL{
 #endif
 
 
-inline std::string GetFileExtention(const std::string& file){// this will only strip off everything include the . of an extention
-	std::string::size_type po = file.find_last_of('.');
-	if (po == std::string::npos) return "";// no extention, return an empty std::string
+template<class T> T GetFileExtention(const T& file){// this will only strip off everything include the . of an extention
+	T::size_type po = file.find_last_of('.');
+	if (po == T::npos) return "";// no extention, return an empty std::string
 	return file.substr(po, file.size() - po + 1);
 }
-inline std::string StripFileExtention(const std::string& file){// this will only strip off everything include the . of an extention
-	std::string::size_type po = file.find_last_of('.');
-	if (po == std::string::npos) return file;// no extention, return the entire std::string
+template<class T>T StripFileExtention(const T& file){// this will only strip off everything include the . of an extention
+	T::size_type po = file.find_last_of('.');
+	if (po == T::npos) return file;// no extention, return the entire std::string
 	return file.substr(0, po);
 }
-inline std::string GetPath(const std::string& file){ // this will return the path of a std::string passed to ut
-	std::string::size_type po = file.find_last_of('\\');
-	if (po == std::string::npos) po = file.find_last_of('/');// couldnt find it with the double slashes, try a single forward slash
-	if (po == std::string::npos) return "\\";// no slashes.. must be something strange.. try to return something usefull
+template<class T> T GetPath(const T& file){ // this will return the path of a std::string passed to ut
+	T::size_type po = file.find_last_of('\\');
+	if (po == T::npos) po = file.find_last_of('/');// couldnt find it with the double slashes, try a single forward slash
+	if (po == T::npos) return "\\";// no slashes.. must be something strange.. try to return something usefull
 	return file.substr(0, po + 1);
 }// utility function to return only the path
-inline std::string StripPath(const std::string& file){// this will only strip off the entire path, so only a filename remains
-	std::string::size_type po = file.find_last_of('\\');
-	if (po == std::string::npos) po = file.find_last_of('/');// couldnt find it with the double slashes, try a single forward slash
-	if (po == std::string::npos) return file;// no slashes.. there must be no path on this std::string
+template<class T>T StripPath(const T& file){// this will only strip off the entire path, so only a filename remains
+	T::size_type po = file.find_last_of('\\');
+	if (po == T::npos) po = file.find_last_of('/');// couldnt find it with the double slashes, try a single forward slash
+	if (po == T::npos) return file;// no slashes.. there must be no path on this std::string
 	po += 1;
 	return file.substr(po, file.size() - po);// only return the filename
 }
 
 // trim from start
-inline std::string &ltrim(std::string &s) { s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace)))); return s; }
+template<class T>T &ltrim(T &s) { s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace)))); return s; }
 // trim from end
-inline std::string &rtrim(std::string &s) { s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end()); return s; }
+template<class T>T &rtrim(T &s) { s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end()); return s; }
 // trim from both ends
-inline std::string &trim(std::string &s) { return ltrim(rtrim(s)); }
+template<class T>T &trim(T &s) { return ltrim(rtrim(s)); }
 
 inline bool ContainsPath(const std::string& str){
 	std::string::size_type po = str.find_last_of('\\');

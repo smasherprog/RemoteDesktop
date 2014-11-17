@@ -21,7 +21,8 @@ namespace RemoteDesktop{
 		std::vector<Cursor_Type> _System_Cursors;
 
 		Point _MousePos;
-	
+		Cursor_Type HCursor;
+
 	public:
 		Display(HWND hwnd);
 
@@ -29,8 +30,9 @@ namespace RemoteDesktop{
 		void UpdateImage(Image& img, Image_Diff_Header& h);
 		void UpdateMouse(MouseEvent_Header& h);
 		void Draw(HDC hdc);
+		bool SetCursor();
 
-		Cursor_Type HCursor;
+		
 	};
 
 };

@@ -1,6 +1,5 @@
 #ifndef CLIENT_H
 #define CLIENT_H
-#include "BaseClient.h"
 
 namespace RemoteDesktop{
 #if defined _DEBUG
@@ -9,29 +8,36 @@ namespace RemoteDesktop{
 
 	class ImageCompression;
 	class Display;
+	class SocketHandler;
+	class BaseClient;
+	struct Packet_Header;
 
-	class Client : public BaseClient{
+	class Client {
 #if defined _DEBUG
 		std::unique_ptr<CConsole> _DebugConsole;
 #endif
 		std::unique_ptr<ImageCompression> _ImageCompression;
 		std::unique_ptr<Display> _Display;
+		std::unique_ptr<BaseClient> _NetworkClient;
 
 		std::vector<int> _DownKeys;
 		HWND _HWND;
+		void OnDisconnect(std::shared_ptr<SocketHandler>& sh);
+		void OnConnect(std::shared_ptr<SocketHandler>& sh);
+		void OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh);
+		std::wstring _Host, _Port;
 
 	public:
 		Client(HWND hwnd);
-		virtual ~ Client() override;	
-		virtual void OnDisconnect(SocketHandler& sh) override;
-		virtual void OnConnect(SocketHandler& sh) override;
-		virtual void OnReceive(SocketHandler& sh)  override;
+		~Client();	
+	
+		void Connect(std::wstring host, std::wstring port = L"443");
+		void Stop();
 
-		virtual void Draw(HDC hdc) override;
-		virtual void KeyEvent(int VK, bool down)  override;
-		virtual void MouseEvent(unsigned int action, int x, int y, int wheel=0)  override;
-		virtual bool SetCursor()  override;
-
+		void Draw(HDC hdc);
+		void KeyEvent(int VK, bool down) ;
+		void MouseEvent(unsigned int action, int x, int y, int wheel=0);
+		bool SetCursor();
 		void SendCAD();
 	};
 
