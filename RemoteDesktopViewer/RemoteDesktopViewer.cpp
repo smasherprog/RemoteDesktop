@@ -19,6 +19,7 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK	ConnectAbout(HWND, UINT, WPARAM, LPARAM);
 #define IDB_BUTTON 1234
 
 
@@ -34,7 +35,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 #endif
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-	
+
 	// TODO: Place code here.
 	MSG msg;
 	HACCEL hAccelTable;
@@ -139,10 +140,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wmId)
 		{
 		case NEWCONNECT:
-			_Client = std::make_unique<RemoteDesktop::Client>(hWnd);
-			//_Client->Connect(L"127.0.0.1", L"443");
-			_Client->Connect(L"192.168.221.128", L"443");
-			SetFocus(_H_wnd);
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG1), hWnd, ConnectAbout);
 			break;
 		case DISCONNECT:
 			if (_Client) {
@@ -155,7 +153,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (_Client) _Client->SendCAD();
 			SetFocus(_H_wnd);
 			break;
-			
+
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
@@ -169,7 +167,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (_Client != nullptr){
 			_Client->Draw(hdc);
 		}
-		EndPaint(hWnd, &ps); 
+		EndPaint(hWnd, &ps);
 		break;
 	case WM_KEYUP:
 		if (_Client != nullptr) _Client->KeyEvent(wParam, false);
@@ -208,7 +206,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-// Message handler for about box.
+#include "..\RemoteDesktop_Library\Ping.h"
+
+INT_PTR CALLBACK ConnectAbout(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	wchar_t text[128];
+	WORD w = 0;
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		return (INT_PTR)TRUE;
+
+	case WM_COMMAND:
+		w = LOWORD(wParam);
+		if (w == IDOK)
+		{
+			GetWindowText(GetDlgItem(hDlg, IDC_EDIT1), text, 128);
+			if (RemoteDesktop::Ping(text)){
+				_Client = std::make_unique<RemoteDesktop::Client>(_H_wnd);
+				//_Client->Connect(L"127.0.0.1", L"443");
+				_Client->Connect(text, L"443");
+				SetFocus(_H_wnd);
+				EndDialog(hDlg, LOWORD(wParam));
+			}
+			else {
+
+			}
+
+			return (INT_PTR)TRUE;
+		}
+		else if (w == IDCANCEL) {
+			SetFocus(_H_wnd);
+			EndDialog(hDlg, LOWORD(wParam));
+		}
+		break;
+	}
+	return (INT_PTR)FALSE;
+}
+
+
+
+
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(lParam);

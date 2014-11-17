@@ -181,6 +181,7 @@
     <ClInclude Include="Image.h" />
     <ClInclude Include="ImageCompression.h" />
     <ClInclude Include="MouseCommon.h" />
+    <ClInclude Include="Ping.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="NetworkSetup.h" />
     <ClInclude Include="SocketHandler.h" />
@@ -195,6 +196,7 @@
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ImageCompression.cpp" />
     <ClCompile Include="NetworkSetup.cpp" />
+    <ClCompile Include="Ping.cpp" />
     <ClCompile Include="SocketHandler.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

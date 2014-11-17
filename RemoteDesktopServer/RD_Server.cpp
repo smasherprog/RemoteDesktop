@@ -222,8 +222,6 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port) {
 			
 			_ScreenCapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
 			_DesktopMonitor->Switch_to_ActiveDesktop(); 
-			std::ofstream myfile("c:\\mytile.txt", std::ios::app);
-			myfile << "Switching to " << _DesktopMonitor->m_hDesk << std::endl;
 			_NetworkServer->SetThreadDesktop(_DesktopMonitor->m_hDesk);
 		}
 

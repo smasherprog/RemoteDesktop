@@ -45,8 +45,7 @@ bool RemoteDesktop::BaseClient::_Connect(){
 	// Attempt to connect to an address until one succeeds
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
 		// Create a SOCKET for connecting to server
-		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-			ptr->ai_protocol);
+		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
 		if (ConnectSocket == INVALID_SOCKET) return false;
 		// Connect to server.
 		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
@@ -84,11 +83,11 @@ bool RemoteDesktop::BaseClient::_Connect(){
 	}
 
 	WSACloseEvent(newevent);
-	_Socket = std::make_shared<SocketHandler>(ConnectSocket, true);
-	_Socket->Connected_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnConnectHandler, this, std::placeholders::_1);
-	_Socket->Receive_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnReceiveHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	_Socket->Disconnect_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnDisconnectHandler, this, std::placeholders::_1);
-	_Socket->Exchange_Keys();
+	Socket = std::make_shared<SocketHandler>(ConnectSocket, true);
+	Socket->Connected_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnConnectHandler, this, std::placeholders::_1);
+	Socket->Receive_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnReceiveHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	Socket->Disconnect_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnDisconnectHandler, this, std::placeholders::_1);
+	Socket->Exchange_Keys();
 	return true;
 }
 
@@ -112,7 +111,7 @@ void RemoteDesktop::BaseClient::_RunWrapper(){
 void RemoteDesktop::BaseClient::_Run(){
 	auto newevent = WSACreateEvent();
 
-	WSAEventSelect(_Socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
+		WSAEventSelect(Socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
 
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
@@ -123,10 +122,10 @@ void RemoteDesktop::BaseClient::_Run(){
 
 		if ((Index != WSA_WAIT_FAILED) && (Index != WSA_WAIT_TIMEOUT)) {
 
-			WSAEnumNetworkEvents(_Socket->get_Socket(), newevent, &NetworkEvents);
+			WSAEnumNetworkEvents(Socket->get_Socket(), newevent, &NetworkEvents);
 			if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				_Socket->Receive();
+				Socket->Receive();
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				break;// get out of loop and try reconnecting
@@ -135,24 +134,24 @@ void RemoteDesktop::BaseClient::_Run(){
 	}	
 	DEBUG_MSG("Ending Loop");
 	WSACloseEvent(newevent);
-	_Socket.reset();
+	Socket.reset();
 }
 
 void RemoteDesktop::BaseClient::_OnDisconnectHandler(SocketHandler* socket){
 	DisconnectReceived = true;
 	DEBUG_MSG("Disconnect Received");
-	Disconnect_CallBack(_Socket);
+	Disconnect_CallBack(Socket);
 }
 
 void RemoteDesktop::BaseClient::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){
-	if (Running && _Socket) Receive_CallBack(p, d, _Socket);
+	if (Running && Socket) Receive_CallBack(p, d, Socket);
 }
 void RemoteDesktop::BaseClient::_OnConnectHandler(SocketHandler* socket){
-	if (Running && _Socket) Connected_CallBack(_Socket);
+	if (Running && Socket) Connected_CallBack(Socket);
 }
 
 void RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
-	if (Running && _Socket) _Socket->Send(m, msg);
+	if (Running && Socket) Socket->Send(m, msg);
 }
 
 void RemoteDesktop::BaseClient::Stop() {

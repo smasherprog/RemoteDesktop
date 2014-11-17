@@ -18,7 +18,7 @@ namespace RemoteDesktop{
 		std::function<void(std::shared_ptr<SocketHandler>&)> Connected_CallBack;
 		std::function<void(std::shared_ptr<SocketHandler>&)> Disconnect_CallBack;
 
-		std::shared_ptr<SocketHandler> _Socket;
+	
 
 		void _Run();
 		void _RunWrapper();
@@ -36,6 +36,8 @@ namespace RemoteDesktop{
 
 		void Connect(std::wstring host, std::wstring port = L"443");
 
+		std::shared_ptr<SocketHandler> Socket;
+		bool NetworkRunning() const { return Running; }
 		void Send(NetworkMessages m, NetworkMsg& msg);
 		void Stop();
 	};

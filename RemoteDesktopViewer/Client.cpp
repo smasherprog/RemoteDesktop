@@ -46,11 +46,6 @@ bool RemoteDesktop::Client::SetCursor(){
 
 void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	DEBUG_MSG("Connection Successful");
-	std::wstring str = L"Connected to: ";
-	str += _Host;
-	str += L":";
-	str += _Port;
-	SetWindowText(_HWND, str.c_str());
 	_DownKeys.clear();
 }
 
@@ -95,6 +90,7 @@ void RemoteDesktop::Client::SendCAD(){
 
 void RemoteDesktop::Client::Draw(HDC hdc){
 	_Display->Draw(hdc);
+	UpdateWindowTitle();
 }
 
 void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
@@ -135,22 +131,28 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		memcpy(&h, beg, sizeof(h));
 		_Display->UpdateMouse(h);
 	}
-	static int updatecounter = 0;
-	if (updatecounter++ > 20){
-		std::wstring str = L"Connected to: ";
-		str += _Host;
-		str += L":";
-		str += _Port;
-		str += L" Send: ";
-		str += FormatBytes(sh->Traffic.get_SendBPS());
-		str += L" Recv: ";
-		str += FormatBytes(sh->Traffic.get_RecvBPS());
-		SetWindowText(_HWND, str.c_str());
-		updatecounter = 0;
-	}
 
 
+	UpdateWindowTitle();
 	t.Stop();
 	//DEBUG_MSG("took: %", t.Elapsed());
 }
+void RemoteDesktop::Client::UpdateWindowTitle(){
+	static int updatecounter = 0;
 
+	if (updatecounter++ > 20 && _NetworkClient){
+		if (_NetworkClient->NetworkRunning()){
+			std::wstring str = L"Connected to: ";
+			str += _Host;
+			str += L":";
+			str += _Port;
+			str += L" Send: ";
+			str += FormatBytes(_NetworkClient->Socket->Traffic.get_SendBPS());
+			str += L" Recv: ";
+			str += FormatBytes(_NetworkClient->Socket->Traffic.get_RecvBPS());
+			SetWindowText(_HWND, str.c_str());
+			updatecounter = 0;
+		}
+
+	}
+}

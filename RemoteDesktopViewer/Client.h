@@ -39,6 +39,7 @@ namespace RemoteDesktop{
 		void MouseEvent(unsigned int action, int x, int y, int wheel=0);
 		bool SetCursor();
 		void SendCAD();
+		void UpdateWindowTitle();
 	};
 
 };

@@ -60,6 +60,9 @@
     <ClInclude Include="Traffic_Monitor.h">
       <Filter>Header Files\Network</Filter>
     </ClInclude>
+    <ClInclude Include="Ping.h">
+      <Filter>Header Files\Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -87,6 +90,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Traffic_Monitor.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Ping.cpp">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
   </ItemGroup>
