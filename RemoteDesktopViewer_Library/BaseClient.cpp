@@ -13,6 +13,7 @@ RemoteDesktop::BaseClient::BaseClient(std::function<void(std::shared_ptr<SocketH
 
 }
 RemoteDesktop::BaseClient::~BaseClient(){
+	DEBUG_MSG("~BaseClient() Beg");
 	Stop();//ensure threads have been stopped
 	ShutDownNetwork();
 	DEBUG_MSG("~BaseClient");
@@ -155,6 +156,8 @@ void RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
 }
 
 void RemoteDesktop::BaseClient::Stop() {
-	Running = false;
-	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
+	Running = false; 
+	DEBUG_MSG("BaseClient::Stop Beg");
+	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join(); 
+	DEBUG_MSG("BaseClient::Stop End");
 }

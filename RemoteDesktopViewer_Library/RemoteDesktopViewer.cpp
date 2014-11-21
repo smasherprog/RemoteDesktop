@@ -24,48 +24,48 @@ INT_PTR CALLBACK	ConnectAbout(HWND, UINT, WPARAM, LPARAM);
 
 
 std::unique_ptr<RemoteDesktop::Client> _Client;
-
-int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPTSTR    lpCmdLine,
-	_In_ int       nCmdShow)
-{
-#if _DEBUG
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
-
-	// TODO: Place code here.
-	MSG msg;
-	HACCEL hAccelTable;
-
-	// Initialize global strings
-	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_REMOTEDESKTOPVIEWER, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
-
-	// Perform application initialization:
-	if (!InitInstance(hInstance, nCmdShow))
-	{
-		return FALSE;
-	}
-
-	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_REMOTEDESKTOPVIEWER));
-
-	// Main message loop:
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-	_Client.reset();
-
-	return (int)msg.wParam;
-}
+//
+//int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
+//	_In_opt_ HINSTANCE hPrevInstance,
+//	_In_ LPTSTR    lpCmdLine,
+//	_In_ int       nCmdShow)
+//{
+//#if _DEBUG
+//	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+//#endif
+//	UNREFERENCED_PARAMETER(hPrevInstance);
+//	UNREFERENCED_PARAMETER(lpCmdLine);
+//
+//	// TODO: Place code here.
+//	MSG msg;
+//	HACCEL hAccelTable;
+//
+//	// Initialize global strings
+//	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+//	LoadString(hInstance, IDC_REMOTEDESKTOPVIEWER, szWindowClass, MAX_LOADSTRING);
+//	MyRegisterClass(hInstance);
+//
+//	// Perform application initialization:
+//	if (!InitInstance(hInstance, nCmdShow))
+//	{
+//		return FALSE;
+//	}
+//
+//	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_REMOTEDESKTOPVIEWER));
+//
+//	// Main message loop:
+//	while (GetMessage(&msg, NULL, 0, 0))
+//	{
+//		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+//		{
+//			TranslateMessage(&msg);
+//			DispatchMessage(&msg);
+//		}
+//	}
+//	_Client.reset();
+//
+//	return (int)msg.wParam;
+//}
 
 
 

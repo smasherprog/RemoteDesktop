@@ -146,7 +146,7 @@ bool RemoteDesktop::Display::SetCursor(){
 	if (inwindow && (GetFocus() == _HWND)) {
 
 		//DEBUG_MSG("Setting cursor %", HCursor.ID);
-		::SetCursor(HCursor.HCursor);
+	//	::SetCursor(HCursor.HCursor);
 		return true;
 	}
 	return false;

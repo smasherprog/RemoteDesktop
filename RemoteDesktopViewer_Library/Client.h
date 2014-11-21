@@ -2,9 +2,6 @@
 #define CLIENT_H
 
 namespace RemoteDesktop{
-#if defined _DEBUG
-	class CConsole;
-#endif
 
 	class ImageCompression;
 	class Display;
@@ -13,9 +10,7 @@ namespace RemoteDesktop{
 	struct Packet_Header;
 
 	class Client {
-#if defined _DEBUG
-		std::unique_ptr<CConsole> _DebugConsole;
-#endif
+
 		std::unique_ptr<ImageCompression> _ImageCompression;
 		std::unique_ptr<Display> _Display;
 		std::unique_ptr<BaseClient> _NetworkClient;
@@ -39,7 +34,8 @@ namespace RemoteDesktop{
 		void MouseEvent(unsigned int action, int x, int y, int wheel=0);
 		bool SetCursor();
 		void SendCAD();
-		void UpdateWindowTitle();
+		
+
 	};
 
 };

@@ -21,7 +21,7 @@ void DEBUG_MSG(const char *s, Args... args)
 	_INTERNAL::xsprintf(result, s, args...);
 	OutputDebugStringA(result.c_str());
 	OutputDebugStringA("\n");
-	std::cout << result << std::endl;
+	//std::cout << result << std::endl;
 #endif
 }
 

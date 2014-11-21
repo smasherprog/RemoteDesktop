@@ -8,32 +8,25 @@
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 
 RemoteDesktop::Client::Client(HWND hwnd) : _HWND(hwnd) {
-
-#if defined _DEBUG
-	_DebugConsole = std::make_unique<CConsole>();
-#endif
 	_ImageCompression = std::make_unique<ImageCompression>();
 	_Display = std::make_unique<Display>(hwnd);
-	SetWindowText(_HWND, L"Remote Desktop Viewer");
+	//SetWindowText(_HWND, L"Remote Desktop Viewer");
+	DEBUG_MSG("Client()");
 }
 
 RemoteDesktop::Client::~Client(){
-	DEBUG_MSG("~Client");
+	DEBUG_MSG("~Client() Beg");
+	_NetworkClient->Stop();
+	DEBUG_MSG("~Client() End");
 }
 void RemoteDesktop::Client::OnDisconnect(std::shared_ptr<SocketHandler>& sh){
-	SetWindowText(_HWND, L"Remote Desktop Viewer");
+	//SetWindowText(_HWND, L"Remote Desktop Viewer");
 }
 void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port){
+	if (_NetworkClient) _NetworkClient.reset();
 	_NetworkClient = std::make_unique<BaseClient>(std::bind(&RemoteDesktop::Client::OnConnect, this, std::placeholders::_1),
 		std::bind(&RemoteDesktop::Client::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
 		std::bind(&RemoteDesktop::Client::OnDisconnect, this, std::placeholders::_1));
-	std::wstring str = L"Attemping Connect to: ";
-	str += host;
-	str += L":";
-	str += port;
-	SetWindowText(_HWND, str.c_str());
-	_Host = host;
-	_Port = port;
 	_NetworkClient->Connect(host, port);
 }
 void RemoteDesktop::Client::Stop(){
@@ -88,9 +81,9 @@ void RemoteDesktop::Client::SendCAD(){
 	_NetworkClient->Send(NetworkMessages::CAD, msg);
 }
 
+
 void RemoteDesktop::Client::Draw(HDC hdc){
 	_Display->Draw(hdc);
-	UpdateWindowTitle();
 }
 
 void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
@@ -133,26 +126,7 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 	}
 
 
-	UpdateWindowTitle();
 	t.Stop();
 	//DEBUG_MSG("took: %", t.Elapsed());
 }
-void RemoteDesktop::Client::UpdateWindowTitle(){
-	static int updatecounter = 0;
 
-	if (updatecounter++ > 20 && _NetworkClient){
-		if (_NetworkClient->NetworkRunning()){
-			std::wstring str = L"Connected to: ";
-			str += _Host;
-			str += L":";
-			str += _Port;
-			str += L" Send: ";
-			str += FormatBytes(_NetworkClient->Socket->Traffic.get_SendBPS());
-			str += L" Recv: ";
-			str += FormatBytes(_NetworkClient->Socket->Traffic.get_RecvBPS());
-			SetWindowText(_HWND, str.c_str());
-			updatecounter = 0;
-		}
-
-	}
-}
