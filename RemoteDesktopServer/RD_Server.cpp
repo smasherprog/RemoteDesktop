@@ -9,6 +9,7 @@
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 #include "..\RemoteDesktop_Library\Rect.h"
 #include "..\RemoteDesktop_Library\CommonNetwork.h"
+#include "..\RemoteDesktop_Library\Event_Wrapper.h"
 
 #if defined _DEBUG
 #include "Console.h"
@@ -76,23 +77,24 @@ void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const
 	if (h.Action == WM_MOUSEMOVE) inp.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 	else if (h.Action == WM_LBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
 	else if (h.Action == WM_LBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-
 	else if (h.Action == WM_RBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-
 	else if (h.Action == WM_RBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-
 	else if (h.Action == WM_MBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
-
 	else if (h.Action == WM_MBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
-
 	else if (h.Action == WM_MOUSEWHEEL) {
 		inp.mi.dwFlags = MOUSEEVENTF_WHEEL;
 		inp.mi.mouseData = h.wheel;
 	}
-	else return;
+	else if (h.Action == WM_LBUTTONDBLCLK){
+		inp.mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
+		SendInput(1, &inp, sizeof(inp));
+	}
+	if (h.Action == WM_RBUTTONDBLCLK){
+		inp.mi.dwFlags = MOUSEEVENTF_RIGHTUP | MOUSEEVENTF_RIGHTDOWN;
+		SendInput(1, &inp, sizeof(inp));
+	}
+
 	SendInput(1, &inp, sizeof(inp));
-
-
 }
 void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	switch (header->Packet_Type){
@@ -126,7 +128,9 @@ void RemoteDesktop::RD_Server::_HandleNewClients(Image& img){
 	msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes));
 	std::lock_guard<std::mutex> lock(_NewClientLock);
 	DEBUG_MSG("Servicing new Client %, %", img.height, img.width);
+
 	for (auto& a : _NewClients){
+
 		a->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
 	_NewClients.clear();
@@ -159,7 +163,7 @@ void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, std
 		imgdif_network.compressed = imgdif.compressed == true ? 0 : -1;
 		msg.push_back(imgdif_network);
 		msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes));
-	
+
 		_NetworkServer->SendToAll(NetworkMessages::UPDATEREGION, msg);
 	}
 
@@ -190,38 +194,39 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port) {
 
 	_NetworkServer->StartListening(port, _DesktopMonitor->m_hDesk);
 
+	std::vector<unsigned char> curimagebuffer;
 	std::vector<unsigned char> lastimagebuffer;
 	std::vector<unsigned char> sendimagebuffer;
 
 	Image _LastImage = _ScreenCapture->GetPrimary(lastimagebuffer);//<---Seed the image
 	auto pingpong = true;
-	HANDLE shutdownhandle = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram");
-	WaitForSingleObject(shutdownhandle, 100);//call this to get the first signal from the service
+	Event_Wrapper shutdownhandle(OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram"));
+
+	WaitForSingleObject(shutdownhandle.get_Handle(), 100);//call this to get the first signal from the service
 	DWORD dwEvent;
 	auto lastwaittime = 0;
 
 	while (_NetworkServer->Is_Running()){
-		if (shutdownhandle == NULL) std::this_thread::sleep_for(std::chrono::milliseconds(lastwaittime));//sleep
+		if (shutdownhandle.get_Handle() == NULL) std::this_thread::sleep_for(std::chrono::milliseconds(lastwaittime));//sleep
 		else {
-			dwEvent = WaitForSingleObject(shutdownhandle, lastwaittime);
+			dwEvent = WaitForSingleObject(shutdownhandle.get_Handle(), lastwaittime);
 			if (dwEvent == 0){
 				_NetworkServer->Stop();//stop program!
 				break;
 			}
 		}
-
 		auto t1 = Timer(true);
 		if (_NetworkServer->Client_Count() <= 0) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep if there are no clients connected.
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));//sleep if there are no clients connected.
 			continue;
 		}
-		
+
 		auto d = _DesktopMonitor->Is_InputDesktopSelected();
 		if (!d)
 		{
-			
+
 			_ScreenCapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
-			_DesktopMonitor->Switch_to_ActiveDesktop(); 
+			_DesktopMonitor->Switch_to_ActiveDesktop();
 			_NetworkServer->SetThreadDesktop(_DesktopMonitor->m_hDesk);
 		}
 
@@ -230,7 +235,7 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port) {
 		pingpong = !pingpong;
 		Image img;
 
-		if (!pingpong) img = _ScreenCapture->GetPrimary();
+		if (!pingpong) img = _ScreenCapture->GetPrimary(curimagebuffer);
 		else img = _ScreenCapture->GetPrimary(lastimagebuffer);
 		_HandleNewClients(img);
 		if (!_HandleResolutionUpdates(img, _LastImage)){
@@ -247,6 +252,5 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port) {
 		lastwaittime = FRAME_CAPTURE_INTERVAL - tim;
 		if (lastwaittime < 0) lastwaittime = 0;
 	}
-	if (shutdownhandle) CloseHandle(shutdownhandle);
 	_NetworkServer->Stop();
 }

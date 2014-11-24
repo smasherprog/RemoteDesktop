@@ -33,7 +33,7 @@ void RemoteDesktop::BaseServer::Stop(){
 }
 
 void RemoteDesktop::BaseServer::StartListening(unsigned short port, HDESK h){
-	_NetworkCurrentDesktop  = h;
+	_NetworkCurrentDesktop = h;
 	Stop();
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port);
@@ -41,8 +41,9 @@ void RemoteDesktop::BaseServer::StartListening(unsigned short port, HDESK h){
 
 
 void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
-	for (auto i = 1; i < SocketArray.size(); i++){
-		if (SocketArray[i]->Send(m, msg) == -1) _OnDisconnect(i);//disconect cliet here
+	std::lock_guard<std::mutex> lo(_SocketArrayLock);
+	for (auto& c : SocketArray) {
+		c->Send(m, msg);
 	}
 }
 
@@ -143,12 +144,16 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 }
 
 void RemoteDesktop::BaseServer::_OnDisconnect(int index){
-	if (index<0 || index > SocketArray.size()) return;
+	if (index<0 || index >= SocketArray.size()) return;
 	DEBUG_MSG("_OnDisconnect Called");
 	Disconnect_CallBack(SocketArray[index]);
 	auto ev = EventArray[index];
-	EventArray.erase(EventArray.begin() + index);
-	SocketArray.erase(SocketArray.begin() + index);
+	{
+		std::lock_guard<std::mutex> lo(_SocketArrayLock);
+		EventArray.erase(EventArray.begin() + index);
+		SocketArray.erase(SocketArray.begin() + index);
+	}
+
 	if (ev != NULL) WSACloseEvent(ev);
 	DEBUG_MSG("_OnDisconnect Finished");
 }
@@ -182,7 +187,7 @@ void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 	DEBUG_MSG("BaseServer OnConnect End");
 }
 void RemoteDesktop::BaseServer::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){
-	for (auto a : SocketArray){//copys are intentional to ensure lifetime management
+	for (auto& a : SocketArray){
 		if (a.get() == s) {
 			Receive_CallBack(p, d, a);
 			break;
@@ -191,7 +196,7 @@ void RemoteDesktop::BaseServer::_OnReceiveHandler(Packet_Header* p, const char* 
 }
 
 void RemoteDesktop::BaseServer::_OnConnectHandler(SocketHandler* socket){
-	for (auto a : SocketArray){//copys are intentional to ensure lifetime management
+	for (auto& a : SocketArray){
 		if (a.get() == socket) {
 			Connected_CallBack(a);
 			break;

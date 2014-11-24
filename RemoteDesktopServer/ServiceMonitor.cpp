@@ -3,6 +3,8 @@
 #include "ServiceHelpers.h"
 #include "Userenv.h"
 #include <fstream>
+#include "..\RemoteDesktop_Library\Event_Wrapper.h"
+
 RemoteDesktop::ServiceMonitor::ServiceMonitor() : lpfnWTSGetActiveConsoleSessionId("kernel32", "WTSGetActiveConsoleSessionId") {
 	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
 	memset(&StartUPInfo, 0, sizeof(STARTUPINFO));
@@ -26,9 +28,6 @@ void RemoteDesktop::ServiceMonitor::Stop(){
 
 }
 
-void RemoteDesktop::ServiceMonitor::LaunchProcess(){
-
-}
 void wait_for_existing_process()
 {
 	HANDLE hEvent = NULL;
@@ -42,12 +41,12 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 
 	wait_for_existing_process();//wait for any existing program to stop running
 
-	auto exitrdprogram = CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram");
-	auto cadrequest = CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRDCad");
+	Event_Wrapper exitprog(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram"));
+	Event_Wrapper cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRDCad"));
 
 	while (Running){
-
-		auto Index = WaitForSingleObject(cadrequest, 1000);
+		DEBUG_MSG("Waiting for CAD Event");
+		auto Index = WaitForSingleObject(cardreq.get_Handle(), 1000);
 		if (Index == 0){
 			typedef VOID(WINAPI *SendSas)(BOOL asUser);
 			HINSTANCE Inst = LoadLibrary(L"sas.dll");
@@ -61,7 +60,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		if ((_LastSession != 0xFFFFFFFF) && (_LastSession >= 0) && (_LastSession != _CurrentSession)){
 			_CurrentSession = _LastSession;
 			DWORD exitcode = 0;
-			SetEvent(exitrdprogram); // signal to shut down if running
+			SetEvent(exitprog.get_Handle()); // signal to shut down if running
 			Sleep(3000);
 			if (ProcessInfo.hProcess == 0) {//this is the first launch of the application
 				_LaunchProcess();
@@ -95,7 +94,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		}
 
 	}
-	if (exitrdprogram) SetEvent(exitrdprogram); // signal to shut down if running
+	if (exitprog.get_Handle()) SetEvent(exitprog.get_Handle()); // signal to shut down if running
 
 	if (ProcessInfo.hProcess)
 	{
@@ -103,9 +102,6 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
 		if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
 	}
-
-	if (exitrdprogram) CloseHandle(exitrdprogram);//close handle
-
 }
 
 void RemoteDesktop::ServiceMonitor::_LaunchProcess(){

@@ -25,7 +25,7 @@ namespace RemoteDesktop{
 		~ServiceMonitor();
 		void Start();
 		void Stop();
-		void LaunchProcess();
+
 	};
 };
 

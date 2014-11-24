@@ -4,7 +4,7 @@
 #include "CommonNetwork.h"
 #include <algorithm>
 
-RemoteDesktop::Display::Display(HWND hwnd) : _HWND(hwnd){
+RemoteDesktop::Display::Display(HWND hwnd, void(__stdcall * oncursorchange)(int)) : _HWND(hwnd), _OnCursorChange(oncursorchange){
 
 	_System_Cursors = GetSystemCursors();
 
@@ -48,22 +48,9 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	auto hMemDC = CreateCompatibleDC(hdc);
 	_Draw(hdc, hMemDC, ptr->Bitmap, ptr->width, ptr->height);
 
-	POINT p;
-	GetCursorPos(&p);
-	bool inwindow = p.x > rect.left && p.x < rect.right && p.y> rect.top && p.y < rect.bottom;
-
-	static int _LastCursor = -23452;
-
-	if (inwindow && (GetFocus() == _HWND)) {
-		if (HCursor.ID != _LastCursor){
-			DEBUG_MSG("Setting cursor %", HCursor.ID);
-			::SetCursor(HCursor.HCursor);
-		}
-	}
-	else {
+	if (GetFocus() != _HWND) {
 		DrawIcon(hdc, _MousePos.left, _MousePos.top, HCursor.HCursor);
 	}
-	_LastCursor = HCursor.ID;
 	DeleteDC(hMemDC);
 }
 
@@ -118,37 +105,38 @@ void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 	if (f != _System_Cursors.end()){
 		if (f->ID != HCursor.ID){
 			DEBUG_MSG("Cursor Changed");
+			_OnCursorChange(f->ID);
 		}
 		HCursor = *f;
 	}
 	InvalidateRect(_HWND, NULL, false);
 }
-
-bool RemoteDesktop::Display::SetCursor(){
-
-	RECT rect;
-	if (!GetClientRect(_HWND, &rect)) return true;
-
-	ClientToScreen(_HWND, (LPPOINT)&rect.left);
-	ClientToScreen(_HWND, (LPPOINT)&rect.right);
-
-	if (rect.bottom == 0 && rect.left == 0 && rect.right == 0 && rect.top == 0) {
-		DEBUG_MSG("Exiting cannot see window");
-		return true;
-	}
-
-	POINT p;
-	if (!GetCursorPos(&p)) {
-		DEBUG_MSG("Exiting cannot GetCursorPos");
-		return true;
-	}
-	bool inwindow = p.x > rect.left && p.x < rect.right && p.y> rect.top && p.y < rect.bottom;
-	if (inwindow && (GetFocus() == _HWND)) {
-
-		//DEBUG_MSG("Setting cursor %", HCursor.ID);
-	//	::SetCursor(HCursor.HCursor);
-		return true;
-	}
-	return false;
-
-}
+//
+//bool RemoteDesktop::Display::SetCursor(){
+//
+//	RECT rect;
+//	if (!GetClientRect(_HWND, &rect)) return true;
+//
+//	ClientToScreen(_HWND, (LPPOINT)&rect.left);
+//	ClientToScreen(_HWND, (LPPOINT)&rect.right);
+//
+//	if (rect.bottom == 0 && rect.left == 0 && rect.right == 0 && rect.top == 0) {
+//		DEBUG_MSG("Exiting cannot see window");
+//		return true;
+//	}
+//
+//	POINT p;
+//	if (!GetCursorPos(&p)) {
+//		DEBUG_MSG("Exiting cannot GetCursorPos");
+//		return true;
+//	}
+//	bool inwindow = p.x > rect.left && p.x < rect.right && p.y> rect.top && p.y < rect.bottom;
+//	if (inwindow && (GetFocus() == _HWND)) {
+//
+//		//DEBUG_MSG("Setting cursor %", HCursor.ID);
+//		::SetCursor(HCursor.HCursor);
+//		return true;
+//	}
+//	return false;
+//
+//}

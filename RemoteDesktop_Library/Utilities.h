@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 template<typename... Args>
 void DEBUG_MSG(const char *s, Args... args)
@@ -103,6 +104,11 @@ inline std::wstring FormatBytes(long bytes)
 #define assert2(_Expression, _Msg) (void)( (!!(_Expression)) || (_wassert(_Msg, _CRT_WIDE(__FILE__), __LINE__), 0) )
 #endif
 
+inline std::ifstream::pos_type filesize(const char* filename)
+{
+	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+	return in.tellg();
+}
 
 template<class T> T GetFileExtention(const T& file){// this will only strip off everything include the . of an extention
 	T::size_type po = file.find_last_of('.');
@@ -144,6 +150,13 @@ inline bool FileExists(const std::string& f){
 	struct stat fileInfo;
 	return stat(f.c_str(), &fileInfo) == 0;
 }
+inline bool IsFile(const std::string& f){
+	struct stat info;
+	if (stat(f.c_str(), &info) != 0) return false;
+	else if (info.st_mode & S_IFDIR)  return false;
+	else return true;
+}
+
 
 class DynamicFnBase {
 public:

@@ -2,6 +2,7 @@
 #include "Desktop_Monitor.h"
 #include <fstream>
 #include <thread>
+#include "..\RemoteDesktop_Library\Desktop_Wrapper.h"
 
 RemoteDesktop::DesktopMonitor::DesktopMonitor(){
 	CADEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad");
@@ -61,28 +62,21 @@ bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected() const{
 	// Get the input and thread desktops
 	HDESK threaddesktop = GetThreadDesktop(GetCurrentThreadId());
 
-	HDESK inputdesktop = OpenInputDesktop(0, FALSE,
+	Desktop_Wrapper inputdesktop(OpenInputDesktop(0, FALSE,
 		DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
 		DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
 		DESKTOP_WRITEOBJECTS | DESKTOP_READOBJECTS |
-		DESKTOP_SWITCHDESKTOP);
+		DESKTOP_SWITCHDESKTOP));
 
-	if (inputdesktop == NULL) return true;
+	if (inputdesktop.get_Handle() == NULL) return true;
 
 
 	DWORD dummy;
 	char threadname[256];
 	char inputname[256];
 
-	if (!GetUserObjectInformation(threaddesktop, UOI_NAME, &threadname, 256, &dummy)) {
-		CloseDesktop(inputdesktop);
-		return false;
-	}
-	if (!GetUserObjectInformation(inputdesktop, UOI_NAME, &inputname, 256, &dummy)) {
-		CloseDesktop(inputdesktop);
-		return false;
-	}
-	CloseDesktop(inputdesktop);
+	if (!GetUserObjectInformation(threaddesktop, UOI_NAME, &threadname, 256, &dummy)) return false;
+	if (!GetUserObjectInformation(inputdesktop.get_Handle(), UOI_NAME, &inputname, 256, &dummy)) return false;
 	return strcmp(threadname, inputname) == 0;
 }
 void RemoteDesktop::DesktopMonitor::Switch_to_ActiveDesktop(){

@@ -22,15 +22,16 @@ namespace RemoteDesktop{
 
 		Point _MousePos;
 		Cursor_Type HCursor;
+		void(__stdcall * _OnCursorChange)(int c_type);
 
 	public:
-		Display(HWND hwnd);
+		Display(HWND hwnd, void(__stdcall * oncursorchange)(int));
 
 		void NewImage(Image& img);
 		void UpdateImage(Image& img, Image_Diff_Header& h);
 		void UpdateMouse(MouseEvent_Header& h);
 		void Draw(HDC hdc);
-		bool SetCursor();
+		//bool SetCursor();
 
 		
 	};

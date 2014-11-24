@@ -23,7 +23,6 @@ void ServerService::OnStart(DWORD dwArgc, LPWSTR *lpszArgv)
 
 	_ServiceMonitor = std::make_unique<RemoteDesktop::ServiceMonitor>();
 	_ServiceMonitor->Start();
-	_ServiceMonitor->LaunchProcess();
 }
 void ServerService::OnStop()
 {
@@ -34,5 +33,5 @@ void ServerService::OnStop()
 	_ServiceMonitor.release();
 }
 void ServerService::OnSessionChange(){
-	_ServiceMonitor->LaunchProcess();
+	
 }

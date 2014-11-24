@@ -21,6 +21,7 @@ namespace RemoteDesktop{
 		std::mutex _DisconectClientLock;
 		std::vector<SocketHandler*> _DisconectClientList;
 
+		std::mutex _SocketArrayLock;
 		std::thread _BackGroundNetworkWorker;
 		std::vector<WSAEVENT> EventArray;
 
@@ -42,7 +43,7 @@ namespace RemoteDesktop{
 		bool Is_Running() const{ return Running; }
 
 		void SetThreadDesktop(HDESK h){ _NetworkCurrentDesktop = h; }
-		int Client_Count() const { return  SocketArray.size() - 1; }
+		size_t Client_Count() const { return  SocketArray.size() - 1; }
 		void StartListening(unsigned short port, HDESK h);
 		void Stop();
 		void SendToAll(NetworkMessages m, NetworkMsg& msg );

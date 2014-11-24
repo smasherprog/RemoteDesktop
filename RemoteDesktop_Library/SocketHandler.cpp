@@ -16,14 +16,13 @@ RemoteDesktop::SocketHandler::SocketHandler(SOCKET socket, bool client){
 	_ReceivedBuffer.reserve(STARTBUFFERSIZE);
 	_SendBuffer.reserve(STARTBUFFERSIZE);
 	_Encyption.Init(client);
-
-
 }
 
-RemoteDesktop::Network_Return _SendLoop(SOCKET s, char* data, int len){
+RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_SendLoop(char* data, int len){
 	while (len > 0){
 		//DEBUG_MSG("send len %", len);
-		auto sentamount = send(s, data, len, 0);
+		std::lock_guard<std::mutex> slock(_SendLock);//this lock is needed to prevent multiple threads from interleaving send calls
+		auto sentamount = send(_Socket->socket, data, len, 0);
 		if (sentamount < 0){
 			auto sockerr = WSAGetLastError();
 			if (sockerr != WSAEMSGSIZE && sockerr != WSAEWOULDBLOCK){
@@ -48,7 +47,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(){
 	memcpy(_SendBuffer.data(), _Encyption.get_Static_PublicKey(), StaticPublicKeyLength);
 	memcpy(_SendBuffer.data() + StaticPublicKeyLength, _Encyption.get_Ephemeral_PublicKey(), EphemeralPublicKeyLength);
 
-	auto ret = _SendLoop(_Socket->socket, _SendBuffer.data(), _SendBuffer.size());
+	auto ret = _SendLoop(_SendBuffer.data(), _SendBuffer.size());
 	State = PEER_STATE_EXCHANGING_KEYS;
 	if (ret == FAILED) return _Disconnect();
 	return ret;
@@ -78,7 +77,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 	auto enph = (Packet_Encrypt_Header*)_SendBuffer.data();
 	enph->PayloadLen = _Encyption.Ecrypt(beg, end - beg, enph->IV) + IVSIZE;
 	if (enph->PayloadLen < 0)  return _Disconnect();
-	if (_SendLoop(_Socket->socket, _SendBuffer.data(), enph->PayloadLen + sizeof(enph->PayloadLen)) == RemoteDesktop::Network_Return::FAILED) return _Disconnect();
+	if (_SendLoop(_SendBuffer.data(), enph->PayloadLen + sizeof(enph->PayloadLen)) == RemoteDesktop::Network_Return::FAILED) return _Disconnect();
 	Traffic.UpdateSend(enph->PayloadLen + sizeof(enph->PayloadLen));
 	return RemoteDesktop::Network_Return::COMPLETED;
 }

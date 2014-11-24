@@ -2,8 +2,8 @@
 #include "DLL_API.h"
 #include "Client.h"
 
-void* Create_Client(void* hwnd){
-	return new RemoteDesktop::Client((HWND)hwnd);
+void* Create_Client(void* hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int)){
+	return new RemoteDesktop::Client((HWND)hwnd, onconnect, ondisconnect, oncursorchange);
 }
 void Destroy_Client(void* client){
 	if (client != NULL) {
@@ -36,4 +36,9 @@ void SendCAD(void* client){
 	if (client == NULL)return;
 	auto c = (RemoteDesktop::Client*)client;
 	c->SendCAD();
+}
+void SendFile(void* client, const char* absolute_path, const char* root_path){
+	if (client == NULL)return;
+	auto c = (RemoteDesktop::Client*)client;
+	c->SendFile(absolute_path, root_path);
 }

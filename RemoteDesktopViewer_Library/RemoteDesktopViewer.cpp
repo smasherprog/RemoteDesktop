@@ -177,7 +177,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_SETCURSOR:
 		if (_Client != nullptr)
-			if (_Client->SetCursor()) return 0;
+			//if (_Client->SetCursor()) return 0;
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	case WM_MOUSEMOVE:
 		ButtonsShown = false;
@@ -224,7 +224,7 @@ INT_PTR CALLBACK ConnectAbout(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			GetWindowText(GetDlgItem(hDlg, IDC_EDIT1), text, 128);
 			if (RemoteDesktop::Ping(text)){
-				_Client = std::make_unique<RemoteDesktop::Client>(_H_wnd);
+			//	_Client = std::make_unique<RemoteDesktop::Client>(_H_wnd);
 				//_Client->Connect(L"127.0.0.1", L"443");
 				_Client->Connect(text, L"443");
 				SetFocus(_H_wnd);

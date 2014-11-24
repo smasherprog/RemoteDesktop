@@ -60,7 +60,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Code\Client_Wrapper.cs" />
+    <Compile Include="Code\ControlExtension.cs" />
+    <Compile Include="Code\CursorManager.cs" />
     <Compile Include="Code\InputListener.cs" />
     <Compile Include="Code\ViewPort.cs">
       <SubType>Component</SubType>
@@ -70,6 +71,12 @@
     </Compile>
     <Compile Include="ConnectDialog.Designer.cs">
       <DependentUpon>ConnectDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Connecting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Connecting.Designer.cs">
+      <DependentUpon>Connecting.cs</DependentUpon>
     </Compile>
     <Compile Include="MainViewer.cs">
       <SubType>Form</SubType>
@@ -81,6 +88,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="ConnectDialog.resx">
       <DependentUpon>ConnectDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Connecting.resx">
+      <DependentUpon>Connecting.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainViewer.resx">
       <DependentUpon>MainViewer.cs</DependentUpon>

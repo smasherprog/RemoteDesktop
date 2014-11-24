@@ -6,11 +6,10 @@
 
 RemoteDesktop::BaseClient::BaseClient(std::function<void(std::shared_ptr<SocketHandler>&)> c,
 	std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
-	std::function<void(std::shared_ptr<SocketHandler>&)> d){
+	std::function<void()> d){
 	Connected_CallBack = c;
 	Receive_CallBack = r;
 	Disconnect_CallBack = d;
-
 }
 RemoteDesktop::BaseClient::~BaseClient(){
 	DEBUG_MSG("~BaseClient() Beg");
@@ -23,7 +22,7 @@ void RemoteDesktop::BaseClient::Connect(std::wstring host, std::wstring port){
 	_Host = host;
 	_Port = port;
 	Running = true;
-	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this);
+	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this, 1);
 
 }
 
@@ -92,20 +91,21 @@ bool RemoteDesktop::BaseClient::_Connect(){
 	return true;
 }
 
-void RemoteDesktop::BaseClient::_RunWrapper(){
-	static int counter = 0;
-	counter = 0;
+void RemoteDesktop::BaseClient::_RunWrapper(int connectattempts){
+	int counter = 0;
 
-	while (Running && counter++ < 15){
+	while (Running && counter++ < connectattempts){
 		if (!_Connect()){
 			DEBUG_MSG("socket failed with error = %\n", WSAGetLastError());
 		}
 		else {
 			counter = 0;//reset timer
 			DisconnectReceived = false;
+			connectattempts = 15;//set this to a specific value
 			_Run();
 		}
 	}
+	if (counter >= connectattempts)	Disconnect_CallBack();
 	Running = false;
 
 }
@@ -141,7 +141,7 @@ void RemoteDesktop::BaseClient::_Run(){
 void RemoteDesktop::BaseClient::_OnDisconnectHandler(SocketHandler* socket){
 	DisconnectReceived = true;
 	DEBUG_MSG("Disconnect Received");
-	Disconnect_CallBack(Socket);
+	Disconnect_CallBack();
 }
 
 void RemoteDesktop::BaseClient::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){

@@ -177,7 +177,9 @@
   <ItemGroup>
     <ClInclude Include="CommonNetwork.h" />
     <ClInclude Include="Console.h" />
+    <ClInclude Include="Desktop_Wrapper.h" />
     <ClInclude Include="Encryption.h" />
+    <ClInclude Include="Event_Wrapper.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ImageCompression.h" />
     <ClInclude Include="MouseCommon.h" />
@@ -192,7 +194,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Console.cpp" />
+    <ClCompile Include="Desktop_Wrapper.cpp" />
     <ClCompile Include="Encryption.cpp" />
+    <ClCompile Include="Event_Wrapper.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ImageCompression.cpp" />
     <ClCompile Include="NetworkSetup.cpp" />

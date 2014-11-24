@@ -11,7 +11,7 @@
 #include <functional>
 #include <vector>
 #include "Traffic_Monitor.h"
-
+#include <mutex>
 
 namespace RemoteDesktop{
 	enum PeerState{
@@ -23,14 +23,16 @@ namespace RemoteDesktop{
 	class socket_wrapper{
 	public:
 		SOCKET socket;
-	
+
 		explicit socket_wrapper(SOCKET s) : socket(s) { }
 		~socket_wrapper();
 		
 	};
 	class SocketHandler{
+		std::mutex _SendLock;
 		std::vector<char> _ReceivedBuffer, _SendBuffer;
 		int _ReceivedBufferCounter = 0;
+		Network_Return _SendLoop(char* data, int len);
 
 		Packet_Encrypt_Header _Encypt_Header;
 		Encryption _Encyption;

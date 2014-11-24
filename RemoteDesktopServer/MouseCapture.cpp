@@ -17,6 +17,12 @@ void RemoteDesktop::MouseCapture::Update(){
 		return;
 	ICONINFO iconinfo;
 	if (!GetIconInfo(cursorInfo.hCursor, &iconinfo)) return;
+
+	if (iconinfo.hbmMask != NULL)
+		DeleteObject(iconinfo.hbmMask);
+	if (iconinfo.hbmColor != NULL)
+		DeleteObject(iconinfo.hbmColor);
+
 	Last_ScreenPos = Current_ScreenPos;
 
 	Current_ScreenPos.left = cursorInfo.ptScreenPos.x - iconinfo.xHotspot;

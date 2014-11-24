@@ -7,9 +7,10 @@
 #include "BaseClient.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 
-RemoteDesktop::Client::Client(HWND hwnd) : _HWND(hwnd) {
+RemoteDesktop::Client::Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect) {
+
 	_ImageCompression = std::make_unique<ImageCompression>();
-	_Display = std::make_unique<Display>(hwnd);
+	_Display = std::make_unique<Display>(hwnd, oncursorchange);
 	//SetWindowText(_HWND, L"Remote Desktop Viewer");
 	DEBUG_MSG("Client()");
 }
@@ -19,36 +20,27 @@ RemoteDesktop::Client::~Client(){
 	_NetworkClient->Stop();
 	DEBUG_MSG("~Client() End");
 }
-void RemoteDesktop::Client::OnDisconnect(std::shared_ptr<SocketHandler>& sh){
-	//SetWindowText(_HWND, L"Remote Desktop Viewer");
+void RemoteDesktop::Client::OnDisconnect(){
+	_OnDisconnect();
 }
 void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port){
 	if (_NetworkClient) _NetworkClient.reset();
 	_NetworkClient = std::make_unique<BaseClient>(std::bind(&RemoteDesktop::Client::OnConnect, this, std::placeholders::_1),
 		std::bind(&RemoteDesktop::Client::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-		std::bind(&RemoteDesktop::Client::OnDisconnect, this, std::placeholders::_1));
+		std::bind(&RemoteDesktop::Client::OnDisconnect, this));
 	_NetworkClient->Connect(host, port);
 }
 void RemoteDesktop::Client::Stop(){
 	_NetworkClient->Stop();
 }
 
-bool RemoteDesktop::Client::SetCursor(){
-	return _Display->SetCursor();
-}
-
 void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	DEBUG_MSG("Connection Successful");
-	_DownKeys.clear();
+
+	_OnConnect();
 }
 
 void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
-	if (down){
-		if (std::find(_DownKeys.begin(), _DownKeys.end(), VK) != _DownKeys.end()) _DownKeys.push_back(VK);// key is not in a down state
-	}
-	else {//otherwise, remove the key
-		std::remove(_DownKeys.begin(), _DownKeys.end(), VK);
-	}
 
 	NetworkMsg msg;
 	KeyEvent_Header h;
@@ -81,6 +73,25 @@ void RemoteDesktop::Client::SendCAD(){
 	_NetworkClient->Send(NetworkMessages::CAD, msg);
 }
 
+void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* root_path){
+	std::string filename = absolute_path;
+	if (IsFile(filename)){
+		auto fs = filesize(absolute_path);
+		if (fs <= 0) return;//file must not exist
+		NetworkMsg msg;
+		std::vector<char> data;
+		data.resize(fs);
+
+		std::ifstream in(absolute_path, std::ifstream::binary);
+		in.read(data.data(), fs);//read all the data
+
+		//_NetworkClient->Send(NetworkMessages::CAD, msg);
+	}
+	else {
+
+	}
+
+}
 
 void RemoteDesktop::Client::Draw(HDC hdc){
 	_Display->Draw(hdc);

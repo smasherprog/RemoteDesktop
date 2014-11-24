@@ -18,6 +18,7 @@ namespace RemoteDesktop{
 		HCURSOR HCursor;
 		Mouse_Types ID = INVALID_MOUSE;
 	};
+	
 	inline std::vector<Cursor_Type> GetSystemCursors(){
 		std::vector<Cursor_Type> _System_Cursors;
 		_System_Cursors.push_back(Cursor_Type(LoadCursor(NULL, MAKEINTRESOURCE(ARROW)), ARROW));

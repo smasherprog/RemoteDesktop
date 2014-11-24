@@ -16,12 +16,12 @@ namespace RemoteDesktop{
 
 		std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> Receive_CallBack;
 		std::function<void(std::shared_ptr<SocketHandler>&)> Connected_CallBack;
-		std::function<void(std::shared_ptr<SocketHandler>&)> Disconnect_CallBack;
+		std::function<void()> Disconnect_CallBack;
 
 	
 
 		void _Run();
-		void _RunWrapper();
+		void _RunWrapper(int connectattempts);
 		std::thread _BackGroundNetworkWorker;
 
 		std::wstring _Host, _Port;
@@ -31,7 +31,7 @@ namespace RemoteDesktop{
 	public:
 		explicit BaseClient(std::function<void(std::shared_ptr<SocketHandler>&)> c,
 			std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
-			std::function<void(std::shared_ptr<SocketHandler>&)> d);
+			std::function<void()> d);
 		~BaseClient();
 
 		void Connect(std::wstring host, std::wstring port = L"443");

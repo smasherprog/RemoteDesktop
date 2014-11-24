@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -108,9 +109,10 @@ namespace RemoteDesktop_Viewer.Code
                     {
                         InputMouseEvent(m.Msg, p.X, p.Y, wheel);
                         _LastMsg = m.Msg;
-                        p.X = _LastX;
-                        p.Y = _LastY;
+                        _LastX = p.X;
+                        _LastY = p.Y;
                         _Lastwheel = wheel;
+                        Debug.WriteLine("Sending Mouse event " + m.Msg);
                     }
 
                 }

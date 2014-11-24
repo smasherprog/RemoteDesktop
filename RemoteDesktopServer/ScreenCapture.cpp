@@ -5,35 +5,32 @@ RemoteDesktop::ScreenCapture::~ScreenCapture(){
 	ReleaseHandles();
 }
 void RemoteDesktop::ScreenCapture::ReleaseHandles(){
-	if (nBmp != nullptr) DeleteObject(nBmp);
-	if (nDest != nullptr) DeleteDC(nDest);
-	ReleaseDC(nDesk, nSrce);
-	nDesk = nullptr;
-	nSrce = nullptr;
-	nDest = nullptr;
-	nBmp = nullptr;
+	if (nSrce != NULL) ReleaseDC(nDesk, nSrce);
+	if (nDest != NULL) DeleteDC(nDest);
+	if (nBmp != NULL) DeleteObject(nBmp);
+	nDesk = NULL;
+	nSrce = NULL;
+	nDest = NULL;
+	nBmp = NULL;
 }
 
-RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(){
-	return GetPrimary(WorkingBuffer);
-}
 //use the buffer passed in
 RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(std::vector<unsigned char>& buffer){
 
 	auto screenw(GetSystemMetrics(SM_CXSCREEN)), screenh(GetSystemMetrics(SM_CYSCREEN));
-	if (nDesk == nullptr)
+	if (nDesk == NULL)
 		nDesk = GetDesktopWindow();
-	if (nSrce == nullptr)
-		nSrce = GetWindowDC(nDesk);
-	if (nDest == nullptr)
+	if (nSrce == NULL)
+		nSrce = GetDC(nDesk);
+	if (nDest == NULL)
 		nDest = CreateCompatibleDC(nSrce);
-	if (nBmp == nullptr)
+	if (nBmp == NULL)
 		nBmp = CreateCompatibleBitmap(nSrce, screenw, screenh);
 
-	SelectObject(nDest, nBmp);
+	auto oldbmp = SelectObject(nDest, nBmp);
 
 	auto b = BitBlt(nDest, 0, 0, screenw, screenh, nSrce, 0, 0, SRCCOPY | CAPTUREBLT);
-
+	
 	BITMAPINFOHEADER   bi;
 
 	bi.biSize = sizeof(BITMAPINFOHEADER);
@@ -51,7 +48,8 @@ RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(std::vector<unsign
 	auto dwBmpSize = ((screenw * bi.biBitCount + 31) / 32) * 4 * screenh;
 	buffer.reserve(dwBmpSize);
 
-	GetDIBits(nSrce, nBmp, 0, (UINT)screenh, buffer.data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-
+	GetDIBits(nSrce, nBmp, 0, (UINT)screenh, buffer.data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS); 
+	SelectObject(nDest, oldbmp);
+	//ReleaseHandles();
 	return Image(buffer.data(), dwBmpSize, screenh, screenw, false);
 }

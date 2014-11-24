@@ -19,6 +19,12 @@
     <Filter Include="Source Files\Network">
       <UniqueIdentifier>{7cc09a20-7661-414c-83a1-04285a73e6a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Wrappers">
+      <UniqueIdentifier>{003dbcb9-a9f3-4604-8691-e61a7517cdd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Wrappers">
+      <UniqueIdentifier>{bdf5458b-1f73-4da9-b2fa-23f732fe4723}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -63,6 +69,12 @@
     <ClInclude Include="Ping.h">
       <Filter>Header Files\Network</Filter>
     </ClInclude>
+    <ClInclude Include="Event_Wrapper.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="Desktop_Wrapper.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -94,6 +106,12 @@
     </ClCompile>
     <ClCompile Include="Ping.cpp">
       <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Event_Wrapper.cpp">
+      <Filter>Source Files\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="Desktop_Wrapper.cpp">
+      <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
