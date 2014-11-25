@@ -39,7 +39,7 @@ namespace RemoteDesktop_Viewer
         [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void SendCAD(IntPtr client);
         [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Ansi)]
-        static extern void SendFile(IntPtr client, string absolute_path, string root_path);
+        static extern void SendFile(IntPtr client, string absolute_path, string relative_path);
 
         public delegate void OnConnectHandler();
         public delegate void OnDisconnectHandler();
@@ -110,7 +110,7 @@ namespace RemoteDesktop_Viewer
             lock(_PendingFiles_Lock)
             {
                 var li = new List<string>();
-                li.AddRange((string[])e.Data.GetData(DataFormats.FileDrop));
+                foreach(var item in (string[])e.Data.GetData(DataFormats.FileDrop)) AddFileOrDirectory(item, li);
                 _PendingFiles.Add(li);
                 if(_FileSendingThread == null)
                 {
@@ -118,6 +118,38 @@ namespace RemoteDesktop_Viewer
                     _FileSendingThread.Start();
                 }
 
+            }
+        }
+
+        private void AddFileOrDirectory(string searchpath, List<string> filelist)
+        {
+            if(Directory.Exists(searchpath))
+            {
+                try
+                {
+                    var di = new DirectoryInfo(searchpath);
+                    filelist.Add(searchpath);
+                    foreach(var item in di.GetDirectories())
+                    {
+                        AddFileOrDirectory(item.FullName, filelist);
+                    }
+                    foreach(var item in di.GetFiles())
+                    {
+                        AddFileOrDirectory(item.FullName, filelist);
+                    }
+                } catch(Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
+            } else
+            {
+                try
+                {
+                    filelist.Add(searchpath);
+                } catch(Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
             }
         }
 
@@ -141,12 +173,14 @@ namespace RemoteDesktop_Viewer
                             _PendingFiles.RemoveAt(0);
                             continue;// continue loop
                         }
+                        Debug.WriteLine("Root Path is" + rootpath);
                         var filelist = _PendingFiles.FirstOrDefault();
                         var dt = DateTime.Now;//send for 30 ms, then goto sleep
                         int count = 0;
-                        while((DateTime.Now - dt).TotalMilliseconds < 30)
+                        for(var i = 0; i < filelist.Count && (DateTime.Now - dt).TotalMilliseconds < 30; i++)
                         {
-                            SendFile(_Client, filelist.FirstOrDefault(), rootpath);
+                            var tempfile = filelist[i].Remove(0, rootpath.Length);
+                            SendFile(_Client, filelist[i], tempfile);
                             count++;
                         }
                         filelist.RemoveRange(0, count);

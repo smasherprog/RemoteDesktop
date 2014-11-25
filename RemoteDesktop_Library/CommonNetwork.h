@@ -51,8 +51,8 @@ namespace RemoteDesktop{
 		PARTIALLY_COMPLETED
 	};
 	struct DataPackage{
-		DataPackage(char*d, int l) : data(d), len(l) {}
-		char* data = nullptr;
+		DataPackage(const char*d, int l) : data(d), len(l) {}
+		const char* data = nullptr;
 		int len = 0;
 	};
 	class NetworkMsg{
@@ -60,7 +60,7 @@ namespace RemoteDesktop{
 		NetworkMsg(){}
 		int payloadlength()const{ auto l = 0; for (auto& a : data) l += a.len; return l; }
 		std::vector<DataPackage> data;
-		template<class T>void push_back(const T& x){ data.push_back(DataPackage((char*)&x, sizeof(x))); }
+		template<class T>void push_back(const T& x){ data.push_back(DataPackage((const char*)&x, sizeof(x))); }
 	};
 
 

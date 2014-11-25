@@ -35,6 +35,8 @@ namespace RemoteDesktop{
 		void _Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing);
 
 		void _Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh);
+		void _Handle_File(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh); 
+		void _Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
 
 		bool _RunningAsService = false;
 

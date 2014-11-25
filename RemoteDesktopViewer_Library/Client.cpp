@@ -73,8 +73,9 @@ void RemoteDesktop::Client::SendCAD(){
 	_NetworkClient->Send(NetworkMessages::CAD, msg);
 }
 
-void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* root_path){
+void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path){
 	std::string filename = absolute_path;
+	std::string relative = relative_path;
 	if (IsFile(filename)){
 		auto fs = filesize(absolute_path);
 		if (fs <= 0) return;//file must not exist
@@ -84,11 +85,21 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* root
 
 		std::ifstream in(absolute_path, std::ifstream::binary);
 		in.read(data.data(), fs);//read all the data
-
-		//_NetworkClient->Send(NetworkMessages::CAD, msg);
+		char size = relative.size();
+		msg.data.push_back(DataPackage(&size, sizeof(size)));
+		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
+		int isize = data.size(); 
+		msg.data.push_back(DataPackage((char*)&isize, sizeof(isize)));
+		msg.data.push_back(DataPackage(data.data(), data.size()));
+		_NetworkClient->Send(NetworkMessages::FILE, msg);
 	}
 	else {
-
+	
+		NetworkMsg msg;
+		char size = relative.size();
+		msg.data.push_back(DataPackage(&size, sizeof(size)));
+		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
+		_NetworkClient->Send(NetworkMessages::FOLDER, msg);
 	}
 
 }

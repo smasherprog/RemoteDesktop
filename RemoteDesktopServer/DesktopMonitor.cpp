@@ -3,6 +3,7 @@
 #include <fstream>
 #include <thread>
 #include "..\RemoteDesktop_Library\Desktop_Wrapper.h"
+#include "Wtsapi32.h"
 
 RemoteDesktop::DesktopMonitor::DesktopMonitor(){
 	CADEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad");
@@ -78,6 +79,19 @@ bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected() const{
 	if (!GetUserObjectInformation(threaddesktop, UOI_NAME, &threadname, 256, &dummy)) return false;
 	if (!GetUserObjectInformation(inputdesktop.get_Handle(), UOI_NAME, &inputname, 256, &dummy)) return false;
 	return strcmp(threadname, inputname) == 0;
+}
+std::string RemoteDesktop::DesktopMonitor::get_ActiveUser(){
+#if DEBUG
+	return std::string("scott");// using the functions below in debug cause visual studio to exit for some wierd reason. Works fine in release build. So enter your username here in debug builds
+#endif
+	char* ptr = NULL;
+	DWORD size = 0;
+	if (WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTSGetActiveConsoleSessionId(), WTS_INFO_CLASS::WTSUserName, &ptr, &size)){
+		auto name = std::string(ptr);
+		WTSFreeMemory(ptr);
+		return name;
+	}
+	return "";
 }
 void RemoteDesktop::DesktopMonitor::Switch_to_ActiveDesktop(){
 	auto threadsk = GetThreadDesktop(GetCurrentThreadId());

@@ -36,7 +36,7 @@ namespace RemoteDesktop{
 		void MouseEvent(unsigned int action, int x, int y, int wheel=0);
 
 		void SendCAD();
-		void SendFile(const char* absolute_path, const char* root_path);
+		void SendFile(const char* absolute_path, const char* relative_path);
 
 
 	};

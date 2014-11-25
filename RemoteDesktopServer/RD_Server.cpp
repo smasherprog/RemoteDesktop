@@ -96,6 +96,27 @@ void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const
 
 	SendInput(1, &inp, sizeof(inp));
 }
+void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	char size = *data;
+	data++;
+	std::string fname(data, size);
+	data += size;
+	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
+	int isize = 0;
+	memcpy(&isize, data, sizeof(isize));
+	data += sizeof(isize);
+	std::ofstream f(path, std::ios::binary);
+	f.write(data, isize);
+
+}
+void RemoteDesktop::RD_Server::_Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	char size = *data;
+	data++;
+	std::string fname(data, size);
+	data += size;
+	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
+	CreateDirectoryA(path.c_str(), NULL);
+}
 void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	switch (header->Packet_Type){
 	case NetworkMessages::KEYEVENT:
@@ -106,6 +127,12 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 		break;
 	case NetworkMessages::CAD:
 		_DesktopMonitor->SimulateCtrlAltDel();
+		break;
+	case NetworkMessages::FILE:
+		_Handle_File(header, data, sh);
+		break;
+	case NetworkMessages::FOLDER:
+		_Handle_Folder(header, data, sh);
 		break;
 	default:
 		break;

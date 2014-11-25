@@ -13,7 +13,7 @@ extern "C" {
 	DLLEXPORT void KeyEvent(void* client, int VK, bool down);
 	DLLEXPORT void MouseEvent(void* client, unsigned int action, int x, int y, int wheel);
 	DLLEXPORT void SendCAD(void* client);
-	DLLEXPORT void SendFile(void* client, const char* absolute_path, const char* root_path);
+	DLLEXPORT void SendFile(void* client, const char* absolute_path, const char* relative_path);
 }
 
 #endif
