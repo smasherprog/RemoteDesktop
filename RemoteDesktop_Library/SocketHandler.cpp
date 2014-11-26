@@ -21,7 +21,6 @@ RemoteDesktop::SocketHandler::SocketHandler(SOCKET socket, bool client){
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_SendLoop(char* data, int len){
 	while (len > 0){
 		//DEBUG_MSG("send len %", len);
-		std::lock_guard<std::mutex> slock(_SendLock);//this lock is needed to prevent multiple threads from interleaving send calls
 		auto sentamount = send(_Socket->socket, data, len, 0);
 		if (sentamount < 0){
 			auto sockerr = WSAGetLastError();
@@ -59,6 +58,14 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Send(NetworkMessages
 	else return _Encrypt_And_Send(m, msg);
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(NetworkMessages m, const NetworkMsg& msg){
+	std::lock_guard<std::mutex> slock(_SendLock);//this lock is needed to prevent multiple threads from interleaving send calls
+	if (_SendCounter++ >= 50 * 50){
+		_SendCounter = 0;
+		_SendBuffer.resize(STARTBUFFERSIZE);
+		_SendBuffer.shrink_to_fit();//shrink the vector down
+		DEBUG_MSG("Resized the Send Buffer Capacity now %", _SendBuffer.capacity());
+	}
+
 	auto sendsize = sizeof(Packet_Encrypt_Header) + sizeof(Packet_Header) + msg.payloadlength() + 32;
 	if (sendsize > MAXMESSAGESIZE) return _Disconnect();
 	if (sendsize >= _SendBuffer.capacity()) _SendBuffer.reserve(sendsize + STARTBUFFERSIZE);//grow ahead by chunks
@@ -81,23 +88,35 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 	Traffic.UpdateSend(enph->PayloadLen + sizeof(enph->PayloadLen));
 	return RemoteDesktop::Network_Return::COMPLETED;
 }
-RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Receive(){
+RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_ReceiveLoop(){
 
-	if (_ReceivedBufferCounter - _ReceivedBuffer.capacity() < STARTBUFFERSIZE) _ReceivedBuffer.reserve(_ReceivedBuffer.capacity() + STARTBUFFERSIZE);//grow ahead by chunks
-	auto amtrec = recv(_Socket->socket, _ReceivedBuffer.data() + _ReceivedBufferCounter, _ReceivedBuffer.capacity() - _ReceivedBufferCounter, 0);//read as much as possible
+	if (_ReceivedBufferCounter - _ReceivedBuffer.size() < STARTBUFFERSIZE) _ReceivedBuffer.resize(_ReceivedBuffer.size() + STARTBUFFERSIZE);//grow ahead by chunks
+	auto amtrec = recv(_Socket->socket, _ReceivedBuffer.data() + _ReceivedBufferCounter, _ReceivedBuffer.size() - _ReceivedBufferCounter, 0);//read as much as possible
 	if (amtrec > 0){
-		_ReceivedBufferCounter += amtrec;
 		Traffic.UpdateRecv(amtrec);
-		return _Decrypt_Received_Data();
+		_ReceivedBufferCounter += amtrec;
+		return _ReceiveLoop();
 	}
 	else if (amtrec == 0) return Network_Return::FAILED;
 	else {
 		auto errmsg = WSAGetLastError();
 		//DEBUG_MSG("_ProcessPacketHeader %", errmsg);
 		if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE)  return Network_Return::PARTIALLY_COMPLETED;
-		//DEBUG_MSG("_ProcessPacketHeader DISCONNECTING");
+		DEBUG_MSG("_ProcessPacketHeader DISCONNECTING");
 		return _Disconnect();
 	}
+}
+RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Receive(){
+	if ((_ReceiveCounter++ >= 50 * 50) && Traffic.get_RecvBPS() < 50000){
+		_ReceiveCounter = 0;
+		if (_ReceivedBufferCounter < STARTBUFFERSIZE) _ReceivedBuffer.resize(STARTBUFFERSIZE);
+		else _ReceivedBuffer.resize(_ReceivedBufferCounter);
+		_ReceivedBuffer.shrink_to_fit();//shrink the vector down
+		DEBUG_MSG("Resized the Receive Buffer Capacity now %", _ReceivedBuffer.capacity());
+	}
+	auto retcode = _ReceiveLoop();
+	if (retcode== Network_Return::PARTIALLY_COMPLETED) return _Decrypt_Received_Data();
+	else return Network_Return::FAILED;
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Disconnect(){
 	State = PEER_STATE_DISCONNECTED;//force disconnect

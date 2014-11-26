@@ -173,7 +173,7 @@ namespace RemoteDesktop_Viewer
                             _PendingFiles.RemoveAt(0);
                             continue;// continue loop
                         }
-                        Debug.WriteLine("Root Path is" + rootpath);
+                        startedbatch = true;
                         var filelist = _PendingFiles.FirstOrDefault();
                         var dt = DateTime.Now;//send for 30 ms, then goto sleep
                         int count = 0;
@@ -228,8 +228,17 @@ namespace RemoteDesktop_Viewer
         {
             Connect(_Client, ip_or_host, "443");
         }
+        static int counter = 0;
+        static DateTime timer = DateTime.Now;
         public void Draw(IntPtr hdc)
         {
+            if((DateTime.Now-timer).TotalMilliseconds > 1000)
+            {
+                Debug.WriteLine("FPS: " + counter);
+                counter = 1;
+                timer = DateTime.Now;
+            } else
+                counter += 1;
             Draw(_Client, hdc);
         }
         void KeyEvent(int VK, bool down)

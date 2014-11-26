@@ -105,14 +105,14 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 
 			else if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				if (SocketArray[Index]->Receive() == Network_Return::FAILED) _OnDisconnect(Index);
+				if (SocketArray[Index]->Receive() == Network_Return::FAILED) _OnDisconnectHandler(SocketArray[Index].get());
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				if (Index == 0) {//stop all processing, set running to false and next loop will fail and cleanup
 					Running = false;
 					continue;
 				}
-				_OnDisconnect(Index);
+				_OnDisconnectHandler(SocketArray[Index].get());
 			}
 		}
 
@@ -130,9 +130,11 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 				auto in = -1;
 				for (auto& s : SocketArray){
 					++in;
-					if (s.get() == a) break;
+					if (s.get() == a) {
+						_OnDisconnect(in);		
+						break;
+					}
 				}
-				if (in != -1) _OnDisconnect(in);
 			}
 			_DisconectClientList.clear();
 		}
@@ -144,7 +146,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 }
 
 void RemoteDesktop::BaseServer::_OnDisconnect(int index){
-	if (index<0 || index >= SocketArray.size()) return;
+	if (index<=0 || index >= SocketArray.size()) return;
 	DEBUG_MSG("_OnDisconnect Called");
 	Disconnect_CallBack(SocketArray[index]);
 	auto ev = EventArray[index];

@@ -46,7 +46,7 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 	KeyEvent_Header h;
 	h.VK = VK;
 	h.down = down == true ? 0 : -1;
-	DEBUG_MSG("KeyEvent % in state, down %", VK, (int)h.down);
+	//DEBUG_MSG("KeyEvent % in state, down %", VK, (int)h.down);
 	msg.push_back(h);
 	_NetworkClient->Send(NetworkMessages::KEYEVENT, msg);
 }

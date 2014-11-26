@@ -32,7 +32,10 @@ namespace RemoteDesktop{
 		std::mutex _SendLock;
 		std::vector<char> _ReceivedBuffer, _SendBuffer;
 		int _ReceivedBufferCounter = 0;
+		int _ReceiveCounter = 0;
+		int _SendCounter = 0;
 		Network_Return _SendLoop(char* data, int len);
+		Network_Return _ReceiveLoop();
 
 		Packet_Encrypt_Header _Encypt_Header;
 		Encryption _Encyption;

@@ -86,7 +86,9 @@ void RemoteDesktop::Display::UpdateImage(Image& img, Image_Diff_Header& h){
 		Image::Copy(img, h.rect.left, h.rect.top, ptr->width * 4, ptr->raw_data, ptr->height, ptr->width);
 	}	
 	//DEBUG_MSG("UpdateImage 2");
-	if (ptr != nullptr) InvalidateRect(_HWND, NULL, false);
+	if (ptr != nullptr) 
+		InvalidateRect(_HWND, NULL, false); 
+	
 }
 void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 	_MousePos = h.pos;

@@ -33,7 +33,7 @@ namespace RemoteDesktop{
 	};
 #pragma pack(pop)
 #define NETWORKHEADERSIZE sizeof(Packet_Encrypt_Header)
-#define MAXMESSAGESIZE 1024*1024 *50  //50 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
+#define MAXMESSAGESIZE 1024*1024 *500  //500 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
 	enum NetworkMessages{
 		INVALID = -1,
 		RESOLUTIONCHANGE,

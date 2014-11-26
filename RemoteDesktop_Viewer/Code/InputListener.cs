@@ -112,7 +112,6 @@ namespace RemoteDesktop_Viewer.Code
                         _LastX = p.X;
                         _LastY = p.Y;
                         _Lastwheel = wheel;
-                        Debug.WriteLine("Sending Mouse event " + m.Msg);
                     }
 
                 }

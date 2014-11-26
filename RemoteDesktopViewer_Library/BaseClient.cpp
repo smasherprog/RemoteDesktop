@@ -141,23 +141,29 @@ void RemoteDesktop::BaseClient::_Run(){
 void RemoteDesktop::BaseClient::_OnDisconnectHandler(SocketHandler* socket){
 	DisconnectReceived = true;
 	DEBUG_MSG("Disconnect Received");
-	Disconnect_CallBack();
 }
 
 void RemoteDesktop::BaseClient::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){
-	if (Running && Socket) Receive_CallBack(p, d, Socket);
+	if (Running){
+		auto s = Socket;
+		if (s) Receive_CallBack(p, d, s);
+	}
 }
 void RemoteDesktop::BaseClient::_OnConnectHandler(SocketHandler* socket){
-	if (Running && Socket) Connected_CallBack(Socket);
+	if (Running){
+		auto s = Socket;
+		if (s) Connected_CallBack(s);
+	}
 }
 
 void RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
-	if (Running && Socket) Socket->Send(m, msg);
+	if (Running){
+		auto s = Socket;
+		if (s) s->Send(m, msg);
+	}
 }
 
 void RemoteDesktop::BaseClient::Stop() {
 	Running = false; 
-	DEBUG_MSG("BaseClient::Stop Beg");
 	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join(); 
-	DEBUG_MSG("BaseClient::Stop End");
 }
