@@ -42,3 +42,13 @@ void SendFile(void* client, const char* absolute_path, const char* relative_path
 	auto c = (RemoteDesktop::Client*)client;
 	c->SendFile(absolute_path, relative_path);
 }
+RemoteDesktop::Traffic_Stats get_TrafficStats(void* client){
+	if (client == NULL){
+		RemoteDesktop::Traffic_Stats tmp;
+		memset(&tmp, 0, sizeof(tmp));
+		return tmp;
+	}
+	auto c = (RemoteDesktop::Client*)client;
+	auto s= c->get_TrafficStats();
+	return s;
+}

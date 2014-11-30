@@ -15,6 +15,21 @@ namespace RemoteDesktop_Viewer
 {
     public partial class MainViewer : Form
     {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Traffic_Stats
+        {
+            public long CompressedSendBytes;
+            public long CompressedRecvBytes;//overall lifetime totals 
+            public long UncompressedSendBytes;
+
+            public long UncompressedRecvBytes;//overall lifetime totals 
+
+            public long CompressedSendBPS;
+            public long CompressedRecvBPS;
+            public long UncompressedSendBPS;
+            public long UncompressedRecvBPS;
+        }
+
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate void _OnConnect();
 
@@ -40,6 +55,8 @@ namespace RemoteDesktop_Viewer
         static extern void SendCAD(IntPtr client);
         [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Ansi)]
         static extern void SendFile(IntPtr client, string absolute_path, string relative_path);
+        [DllImport("RemoteDesktopViewer_Library.dll")]
+        static extern Traffic_Stats get_TrafficStats(IntPtr client);
 
         public delegate void OnConnectHandler();
         public delegate void OnDisconnectHandler();
@@ -58,7 +75,9 @@ namespace RemoteDesktop_Viewer
         private List<List<string>> _PendingFiles = new List<List<string>>();
         private bool Running = false;
         private System.Threading.Thread _FileSendingThread = null;
-
+        private System.Timers.Timer _TrafficTimer;
+        private string _Host_Address;
+        public string Host_Address { get { return _Host_Address; } }
         InputListener _InputListener = null;
         public MainViewer()
         {
@@ -81,6 +100,25 @@ namespace RemoteDesktop_Viewer
 
             _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack);
             Running = true;
+
+        }
+
+        void _TrafficTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var traffic = get_TrafficStats(_Client);
+            var outcompressionratio = 0.0f;
+            var incompressionratio = 0.0f;
+            //below i change the range of the data shown and convert it to a percent, For example, .003 changes to 3.0, then -97.0, then 97.0 
+            //I want to display the Effectivness of the compression below... In other words, the compression ratio is 97% effective.
+            if(traffic.UncompressedSendBPS > 0)
+                outcompressionratio = ((((float)traffic.CompressedSendBPS / (float)traffic.UncompressedSendBPS) * 100.0f) - 100.0f) * -1.0f;
+            if(traffic.UncompressedRecvBPS > 0)
+                incompressionratio = ((((float)traffic.CompressedRecvBPS / (float)traffic.UncompressedRecvBPS) * 100.0f) - 100.0f) * -1.0f;
+
+            this.UIThread(() =>
+            {
+                this.Text = "Connected to: " + _Host_Address + ":443,  Out: " + FormatBytes(traffic.CompressedSendBPS) + "/s In: " + FormatBytes(traffic.CompressedRecvBPS) + "/s Comp Rate Out: " + string.Format("{0:0.00}", outcompressionratio) + "% In: " + string.Format("{0:0.00}", incompressionratio) + "%";
+            });
         }
 
 
@@ -110,7 +148,8 @@ namespace RemoteDesktop_Viewer
             lock(_PendingFiles_Lock)
             {
                 var li = new List<string>();
-                foreach(var item in (string[])e.Data.GetData(DataFormats.FileDrop)) AddFileOrDirectory(item, li);
+                foreach(var item in (string[])e.Data.GetData(DataFormats.FileDrop))
+                    AddFileOrDirectory(item, li);
                 _PendingFiles.Add(li);
                 if(_FileSendingThread == null)
                 {
@@ -226,13 +265,14 @@ namespace RemoteDesktop_Viewer
         }
         public void Connect(string ip_or_host)
         {
+            _Host_Address = ip_or_host;
             Connect(_Client, ip_or_host, "443");
         }
         static int counter = 0;
         static DateTime timer = DateTime.Now;
         public void Draw(IntPtr hdc)
         {
-            if((DateTime.Now-timer).TotalMilliseconds > 1000)
+            if((DateTime.Now - timer).TotalMilliseconds > 1000)
             {
                 Debug.WriteLine("FPS: " + counter);
                 counter = 1;
@@ -248,11 +288,19 @@ namespace RemoteDesktop_Viewer
         private void OnConnect()
         {
             Debug.WriteLine("Onconnect in viewer");
+            this.UIThread(() => { this.Text = "Connected to: " + _Host_Address + ":443"; });
+
             if(OnConnectEvent != null)
                 OnConnectEvent();
+
+            StopTrafficTimer();
+            _TrafficTimer = new System.Timers.Timer(1000);
+            _TrafficTimer.Elapsed += _TrafficTimer_Elapsed;
+            _TrafficTimer.Start();
         }
         private void OnDisconnect()
         {
+            StopTrafficTimer();
             if(OnDisconnectEvent != null)
                 OnDisconnectEvent();
             Debug.WriteLine("OnDisconnect in viewer");
@@ -261,8 +309,17 @@ namespace RemoteDesktop_Viewer
         {
             MouseEvent(_Client, action, x, y, wheel);
         }
+        void StopTrafficTimer()
+        {
+            if(_TrafficTimer != null)
+            {
+                _TrafficTimer.Stop();
+                _TrafficTimer.Dispose();
+            }
+        }
         void MainViewer_FormClosed(object sender, FormClosedEventArgs e)
         {
+            StopTrafficTimer();
             Running = false;
             if(_FileSendingThread != null)
                 _FileSendingThread.Join(5000);
@@ -292,6 +349,18 @@ namespace RemoteDesktop_Viewer
         {
             SendCAD(_Client);
         }
-
+        private static string FormatBytes(long bytes)
+        {
+            const long scale = 1024;
+            string[] orders = new string[] { "TB", "GB", "MB", "KB", "Bytes" };
+            var max = (long)Math.Pow(scale, (orders.Length - 1));
+            foreach(string order in orders)
+            {
+                if(bytes > max)
+                    return string.Format("{0:##.##} {1}", Decimal.Divide(bytes, max), order);
+                max /= scale;
+            }
+            return "0 Bytes";
+        }
     }
 }

@@ -87,7 +87,8 @@
             this.ClientSize = new System.Drawing.Size(710, 494);
             this.Controls.Add(this.viewPort1);
             this.Name = "MainViewer";
-            this.Text = "Form1";
+            this.ShowIcon = false;
+            this.Text = "Remote Viewer";
             this.viewPort1.ResumeLayout(false);
             this.ResumeLayout(false);
 

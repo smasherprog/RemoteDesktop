@@ -1,5 +1,6 @@
 #ifndef CLIENT_H
 #define CLIENT_H
+#include "..\RemoteDesktop_Library\CommonNetwork.h"
 
 namespace RemoteDesktop{
 
@@ -37,7 +38,7 @@ namespace RemoteDesktop{
 
 		void SendCAD();
 		void SendFile(const char* absolute_path, const char* relative_path);
-
+		Traffic_Stats get_TrafficStats() const;
 
 	};
 

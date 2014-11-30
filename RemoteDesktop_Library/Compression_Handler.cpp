@@ -12,12 +12,8 @@ int RemoteDesktop::Compression_Handler::Compress(const char* source, char* dest,
 		return -1;//no compression occured
 	}
 
-	auto t1 = Timer(true);
-
 	auto dstsize = (int*)dest;
 	auto compressedsize = LZ4_compress(source, dest + sizeof(int), inputSize);
-	t1.Stop();
-	DEBUG_MSG("2) Compressedsize = %, time %", compressedsize, t1.Elapsed_milli());
 
 	*dstsize = inputSize;
 	return compressedsize + sizeof(int);//return new size of compressed data

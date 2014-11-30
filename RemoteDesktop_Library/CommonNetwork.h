@@ -29,6 +29,7 @@ namespace RemoteDesktop{
 	};
 #pragma pack(pop)
 #define NETWORKHEADERSIZE sizeof(Packet_Encrypt_Header)
+#define TOTALHEADERSIZE sizeof(Packet_Encrypt_Header) + sizeof(Packet_Header)
 #define MAXMESSAGESIZE 1024*1024 *500  //500 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
 #define STARTBUFFERSIZE 1024 *1024 *2
 	enum NetworkMessages{
@@ -58,8 +59,15 @@ namespace RemoteDesktop{
 		int payloadlength()const{ auto l = 0; for (auto& a : data) l += a.len; return l; }
 		std::vector<DataPackage> data;
 		template<class T>void push_back(const T& x){ data.push_back(DataPackage((const char*)&x, sizeof(x))); }
-	};
+	}; 
 
+	struct Traffic_Stats{
+		long long CompressedSendBytes, CompressedRecvBytes;//overall lifetime totals 
+		long long UncompressedSendBytes, UncompressedRecvBytes;//overall lifetime totals 
+
+		long long CompressedSendBPS, CompressedRecvBPS;
+		long long UncompressedSendBPS, UncompressedRecvBPS;
+	};
 
 }
 

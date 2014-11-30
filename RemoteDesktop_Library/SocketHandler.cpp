@@ -102,10 +102,10 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 	auto enph = (Packet_Encrypt_Header*)_SendBuffer.data();
 
 	enph->PayloadLen = _Encyption.Ecrypt(_SendCompressionBuffer.data(), _SendBuffer.data() + sizeof(Packet_Encrypt_Header), packetheader->PayloadLen + sizeof(Packet_Header), enph->IV) + IVSIZE;
-	DEBUG_MSG("Final Outbound Size: %", enph->PayloadLen);
+//	DEBUG_MSG("Final Outbound Size: %", enph->PayloadLen);
 	if (enph->PayloadLen < 0)  return _Disconnect();
 	if (_SendLoop(_SendBuffer.data(), enph->PayloadLen + sizeof(enph->PayloadLen)) == RemoteDesktop::Network_Return::FAILED) return _Disconnect();
-	Traffic.UpdateSend(enph->PayloadLen + sizeof(enph->PayloadLen));
+	Traffic.UpdateSend(roundUp(msg.payloadlength() + TOTALHEADERSIZE, 16), enph->PayloadLen + sizeof(enph->PayloadLen));// an uncompressed message would be encrypted and rounded up to the nearest 16 bytes so adjust accordingly
 	return RemoteDesktop::Network_Return::COMPLETED;
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_ReceiveLoop(){
@@ -113,7 +113,6 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_ReceiveLoop(){
 	if (_ReceivedBufferCounter - _ReceivedBuffer.size() < STARTBUFFERSIZE) _ReceivedBuffer.resize(_ReceivedBuffer.size() + STARTBUFFERSIZE);//grow ahead by chunks
 	auto amtrec = recv(_Socket->socket, _ReceivedBuffer.data() + _ReceivedBufferCounter, _ReceivedBuffer.size() - _ReceivedBufferCounter, 0);//read as much as possible
 	if (amtrec > 0){
-		Traffic.UpdateRecv(amtrec);
 		_ReceivedBufferCounter += amtrec;
 		return _ReceiveLoop();
 	}
@@ -127,7 +126,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_ReceiveLoop(){
 	}
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Receive(){
-	if ((_ReceiveCounter++ >= 500) && Traffic.get_RecvBPS() < 50000){
+	if ((_ReceiveCounter++ >= 500) && Traffic.get_TrafficStats().CompressedRecvBPS < 50000){
 		_ReceiveCounter = 0;
 		ShrinkBuffer(_ReceivedBuffer, _ReceivedBufferCounter);		
 		ShrinkBuffer(_ReceivedCompressionBuffer, STARTBUFFERSIZE);
@@ -172,7 +171,8 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 				auto ph = (Packet_Header*)beg;
 				beg += sizeof(Packet_Header);
 				if (ph->PayloadLen > p->PayloadLen - IVSIZE) return _Disconnect();//malformed packet
-				DEBUG_MSG("Received size %", p->PayloadLen);
+
+				//DEBUG_MSG("Received size %", p->PayloadLen);
 				if (ph->Packet_Type < 0){//compressed packet
 					ph->Packet_Type *=-1;//remove the negative sign
 					auto assumed_uncompressedsize = Compression_Handler::Decompressed_Size(beg);//get the size of the uncompresseddata
@@ -182,7 +182,8 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 					auto newsize = Compression_Handler::Decompress(beg, _ReceivedCompressionBuffer.data(), ph->PayloadLen, _ReceivedCompressionBuffer.capacity());
 					//DEBUG_MSG("Compressed assumed size %,  output  %", assumed_uncompressedsize, newsize);
 					if (newsize != assumed_uncompressedsize) return _Disconnect();//malformed packet data . . . disconnect!
-			
+
+					Traffic.UpdateRecv(assumed_uncompressedsize + TOTALHEADERSIZE, ph->PayloadLen + TOTALHEADERSIZE);
 					auto beforesize = ph->PayloadLen;
 					ph->PayloadLen = newsize;
 					if (Receive_CallBack) Receive_CallBack(ph, _ReceivedCompressionBuffer.data(), this);
@@ -190,9 +191,10 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 				}
 				else if (Receive_CallBack) {
 				//	DEBUG_MSG("uncompressed size %", ph->PayloadLen);
+					Traffic.UpdateRecv(ph->PayloadLen + TOTALHEADERSIZE, ph->PayloadLen + TOTALHEADERSIZE);//same size for each if no compression occurs
 					Receive_CallBack(ph, beg, this);
 				}
-
+				
 				_ReceivedBufferCounter -= p->PayloadLen + sizeof(p->PayloadLen);
 				if (_ReceivedBufferCounter > 0) memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + p->PayloadLen + sizeof(p->PayloadLen), _ReceivedBufferCounter);//this will shift down the data 
 				return _Decrypt_Received_Data();//recursive call!

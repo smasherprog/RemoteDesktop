@@ -14,6 +14,11 @@
 #include <iomanip>
 #include <fstream>
 
+inline int roundUp(int numToRound, int multiple)//only for multiples of 2
+{
+	return (numToRound + multiple - 1) & ~(multiple - 1);
+}
+
 template<typename... Args>
 void DEBUG_MSG(const char *s, Args... args)
 {
@@ -22,8 +27,6 @@ void DEBUG_MSG(const char *s, Args... args)
 	_INTERNAL::xsprintf(result, s, args...);
 	OutputDebugStringA(result.c_str());
 	OutputDebugStringA("\n");
-	//std::cout << result << std::endl;
-
 }
 
 namespace _INTERNAL{

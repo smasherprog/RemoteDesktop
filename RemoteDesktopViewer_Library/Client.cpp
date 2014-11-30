@@ -8,9 +8,7 @@
 #include "..\RemoteDesktop_Library\Image.h"
 
 RemoteDesktop::Client::Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect) {
-
 	_Display = std::make_unique<Display>(hwnd, oncursorchange);
-	//SetWindowText(_HWND, L"Remote Desktop Viewer");
 	DEBUG_MSG("Client()");
 }
 
@@ -45,7 +43,6 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 	KeyEvent_Header h;
 	h.VK = VK;
 	h.down = down == true ? 0 : -1;
-	//DEBUG_MSG("KeyEvent % in state, down %", VK, (int)h.down);
 	msg.push_back(h);
 	_NetworkClient->Send(NetworkMessages::KEYEVENT, msg);
 }
@@ -71,7 +68,13 @@ void RemoteDesktop::Client::SendCAD(){
 	NetworkMsg msg;
 	_NetworkClient->Send(NetworkMessages::CAD, msg);
 }
-
+RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
+	auto s = _NetworkClient->Socket;
+	if (s) return s->Traffic.get_TrafficStats();
+	RemoteDesktop::Traffic_Stats tmp;
+	memset(&tmp, 0, sizeof(tmp));
+	return tmp;
+}
 void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path){
 	std::string filename = absolute_path;
 	std::string relative = relative_path;
@@ -92,7 +95,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		msg.data.push_back(DataPackage(data.data(), data.size()));
 		_NetworkClient->Send(NetworkMessages::FILE, msg);
 	}
-	else {
+	else {//this is a folder
 	
 		NetworkMsg msg;
 		char size = relative.size();

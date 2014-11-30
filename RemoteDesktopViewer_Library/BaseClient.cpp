@@ -22,7 +22,7 @@ void RemoteDesktop::BaseClient::Connect(std::wstring host, std::wstring port){
 	_Host = host;
 	_Port = port;
 	Running = true;
-	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this, 1);
+	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this, 3);//3 initial connect attempts, this is about 3-4 seconds
 
 }
 
@@ -142,7 +142,7 @@ void RemoteDesktop::BaseClient::_OnDisconnectHandler(SocketHandler* socket){
 	DisconnectReceived = true;
 	DEBUG_MSG("Disconnect Received");
 }
-
+//the copies below of the socket are VERY IMPORTANT, this ensures the lifetime of the socket for the duration of the call!
 void RemoteDesktop::BaseClient::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){
 	if (Running){
 		auto s = Socket;

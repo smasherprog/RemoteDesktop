@@ -1,6 +1,7 @@
 #ifndef DLL_API123_H
 #define DLL_API123_H
 
+#include "..\RemoteDesktop_Library\CommonNetwork.h"
 
 #define DLLEXPORT __declspec( dllexport )  
 
@@ -14,6 +15,7 @@ extern "C" {
 	DLLEXPORT void MouseEvent(void* client, unsigned int action, int x, int y, int wheel);
 	DLLEXPORT void SendCAD(void* client);
 	DLLEXPORT void SendFile(void* client, const char* absolute_path, const char* relative_path);
+	DLLEXPORT RemoteDesktop::Traffic_Stats get_TrafficStats(void* client);
 }
 
 #endif

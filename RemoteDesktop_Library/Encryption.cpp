@@ -136,10 +136,7 @@ bool RemoteDesktop::Encryption::Decrypt(char* in_data, char* out_data, int insiz
 	}
 	return true;
 }
-int roundUp(int numToRound, int multiple)
-{
-	return (numToRound + multiple - 1) & ~(multiple - 1);
-}
+
 int RemoteDesktop::Encryption::Ecrypt(char* in_data, char* out_data, int insize, char* iv){
 	GCM<AES>::Encryption Encryptor;
 	try{// Crypto++ loves throwing stuff around! If any errors occur, it likely that something is seriously screwed up on our part
