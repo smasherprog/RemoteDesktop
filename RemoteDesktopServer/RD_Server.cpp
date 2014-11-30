@@ -148,13 +148,15 @@ void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) 
 void RemoteDesktop::RD_Server::_HandleNewClients(Image& img){
 
 	if (_NewClients.empty()) return;
+	img.Optimize();
 	NetworkMsg msg;
 	int sz[2];
 	sz[0] = img.height;
 	sz[1] = img.width;
-	DEBUG_MSG("Servicing new Client %, %", img.height, img.width);
+	DEBUG_MSG("Servicing new Client %, %, %", img.height, img.width, img.size_in_bytes);
 	msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
 	msg.data.push_back(DataPackage((char*)img.data, img.size_in_bytes));
+
 	std::lock_guard<std::mutex> lock(_NewClientLock);
 	
 	for (auto& a : _NewClients){
@@ -167,6 +169,7 @@ bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& img, Image& _last
 	bool reschange = (img.height != _lastimg.height || img.width != _lastimg.width) && (img.height > 0 && img.width > 0);
 	//if there was a resolution change
 	if (reschange){
+		img.Optimize();
 		NetworkMsg msg;
 		int sz[2];
 		sz[0] = img.height;
@@ -186,8 +189,10 @@ void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, std
 		
 		NetworkMsg msg;
 		auto imgdif = Image::Copy(img, rect, buffer);
+		imgdif.Optimize();
 		msg.push_back(rect);
 		msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes)); 
+
 		DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
 		_NetworkServer->SendToAll(NetworkMessages::UPDATEREGION, msg);
 	}

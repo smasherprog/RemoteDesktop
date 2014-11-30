@@ -71,7 +71,6 @@
             this.Name = "ConnectDialog";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "ConnectDialog";
-            this.TopMost = true;
             this.ResumeLayout(false);
             this.PerformLayout();
 

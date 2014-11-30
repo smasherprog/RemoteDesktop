@@ -65,6 +65,8 @@ void RemoteDesktop::Display::NewImage(Image& img){
 	bi.bmiHeader.biCompression = BI_RGB;
 	bi.bmiHeader.biSizeImage = ((img.width * bi.bmiHeader.biBitCount + 31) / 32) * 4 * img.height;
 
+	img.UnOptimize(_ImgBuffer);
+
 	std::lock_guard<std::mutex> lock(_DrawLock);
 
 	auto hDC = GetDC(_HWND);
@@ -82,6 +84,7 @@ void RemoteDesktop::Display::UpdateImage(Image& img, Rect& h){
 	//DEBUG_MSG("UpdateImage");
 	auto ptr = _HBITMAP_wrapper.get();
 	if (ptr != nullptr) {
+		img.UnOptimize(_ImgBuffer);
 		std::lock_guard<std::mutex> lock(_DrawLock);
 		Image::Copy(img, h.left, h.top, ptr->width * 4, ptr->raw_data, ptr->height, ptr->width);
 	}	

@@ -102,6 +102,9 @@
     <ClInclude Include="Compression_Handler.h">
       <Filter>Header Files\Compression</Filter>
     </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

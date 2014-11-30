@@ -17,6 +17,7 @@ namespace RemoteDesktop{
 		std::unique_ptr<HBITMAP_wrapper> _HBITMAP_wrapper;
 		HWND _HWND;
 		std::mutex _DrawLock;
+		std::vector<int> _ImgBuffer;
 
 		std::vector<Cursor_Type> _System_Cursors;
 

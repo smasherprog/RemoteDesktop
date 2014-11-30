@@ -52,6 +52,7 @@ namespace RemoteDesktop{
 		DataPackage(const char*d, int l) : data(d), len(l) {}
 		const char* data = nullptr;
 		int len = 0;
+
 	};
 	class NetworkMsg{
 	public:

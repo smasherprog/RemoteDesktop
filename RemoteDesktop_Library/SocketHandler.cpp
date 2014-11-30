@@ -87,7 +87,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 	}
 	auto packetheader = (Packet_Header*)_SendCompressionBuffer.data();
 	packetheader->Packet_Type = m;//set packet type
-	auto compressedsize = Compression_Handler::Compress(_SendBuffer.data(), _SendCompressionBuffer.data() + sizeof(Packet_Header), msg.payloadlength());
+	auto compressedsize = Compression_Handler::Compress(_SendBuffer.data(), _SendCompressionBuffer.data() + sizeof(Packet_Header), msg.payloadlength(), _SendCompressionBuffer.capacity());
 	if (compressedsize > 0){
 		//DEBUG_MSG("Compressing Data from: %, to %", msg.payloadlength(), compressedsize);
 		packetheader->Packet_Type *= -1;//flag as compressed
