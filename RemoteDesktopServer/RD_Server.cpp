@@ -60,8 +60,6 @@ void _HandleKeyEvent(RemoteDesktop::Packet_Header* header, const char* data, std
 	inp.ki.wVk = h.VK;
 	inp.ki.dwFlags = h.down == 0 ? 0 : KEYEVENTF_KEYUP;
 	SendInput(1, &inp, sizeof(INPUT));
-
-	//keybd_event(h.VK, scan, h.down ? KEYEVENTF_EXTENDEDKEY : KEYEVENTF_KEYUP, 0);
 }
 
 void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh){

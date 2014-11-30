@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "Client.h"
 #include "Console.h"
-#include "ImageCompression.h"
 #include "CommonNetwork.h"
 #include "Display.h"
 #include "BaseClient.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
+#include "..\RemoteDesktop_Library\Image.h"
 
 RemoteDesktop::Client::Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect) {
 

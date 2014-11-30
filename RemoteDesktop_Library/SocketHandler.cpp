@@ -141,7 +141,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Disconnect(){
 	State = PEER_STATE_DISCONNECTED;//force disconnect
 	DEBUG_MSG("DebugCalled SocketHandler");
 	if (Disconnect_CallBack) Disconnect_CallBack(this);
-	return Network_Return::FAILED;//disconnect!
+	return Network_Return::FAILED;//disconnect!RemoteDesktop_Viewer
 }
 
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Data(){
