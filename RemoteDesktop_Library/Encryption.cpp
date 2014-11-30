@@ -114,13 +114,13 @@ bool RemoteDesktop::Encryption::Agree(const char *staticOtherPublicKey, const ch
 
 }
 
-bool RemoteDesktop::Encryption::Decrypt(char* in_data, int size, char* iv){
-	size_t multiple = size / AES::BLOCKSIZE;
-	if (multiple * AES::BLOCKSIZE != size) return false;// data not correctly sized
+bool RemoteDesktop::Encryption::Decrypt(char* in_data, char* out_data, int insize, char* iv){
+	size_t multiple = insize / AES::BLOCKSIZE;
+	if (multiple * AES::BLOCKSIZE != insize) return false;// data not correctly sized
 	GCM<AES>::Decryption Decryptor;
 	try{// Crypto++ loves throwing stuff around! If any errors occur, it likely that the peer is messing with us, disconnect 
 		Decryptor.SetKeyWithIV(_Encryption_Impl->AESKey, SHA256::DIGESTSIZE, (byte*)iv);
-		Decryptor.ProcessData((byte*)in_data, (byte*)in_data, size);
+		Decryptor.ProcessData((byte*)out_data, (byte*)in_data, insize);
 	}
 	catch (CryptoPP::HashVerificationFilter::HashVerificationFailed& e){
 		DEBUG_MSG("Caught HashVerificationFailed... %", e.what());
@@ -140,13 +140,13 @@ int roundUp(int numToRound, int multiple)
 {
 	return (numToRound + multiple - 1) & ~(multiple - 1);
 }
-int RemoteDesktop::Encryption::Ecrypt(char* in_data, int size, char* iv){
+int RemoteDesktop::Encryption::Ecrypt(char* in_data, char* out_data, int insize, char* iv){
 	GCM<AES>::Encryption Encryptor;
 	try{// Crypto++ loves throwing stuff around! If any errors occur, it likely that something is seriously screwed up on our part
 		_Encryption_Impl->rnd.GenerateBlock((byte*)iv, AES::BLOCKSIZE);
 		Encryptor.SetKeyWithIV(_Encryption_Impl->AESKey, SHA256::DIGESTSIZE, (byte*)iv);
-		auto bytes = roundUp(size, AES::BLOCKSIZE);
-		Encryptor.ProcessData((byte*)in_data, (byte*)in_data, bytes);// number of bytes to encrypt is always 16 less than the length
+		auto bytes = roundUp(insize, AES::BLOCKSIZE);
+		Encryptor.ProcessData((byte*)out_data, (byte*)in_data, bytes);// number of bytes to encrypt is always 16 less than the length
 		return bytes;
 	}
 	catch (CryptoPP::InvalidArgument& e) {

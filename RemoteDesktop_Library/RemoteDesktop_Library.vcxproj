@@ -68,27 +68,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)libjpeg-turbo\include\;..\;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libjpeg-turbo\lib\$(PlatformArchitecture)\;$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -107,7 +107,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,7 +125,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static_debug.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,7 +148,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -171,17 +171,22 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>turbojpeg-static.lib;cryptlib.lib;Urlmon.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Clipboard.h" />
     <ClInclude Include="CommonNetwork.h" />
+    <ClInclude Include="Compression_Handler.h" />
     <ClInclude Include="Console.h" />
+    <ClInclude Include="Desktop_Monitor.h" />
     <ClInclude Include="Desktop_Wrapper.h" />
     <ClInclude Include="Encryption.h" />
     <ClInclude Include="Event_Wrapper.h" />
     <ClInclude Include="Image.h" />
-    <ClInclude Include="ImageCompression.h" />
+    <ClInclude Include="lz4.h" />
+    <ClInclude Include="lz4frame.h" />
+    <ClInclude Include="lz4hc.h" />
     <ClInclude Include="MouseCommon.h" />
     <ClInclude Include="Ping.h" />
     <ClInclude Include="Rect.h" />
@@ -191,14 +196,35 @@
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Traffic_Monitor.h" />
     <ClInclude Include="Utilities.h" />
+    <ClInclude Include="xxhash.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Clipboard.cpp" />
+    <ClCompile Include="Compression_Handler.cpp" />
     <ClCompile Include="Console.cpp" />
+    <ClCompile Include="Desktop_Monitor.cpp" />
     <ClCompile Include="Desktop_Wrapper.cpp" />
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="Event_Wrapper.cpp" />
     <ClCompile Include="Image.cpp" />
-    <ClCompile Include="ImageCompression.cpp" />
+    <ClCompile Include="lz4.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="lz4frame.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="lz4hc.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="NetworkSetup.cpp" />
     <ClCompile Include="Ping.cpp" />
     <ClCompile Include="SocketHandler.cpp" />
@@ -210,6 +236,12 @@
     </ClCompile>
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Traffic_Monitor.cpp" />
+    <ClCompile Include="xxhash.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cryptopp\cryptlib.vcxproj">

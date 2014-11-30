@@ -95,7 +95,7 @@ RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_reg
 		auto dstrow = dst + (dstrowstride * y);
 		memcpy(dstrow, srcrow, dstrowstride);
 	}
-	return Image(buffer.data(), size, src_copy_region.height, src_copy_region.width, false);
+	return Image(buffer.data(), size, src_copy_region.height, src_copy_region.width);
 }
 void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst, int dst_height, int dst_width)
 {

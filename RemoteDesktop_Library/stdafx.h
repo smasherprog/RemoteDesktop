@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #endif
-
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 
 #include <winsock2.h>

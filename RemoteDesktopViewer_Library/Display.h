@@ -28,7 +28,7 @@ namespace RemoteDesktop{
 		Display(HWND hwnd, void(__stdcall * oncursorchange)(int));
 
 		void NewImage(Image& img);
-		void UpdateImage(Image& img, Image_Diff_Header& h);
+		void UpdateImage(Image& img, Rect& h);
 		void UpdateMouse(MouseEvent_Header& h);
 		void Draw(HDC hdc);
 		//bool SetCursor();

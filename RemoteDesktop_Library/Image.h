@@ -20,12 +20,11 @@ namespace RemoteDesktop{
 	class Image{
 	public:
 		Image() {}
-		Image(unsigned char* d, unsigned long s, int h, int w, bool c) : data(d), size_in_bytes(s), height(h), width(w),compressed(c) {}
+		Image(unsigned char* d, unsigned long s, int h, int w) : data(d), size_in_bytes(s), height(h), width(w) {}
 		unsigned char* data = nullptr;
 		unsigned long size_in_bytes = 0;
 		int height = 0;
 		int width = 0;
-		bool compressed = false;
 		static Rect Difference(Image first, Image second);
 		static Image Copy(Image src_img, Rect r, std::vector<unsigned char>& buffer);
 			static void Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst, int dst_height, int dst_width);

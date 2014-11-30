@@ -6,36 +6,12 @@
 #include "Wtsapi32.h"
 
 RemoteDesktop::DesktopMonitor::DesktopMonitor(){
-	CADEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad");
-}
-void ClearKeyState(WORD key)
-{
-	BYTE keyState[256];
-	GetKeyboardState((LPBYTE)&keyState);
-	if (keyState[key] & 1)
-	{
-		INPUT inp;
 
-		inp.type = INPUT_KEYBOARD;
-		inp.ki.wVk = key;
-		inp.ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
-
-		// Simulate the key being pressed
-		SendInput(1, &inp, sizeof(INPUT));
-		inp.ki.dwFlags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
-		// Simulate it being release
-		SendInput(1, &inp, sizeof(INPUT));
-	}
-}
-
-void RemoteDesktop::DesktopMonitor::SimulateCtrlAltDel(){
-	SetEvent(CADEventHandle);
 }
 
 
 RemoteDesktop::DesktopMonitor::~DesktopMonitor(){
 	if (m_hDesk != NULL)CloseDesktop(m_hDesk);
-	if (CADEventHandle != NULL) CloseHandle(CADEventHandle);
 }
 
 //

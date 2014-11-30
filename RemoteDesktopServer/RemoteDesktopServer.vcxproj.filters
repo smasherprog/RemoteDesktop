@@ -48,9 +48,6 @@
     <ClInclude Include="BaseServer.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
-    <ClInclude Include="Desktop_Monitor.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
     <ClInclude Include="MouseCapture.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
@@ -84,9 +81,6 @@
       <Filter>Source Files\Service</Filter>
     </ClCompile>
     <ClCompile Include="BaseServer.cpp">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="DesktopMonitor.cpp">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
     <ClCompile Include="MouseCapture.cpp">

@@ -25,6 +25,15 @@
     <Filter Include="Source Files\Wrappers">
       <UniqueIdentifier>{bdf5458b-1f73-4da9-b2fa-23f732fe4723}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Compression">
+      <UniqueIdentifier>{4a41546b-d710-423a-b4ce-80ac5028080e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Compression">
+      <UniqueIdentifier>{3177129f-fe86-4bfe-a122-49e2daa513af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{f2aa0dd2-7a8d-4a79-b6da-b1cc92b8e9eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -34,9 +43,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ImageCompression.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Image.h">
@@ -75,12 +81,30 @@
     <ClInclude Include="Desktop_Wrapper.h">
       <Filter>Header Files\Wrappers</Filter>
     </ClInclude>
+    <ClInclude Include="Clipboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Desktop_Monitor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lz4.h">
+      <Filter>Header Files\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="lz4frame.h">
+      <Filter>Header Files\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="lz4hc.h">
+      <Filter>Header Files\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="xxhash.h">
+      <Filter>Header Files\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="Compression_Handler.h">
+      <Filter>Header Files\Compression</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ImageCompression.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NetworkSetup.cpp">
@@ -112,6 +136,27 @@
     </ClCompile>
     <ClCompile Include="Desktop_Wrapper.cpp">
       <Filter>Source Files\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="Clipboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Desktop_Monitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lz4.c">
+      <Filter>Source Files\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="lz4frame.c">
+      <Filter>Source Files\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="lz4hc.c">
+      <Filter>Source Files\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="xxhash.c">
+      <Filter>Source Files\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression_Handler.cpp">
+      <Filter>Source Files\Compression</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

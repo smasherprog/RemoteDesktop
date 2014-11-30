@@ -11,16 +11,12 @@ namespace RemoteDesktop{
 #pragma pack(push, 1)
 	struct Packet_Header{
 		int PayloadLen = 0;
-		char Packet_Type = -1;
+		int Packet_Type = -1;
 	};	
 	struct Packet_Encrypt_Header{
 		int PayloadLen = IVSIZE;//should include the IV size 
 		char IV[IVSIZE];
 	};
-	struct Image_Diff_Header{
-		Rect rect;
-		char compressed = 0;
-	};	
 	struct KeyEvent_Header{
 		int VK;
 		char down = 0;
@@ -34,8 +30,9 @@ namespace RemoteDesktop{
 #pragma pack(pop)
 #define NETWORKHEADERSIZE sizeof(Packet_Encrypt_Header)
 #define MAXMESSAGESIZE 1024*1024 *500  //500 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
+#define STARTBUFFERSIZE 1024 *1024 *2
 	enum NetworkMessages{
-		INVALID = -1,
+		INVALID,
 		RESOLUTIONCHANGE,
 		UPDATEREGION,
 		MOUSEEVENT,
@@ -43,7 +40,7 @@ namespace RemoteDesktop{
 		FOLDER,
 		FILE,	
 		CAD,
-		INIT_ENCRYPTION
+		INIT_ENCRYPTION,
 	};
 	enum Network_Return{
 		FAILED,

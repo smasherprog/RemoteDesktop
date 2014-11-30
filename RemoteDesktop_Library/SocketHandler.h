@@ -6,7 +6,7 @@
 
 #include "CommonNetwork.h"
 #include <memory>
-#define STARTBUFFERSIZE 1024 *1024 *4
+
 #include "Encryption.h"
 #include <functional>
 #include <vector>
@@ -31,6 +31,8 @@ namespace RemoteDesktop{
 	class SocketHandler{
 		std::mutex _SendLock;
 		std::vector<char> _ReceivedBuffer, _SendBuffer;
+		std::vector<char> _ReceivedCompressionBuffer, _SendCompressionBuffer;
+
 		int _ReceivedBufferCounter = 0;
 		int _ReceiveCounter = 0;
 		int _SendCounter = 0;
@@ -39,6 +41,7 @@ namespace RemoteDesktop{
 
 		Packet_Encrypt_Header _Encypt_Header;
 		Encryption _Encyption;
+
 		Network_Return _Encrypt_And_Send(NetworkMessages m, const NetworkMsg& msg); 
 		Network_Return _Decrypt_Received_Data();
 		Network_Return _Complete_Key_Exchange();

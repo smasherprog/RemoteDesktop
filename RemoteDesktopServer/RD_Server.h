@@ -5,7 +5,7 @@
 
 namespace RemoteDesktop{
 	class ScreenCapture;
-	class ImageCompression;
+
 	class MouseCapture;
 	class DesktopMonitor;
 	class BaseServer;
@@ -13,19 +13,22 @@ namespace RemoteDesktop{
 	struct Packet_Header;
 	class Image;
 	class Rect;
-#if defined _DEBUG
+	class Clipboard;
+
+#if _DEBUG
 	class CConsole;
 #endif
 	class RD_Server{
-#if defined _DEBUG
+#if _DEBUG
 		std::unique_ptr<CConsole> _DebugConsole;
 #endif
 		std::vector<std::shared_ptr<SocketHandler>> _NewClients;
-		std::unique_ptr<ImageCompression> imagecompression;
+	
 		std::unique_ptr<MouseCapture> mousecapturing;
 		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
 		std::unique_ptr<BaseServer> _NetworkServer;
 		std::unique_ptr<ScreenCapture> _ScreenCapture;
+		std::unique_ptr<Clipboard> _ClipboardMonitor;
 
 		std::mutex _NewClientLock;
 
@@ -39,6 +42,8 @@ namespace RemoteDesktop{
 		void _Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
 
 		bool _RunningAsService = false;
+		HANDLE _CADEventHandle;
+
 
 	public:
 		RD_Server();

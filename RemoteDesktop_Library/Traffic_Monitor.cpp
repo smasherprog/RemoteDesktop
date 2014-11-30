@@ -18,6 +18,7 @@ void RemoteDesktop::Traffic_Monitor::UpdateSend(long b){
 		_SendBuffer.clear();
 		if (total > 0) _SendBPS = total / 3;
 		_SendTimer = std::chrono::high_resolution_clock::now(); 
+	
 	}
 	else _SendBuffer.push_back(b);
 }

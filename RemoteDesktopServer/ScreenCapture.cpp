@@ -51,5 +51,5 @@ RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(std::vector<unsign
 	GetDIBits(nSrce, nBmp, 0, (UINT)screenh, buffer.data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS); 
 	SelectObject(nDest, oldbmp);
 	//ReleaseHandles();
-	return Image(buffer.data(), dwBmpSize, screenh, screenw, false);
+	return Image(buffer.data(), dwBmpSize, screenh, screenw);
 }

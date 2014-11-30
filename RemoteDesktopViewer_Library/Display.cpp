@@ -78,12 +78,12 @@ void RemoteDesktop::Display::NewImage(Image& img){
 	ReleaseDC(_HWND, hDC); 
 	InvalidateRect(_HWND, NULL, false);
 }
-void RemoteDesktop::Display::UpdateImage(Image& img, Image_Diff_Header& h){
+void RemoteDesktop::Display::UpdateImage(Image& img, Rect& h){
 	//DEBUG_MSG("UpdateImage");
 	auto ptr = _HBITMAP_wrapper.get();
 	if (ptr != nullptr) {
 		std::lock_guard<std::mutex> lock(_DrawLock);
-		Image::Copy(img, h.rect.left, h.rect.top, ptr->width * 4, ptr->raw_data, ptr->height, ptr->width);
+		Image::Copy(img, h.left, h.top, ptr->width * 4, ptr->raw_data, ptr->height, ptr->width);
 	}	
 	//DEBUG_MSG("UpdateImage 2");
 	if (ptr != nullptr) 

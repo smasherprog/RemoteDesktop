@@ -9,7 +9,6 @@
 
 RemoteDesktop::Client::Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect) {
 
-	_ImageCompression = std::make_unique<ImageCompression>();
 	_Display = std::make_unique<Display>(hwnd, oncursorchange);
 	//SetWindowText(_HWND, L"Remote Desktop Viewer");
 	DEBUG_MSG("Client()");
@@ -118,32 +117,32 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		beg += sizeof(img.height);
 		memcpy(&img.width, beg, sizeof(img.width));
 		beg += sizeof(img.width);
-		img.compressed = true;
 		img.data = (unsigned char*)beg;
 		img.size_in_bytes = header->PayloadLen - sizeof(img.height) - sizeof(img.width);
-
-		_Display->NewImage(_ImageCompression->Decompress(img));
+		assert(img.size_in_bytes == img.height * img.width * 4);
+		_Display->NewImage(img);
 
 	}
 	else if (header->Packet_Type == NetworkMessages::UPDATEREGION){
 		Image img;
-		Image_Diff_Header imgdif_network;
+		Rect rect;
 
-		memcpy(&imgdif_network, beg, sizeof(imgdif_network));
+		memcpy(&rect, beg, sizeof(rect));
 
-		beg += sizeof(imgdif_network);
-		img.height = imgdif_network.rect.height;
-		img.width = imgdif_network.rect.width;
-		img.compressed = imgdif_network.compressed == 0 ? true : false;
+		beg += sizeof(rect);
+		img.height = rect.height;
+		img.width = rect.width;
 		img.data = (unsigned char*)beg;
-		img.size_in_bytes = header->PayloadLen - sizeof(imgdif_network);
-
-		_Display->UpdateImage(_ImageCompression->Decompress(img), imgdif_network);
+		img.size_in_bytes = header->PayloadLen - sizeof(rect);
+		assert(img.size_in_bytes == img.height * img.width * 4);
+		DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
+		_Display->UpdateImage(img, rect);
 
 	}
 	else if (header->Packet_Type == NetworkMessages::MOUSEEVENT){
 		MouseEvent_Header h;
 		memcpy(&h, beg, sizeof(h));
+		assert(header->PayloadLen == sizeof(h));
 		_Display->UpdateMouse(h);
 	}
 

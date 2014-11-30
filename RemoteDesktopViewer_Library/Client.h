@@ -3,7 +3,7 @@
 
 namespace RemoteDesktop{
 
-	class ImageCompression;
+
 	class Display;
 	class SocketHandler;
 	class BaseClient;
@@ -11,7 +11,7 @@ namespace RemoteDesktop{
 
 	class Client {
 
-		std::unique_ptr<ImageCompression> _ImageCompression;
+
 		std::unique_ptr<Display> _Display;
 		std::unique_ptr<BaseClient> _NetworkClient;
 

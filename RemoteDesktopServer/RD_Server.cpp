@@ -1,33 +1,34 @@
 #include "stdafx.h"
 #include "RD_Server.h"
 #include "ScreenCapture.h"
-#include "ImageCompression.h"
 #include "MouseCapture.h"
 #include "Desktop_Monitor.h"
 #include <fstream>
 #include "BaseServer.h"
-#include "..\RemoteDesktop_Library\SocketHandler.h"
-#include "..\RemoteDesktop_Library\Rect.h"
-#include "..\RemoteDesktop_Library\CommonNetwork.h"
-#include "..\RemoteDesktop_Library\Event_Wrapper.h"
+#include "SocketHandler.h"
+#include "Rect.h"
+#include "CommonNetwork.h"
+#include "Event_Wrapper.h"
+#include "Clipboard.h"
 
-#if defined _DEBUG
+#if _DEBUG
 #include "Console.h"
 #endif
-#define FRAME_CAPTURE_INTERVAL 100
+
+#define FRAME_CAPTURE_INTERVAL 100 //ms between checking for screen changes
 
 RemoteDesktop::RD_Server::RD_Server(){
 
-#if defined _DEBUG
+#if _DEBUG
 	_DebugConsole = std::make_unique<CConsole>();
 #endif
+
 	DWORD bufsize = 256;
 	TCHAR buff[256];
 	GetUserName(buff, &bufsize);
 	std::wstring uname = buff;
 	_RunningAsService = ci_find_substr(uname, std::wstring(L"system")) == 0;
 
-	imagecompression = std::make_unique<ImageCompression>();
 	mousecapturing = std::make_unique<MouseCapture>();
 	_DesktopMonitor = std::make_unique<DesktopMonitor>();
 	_NetworkServer = std::make_unique<BaseServer>(
@@ -36,9 +37,13 @@ RemoteDesktop::RD_Server::RD_Server(){
 		std::bind(&RemoteDesktop::RD_Server::OnDisconnect, this, std::placeholders::_1)
 		);
 	_ScreenCapture = std::make_unique<ScreenCapture>();
+	_ClipboardMonitor = std::make_unique<Clipboard>();		
+
+	_CADEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad");
+
 }
 RemoteDesktop::RD_Server::~RD_Server(){
-
+	if (_CADEventHandle != NULL) CloseHandle(_CADEventHandle);
 }
 
 void RemoteDesktop::RD_Server::OnConnect(std::shared_ptr<SocketHandler>& sh){
@@ -126,7 +131,7 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 		_Handle_MouseUpdate(header, data, sh);
 		break;
 	case NetworkMessages::CAD:
-		_DesktopMonitor->SimulateCtrlAltDel();
+		SetEvent(_CADEventHandle);
 		break;
 	case NetworkMessages::FILE:
 		_Handle_File(header, data, sh);
@@ -149,13 +154,11 @@ void RemoteDesktop::RD_Server::_HandleNewClients(Image& img){
 	int sz[2];
 	sz[0] = img.height;
 	sz[1] = img.width;
-
-	auto imgdif = imagecompression->Compress(img);
-	msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
-	msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes));
-	std::lock_guard<std::mutex> lock(_NewClientLock);
 	DEBUG_MSG("Servicing new Client %, %", img.height, img.width);
-
+	msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
+	msg.data.push_back(DataPackage((char*)img.data, img.size_in_bytes));
+	std::lock_guard<std::mutex> lock(_NewClientLock);
+	
 	for (auto& a : _NewClients){
 
 		a->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
@@ -171,9 +174,8 @@ bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& img, Image& _last
 		sz[0] = img.height;
 		sz[1] = img.width;
 
-		auto imgdif = imagecompression->Compress(img);
 		msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
-		msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes));
+		msg.data.push_back(DataPackage((char*)img.data, img.size_in_bytes));
 		_NetworkServer->SendToAll(NetworkMessages::RESOLUTIONCHANGE, msg);
 		return true;
 	}
@@ -183,14 +185,12 @@ bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& img, Image& _last
 
 void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, std::vector<unsigned char>& buffer){
 	if (rect.width > 0 && rect.height > 0){
+		
 		NetworkMsg msg;
-		auto imgdif = imagecompression->Compress(Image::Copy(img, rect, buffer));
-		Image_Diff_Header imgdif_network;
-		imgdif_network.rect = rect;
-		imgdif_network.compressed = imgdif.compressed == true ? 0 : -1;
-		msg.push_back(imgdif_network);
-		msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes));
-
+		auto imgdif = Image::Copy(img, rect, buffer);
+		msg.push_back(rect);
+		msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes)); 
+		DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
 		_NetworkServer->SendToAll(NetworkMessages::UPDATEREGION, msg);
 	}
 
@@ -243,8 +243,9 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port) {
 			}
 		}
 		auto t1 = Timer(true);
+
 		if (_NetworkServer->Client_Count() <= 0) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));//sleep if there are no clients connected.
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));//sleep if there are no clients connected.
 			continue;
 		}
 

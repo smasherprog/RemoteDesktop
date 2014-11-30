@@ -79,7 +79,7 @@ protected:
 		hash.Update(s1, s1len);
 		hash.Update(s2, s2len);
 
-		const size_t sz = min(dlen, (size_t)HASH::DIGESTSIZE);
+		const size_t sz = std::min(dlen, (size_t)HASH::DIGESTSIZE);
 		hash.TruncatedFinal(digest, sz);
 	}
 
