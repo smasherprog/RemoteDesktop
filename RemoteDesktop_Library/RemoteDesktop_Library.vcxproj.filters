@@ -34,18 +34,15 @@
     <Filter Include="tests">
       <UniqueIdentifier>{f2aa0dd2-7a8d-4a79-b6da-b1cc92b8e9eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Utilities">
+      <UniqueIdentifier>{d77c6cde-7c11-4748-8539-52f88d62f5fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities">
+      <UniqueIdentifier>{948d43d5-9c0c-4db8-a2c7-618077331f88}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utilities.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NetworkSetup.h">
@@ -57,16 +54,7 @@
     <ClInclude Include="CommonNetwork.h">
       <Filter>Header Files\Network</Filter>
     </ClInclude>
-    <ClInclude Include="Console.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Rect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MouseCommon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Encryption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Traffic_Monitor.h">
@@ -80,9 +68,6 @@
     </ClInclude>
     <ClInclude Include="Desktop_Wrapper.h">
       <Filter>Header Files\Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="Clipboard.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Desktop_Monitor.h">
       <Filter>Header Files</Filter>
@@ -105,6 +90,36 @@
     <ClInclude Include="stb_image.h">
       <Filter>tests</Filter>
     </ClInclude>
+    <ClInclude Include="Console.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Delegate.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Encryption.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Image.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Rect.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Clipboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Clipboard_Monitor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Clipboard_Wrapper.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -113,20 +128,8 @@
     <ClCompile Include="NetworkSetup.cpp">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="Console.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Image.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Encryption.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SocketHandler.cpp">
       <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Traffic_Monitor.cpp">
       <Filter>Source Files\Network</Filter>
@@ -139,9 +142,6 @@
     </ClCompile>
     <ClCompile Include="Desktop_Wrapper.cpp">
       <Filter>Source Files\Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="Clipboard.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Desktop_Monitor.cpp">
       <Filter>Source Files</Filter>
@@ -160,6 +160,27 @@
     </ClCompile>
     <ClCompile Include="Compression_Handler.cpp">
       <Filter>Source Files\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Clipboard_Monitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Clipboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Console.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Encryption.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Image.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Clipboard_Wrapper.cpp">
+      <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -6,9 +6,15 @@
 #include "BaseClient.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 #include "..\RemoteDesktop_Library\Image.h"
+#include "..\RemoteDesktop_Library\Delegate.h"
+#include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 
-RemoteDesktop::Client::Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect) {
+RemoteDesktop::Client::Client(HWND hwnd,
+	void(__stdcall * onconnect)(),
+	void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int),
+	void(__stdcall * onprimchanged)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnPrimaryChanged(onprimchanged) {
 	_Display = std::make_unique<Display>(hwnd, oncursorchange);
+	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Client::_OnClipboardChanged, this));
 	DEBUG_MSG("Client()");
 }
 
@@ -22,14 +28,61 @@ void RemoteDesktop::Client::OnDisconnect(){
 }
 void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port){
 	if (_NetworkClient) _NetworkClient.reset();
-	_NetworkClient = std::make_unique<BaseClient>(std::bind(&RemoteDesktop::Client::OnConnect, this, std::placeholders::_1),
-		std::bind(&RemoteDesktop::Client::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-		std::bind(&RemoteDesktop::Client::OnDisconnect, this));
+	_NetworkClient = std::make_unique<BaseClient>(DELEGATE(&RemoteDesktop::Client::OnConnect, this),
+		DELEGATE(&RemoteDesktop::Client::OnReceive, this),
+		DELEGATE(&RemoteDesktop::Client::OnDisconnect, this));
 	_NetworkClient->Connect(host, port);
 }
 void RemoteDesktop::Client::Stop(){
 	_NetworkClient->Stop();
 }
+void RemoteDesktop::Client::_OnClipboardChanged(const Clipboard_Data& c){
+
+	NetworkMsg msg;
+	int dibsize(c.m_pDataDIB.size()), htmlsize(c.m_pDataHTML.size()), rtfsize(c.m_pDataRTF.size()), textsize(c.m_pDataText.size());
+
+	msg.push_back(dibsize);
+	msg.data.push_back(DataPackage(c.m_pDataDIB.data(), dibsize));
+	msg.push_back(htmlsize);
+	msg.data.push_back(DataPackage(c.m_pDataHTML.data(), htmlsize));
+	msg.push_back(rtfsize);
+	msg.data.push_back(DataPackage(c.m_pDataRTF.data(), rtfsize));
+	msg.push_back(textsize);
+	msg.data.push_back(DataPackage(c.m_pDataText.data(), textsize));
+
+	_NetworkClient->Send(NetworkMessages::CLIPBOARDCHANGED, msg);
+
+}
+void RemoteDesktop::Client::_Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	Clipboard_Data clip;
+	int dibsize(0), htmlsize(0), rtfsize(0), textsize(0);
+
+	dibsize = (*(int*)data);
+	data += sizeof(dibsize);
+	clip.m_pDataDIB.resize(dibsize);
+	memcpy(clip.m_pDataDIB.data(), data, dibsize);
+	data += dibsize;
+
+	htmlsize = (*(int*)data);
+	data += sizeof(htmlsize);
+	clip.m_pDataHTML.resize(htmlsize);
+	memcpy(clip.m_pDataHTML.data(), data, htmlsize);
+	data += htmlsize;
+
+	rtfsize = (*(int*)data);
+	data += sizeof(rtfsize);
+	clip.m_pDataRTF.resize(rtfsize);
+	memcpy(clip.m_pDataRTF.data(), data, rtfsize);
+	data += rtfsize;
+
+	textsize = (*(int*)data);
+	data += sizeof(textsize);
+	clip.m_pDataText.resize(textsize);
+	memcpy(clip.m_pDataText.data(), data, textsize);
+	data += textsize;
+	_ClipboardMonitor->Restore(clip);
+}
+
 
 void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	DEBUG_MSG("Connection Successful");
@@ -90,13 +143,13 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		char size = relative.size();
 		msg.data.push_back(DataPackage(&size, sizeof(size)));
 		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
-		int isize = data.size(); 
+		int isize = data.size();
 		msg.data.push_back(DataPackage((char*)&isize, sizeof(isize)));
 		msg.data.push_back(DataPackage(data.data(), data.size()));
 		_NetworkClient->Send(NetworkMessages::FILE, msg);
 	}
 	else {//this is a folder
-	
+
 		NetworkMsg msg;
 		char size = relative.size();
 		msg.data.push_back(DataPackage(&size, sizeof(size)));
@@ -119,10 +172,11 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		memcpy(&img.height, beg, sizeof(img.height));
 		beg += sizeof(img.height);
 		memcpy(&img.width, beg, sizeof(img.width));
-		beg += sizeof(img.width); 
+		beg += sizeof(img.width);
 		img.stride = 3;
 		img.data = (unsigned char*)beg;
 		img.size_in_bytes = header->PayloadLen - sizeof(img.height) - sizeof(img.width);
+		_OnPrimaryChanged(img.width, img.height);
 		_Display->NewImage(img);
 
 	}
@@ -136,9 +190,9 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		img.height = rect.height;
 		img.width = rect.width;
 		img.data = (unsigned char*)beg;
-		img.size_in_bytes = header->PayloadLen - sizeof(rect); 
+		img.size_in_bytes = header->PayloadLen - sizeof(rect);
 
-		DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
+		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
 		_Display->UpdateImage(img, rect);
 
 	}
@@ -147,6 +201,9 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		memcpy(&h, beg, sizeof(h));
 		assert(header->PayloadLen == sizeof(h));
 		_Display->UpdateMouse(h);
+	}
+	else if (header->Packet_Type == NetworkMessages::CLIPBOARDCHANGED){
+		_Handle_ClipBoard(header, data, sh);
 	}
 
 

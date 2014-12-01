@@ -52,7 +52,7 @@
             this.viewPort1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.viewPort1.Location = new System.Drawing.Point(0, 0);
             this.viewPort1.Name = "viewPort1";
-            this.viewPort1.Size = new System.Drawing.Size(710, 494);
+            this.viewPort1.Size = new System.Drawing.Size(1236, 784);
             this.viewPort1.TabIndex = 2;
             // 
             // button3
@@ -60,7 +60,7 @@
             this.button3.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.button3.ImageIndex = 2;
             this.button3.ImageList = this.imageList1;
-            this.button3.Location = new System.Drawing.Point(361, 3);
+            this.button3.Location = new System.Drawing.Point(624, 3);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(24, 24);
             this.button3.TabIndex = 1;
@@ -72,7 +72,7 @@
             this.button2.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.button2.ImageIndex = 1;
             this.button2.ImageList = this.imageList1;
-            this.button2.Location = new System.Drawing.Point(331, 3);
+            this.button2.Location = new System.Drawing.Point(594, 3);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(24, 24);
             this.button2.TabIndex = 0;
@@ -84,7 +84,7 @@
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(710, 494);
+            this.ClientSize = new System.Drawing.Size(1236, 784);
             this.Controls.Add(this.viewPort1);
             this.Name = "MainViewer";
             this.ShowIcon = false;

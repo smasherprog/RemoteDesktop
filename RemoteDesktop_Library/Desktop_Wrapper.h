@@ -5,7 +5,7 @@ namespace RemoteDesktop{
 	class Desktop_Wrapper{
 		HDESK Handle = NULL;
 	public:
-		Desktop_Wrapper(HDESK h) : Handle(h){}
+		explicit Desktop_Wrapper(HDESK h) : Handle(h){}
 		~Desktop_Wrapper();
 		HDESK get_Handle() const { return Handle; }
 	};

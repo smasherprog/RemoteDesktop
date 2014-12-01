@@ -8,10 +8,10 @@
 #include <memory>
 
 #include "Encryption.h"
-#include <functional>
 #include <vector>
 #include "Traffic_Monitor.h"
 #include <mutex>
+#include "Delegate.h"
 
 namespace RemoteDesktop{
 	enum PeerState{
@@ -58,10 +58,11 @@ namespace RemoteDesktop{
 		Network_Return Send(NetworkMessages m, const NetworkMsg& msg);
 		Network_Return Receive();
 		SOCKET get_Socket() const { return _Socket ? _Socket->socket : INVALID_SOCKET; }
-		std::function<void(Packet_Header*, const char*, SocketHandler*)> Receive_CallBack;
-		std::function<void(SocketHandler*)> Connected_CallBack;
-		std::function<void(SocketHandler*)> Disconnect_CallBack;
 
+		Delegate<void, Packet_Header*, const char*, SocketHandler*> Receive_CallBack;
+		Delegate<void, SocketHandler*> Connected_CallBack;
+		Delegate<void, SocketHandler*> Disconnect_CallBack;
+	
 		Traffic_Monitor Traffic;
 
 	};

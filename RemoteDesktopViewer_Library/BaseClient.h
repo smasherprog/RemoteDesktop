@@ -3,6 +3,7 @@
 #include "CommonNetwork.h"
 #include <thread>
 #include <memory>
+#include "..\RemoteDesktop_Library\Delegate.h"
 
 namespace RemoteDesktop{
 	class SocketHandler;
@@ -14,12 +15,10 @@ namespace RemoteDesktop{
 		void _OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s);
 		void _OnConnectHandler(SocketHandler* socket);
 
-		std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> Receive_CallBack;
-		std::function<void(std::shared_ptr<SocketHandler>&)> Connected_CallBack;
-		std::function<void()> Disconnect_CallBack;
-
+		Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> Receive_CallBack;
+		Delegate<void, std::shared_ptr<SocketHandler>&> Connected_CallBack;
+		Delegate<void> Disconnect_CallBack;
 	
-
 		void _Run();
 		void _RunWrapper(int connectattempts);
 		std::thread _BackGroundNetworkWorker;
@@ -29,9 +28,10 @@ namespace RemoteDesktop{
 		bool Running = false;
 		bool DisconnectReceived = false;
 	public:
-		explicit BaseClient(std::function<void(std::shared_ptr<SocketHandler>&)> c,
-			std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
-			std::function<void()> d);
+		explicit BaseClient(Delegate<void, std::shared_ptr<SocketHandler>&> c,
+			Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
+			Delegate<void> d);
+
 		~BaseClient();
 
 		void Connect(std::wstring host, std::wstring port = L"443");

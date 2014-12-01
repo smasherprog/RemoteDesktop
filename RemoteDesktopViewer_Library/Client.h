@@ -9,24 +9,31 @@ namespace RemoteDesktop{
 	class SocketHandler;
 	class BaseClient;
 	struct Packet_Header;
+	class ClipboardMonitor;
+	struct Clipboard_Data;
 
 	class Client {
 
-
 		std::unique_ptr<Display> _Display;
 		std::unique_ptr<BaseClient> _NetworkClient;
+		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
 
 		HWND _HWND;
 		void OnDisconnect();
-		void OnConnect(std::shared_ptr<SocketHandler>& sh);
+		void OnConnect(std::shared_ptr<SocketHandler>& sh); 
+		void _OnClipboardChanged(const Clipboard_Data& c);
+		void _Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
+
 		void OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh);
 		std::wstring _Host, _Port;
 		void(__stdcall * _OnConnect)();
-		void(__stdcall * _OnDisconnect)(); 
+		void(__stdcall * _OnDisconnect)();
+		void(__stdcall * _OnPrimaryChanged)(int x, int y);
+
 		void SendFileOrFolder(std::string root1, std::string fullpath);
 
 	public:
-		Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int));
+		Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int));
 		~Client();	
 	
 		void Connect(std::wstring host, std::wstring port = L"443");

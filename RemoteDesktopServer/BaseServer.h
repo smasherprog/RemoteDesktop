@@ -4,6 +4,7 @@
 #include <thread>
 #include <memory>
 #include <mutex>
+#include "..\RemoteDesktop_Library\Delegate.h"
 
 namespace RemoteDesktop{
 	class SocketHandler;
@@ -30,14 +31,14 @@ namespace RemoteDesktop{
 		bool Running = false;
 		HDESK _NetworkCurrentDesktop = NULL;
 		
-		std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> Receive_CallBack;
-		std::function<void(std::shared_ptr<SocketHandler>&)> Connected_CallBack;
-		std::function<void(std::shared_ptr<SocketHandler>&)> Disconnect_CallBack;
+		Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> Receive_CallBack;
+		Delegate<void, std::shared_ptr<SocketHandler>&> Connected_CallBack;
+		Delegate<void, std::shared_ptr<SocketHandler>&> Disconnect_CallBack;
 
 	public:
-		BaseServer(std::function<void(std::shared_ptr<SocketHandler>&)> c,
-			std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
-			std::function<void(std::shared_ptr<SocketHandler>&)> d);
+		BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
+			Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
+			Delegate<void, std::shared_ptr<SocketHandler>&> d);
 		~BaseServer();
 
 		bool Is_Running() const{ return Running; }

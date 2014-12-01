@@ -4,9 +4,9 @@
 #include "CommonNetwork.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 
-RemoteDesktop::BaseServer::BaseServer(std::function<void(std::shared_ptr<SocketHandler>&)> c,
-	std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
-	std::function<void(std::shared_ptr<SocketHandler>&)> d){
+RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
+	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
+	Delegate<void, std::shared_ptr<SocketHandler>&> d){
 	Connected_CallBack = c;
 	Receive_CallBack = r;
 	Disconnect_CallBack = d;
@@ -159,6 +159,7 @@ void RemoteDesktop::BaseServer::_OnDisconnect(int index){
 	if (ev != NULL) WSACloseEvent(ev);
 	DEBUG_MSG("_OnDisconnect Finished");
 }
+#include "..\RemoteDesktop_Library\Delegate.h"
 
 void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 	DEBUG_MSG("BaseServer OnConnect Called");
@@ -178,9 +179,9 @@ void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 
 	auto sock = std::make_shared<SocketHandler>(connectsocket, false);
 
-	sock->Connected_CallBack = std::bind(&RemoteDesktop::BaseServer::_OnConnectHandler, this, std::placeholders::_1);
-	sock->Receive_CallBack = std::bind(&RemoteDesktop::BaseServer::_OnReceiveHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	sock->Disconnect_CallBack = std::bind(&RemoteDesktop::BaseServer::_OnDisconnectHandler, this, std::placeholders::_1);
+	sock->Connected_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnConnectHandler, this);
+	sock->Receive_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnReceiveHandler, this);
+	sock->Disconnect_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnDisconnectHandler, this);
 
 	auto sockptr = sock.get();
 	SocketArray.push_back(sock);

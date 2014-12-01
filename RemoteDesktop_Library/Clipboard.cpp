@@ -1,64 +1,83 @@
 #include "stdafx.h"
 #include "Clipboard.h"
-#include "Desktop_Monitor.h"
+#include "Clipboard_Wrapper.h"
 
+const UINT formatUnicodeText = CF_UNICODETEXT;
+const UINT formatRTF = RegisterClipboardFormat(L"Rich Text Format");
+const UINT formatHTML = RegisterClipboardFormat(L"HTML Format");
+const UINT formatDIB = CF_DIBV5;
 
-RemoteDesktop::Clipboard::Clipboard(){
-	_Running = true;
-	_BackGroundWorker = std::thread(&RemoteDesktop::Clipboard::_Run, this);
-}
-RemoteDesktop::Clipboard::~Clipboard(){
-	_Running = false;
-	if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
+RemoteDesktop::Clipboard_Data RemoteDesktop::Clipboard::Load(void* hwnd){
+	DEBUG_MSG("BEGIN Loading Clipboard");
 
-}
-void RemoteDesktop::Clipboard::_Run(){
-	DesktopMonitor dekstopmonitor;
-	dekstopmonitor.Switch_to_ActiveDesktop();
+	Clipboard_Data retdata;
+	Clipboard_Wrapper clipwrap(hwnd);
+	if (!clipwrap.IsValid()) return retdata;
 
-	auto myclass = L"myclass";
-	WNDCLASSEX wndclass = {};
-	memset(&wndclass, 0, sizeof(wndclass));
-	wndclass.cbSize = sizeof(WNDCLASSEX);
-	wndclass.lpfnWndProc = DefWindowProc;
-	wndclass.lpszClassName = myclass;
-	HWND _WindowHandle = NULL;
-	if (RegisterClassEx(&wndclass))
-	{
-		_WindowHandle = CreateWindowEx(0, myclass, L"clipwatcher", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
-		if (!AddClipboardFormatListener(_WindowHandle)){
-			DEBUG_MSG("Error %", GetLastError());
+	HANDLE hText = NULL;
+	if (IsClipboardFormatAvailable(formatUnicodeText)) {
+		hText = ::GetClipboardData(formatUnicodeText);
+	}
+
+	if (hText) {
+		BYTE* pData = (BYTE*)GlobalLock(hText);
+		int nLength = (int)GlobalSize(hText);
+
+		if (pData != NULL && nLength > 0) {
+			// Convert from UTF-16 to UTF-8
+			int nConvertedSize = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)pData, -1, NULL, 0, NULL, NULL);
+
+			if (nConvertedSize > 0) {
+				retdata.m_pDataText.resize(nConvertedSize);
+
+				int nFinalConvertedSize = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)pData, -1, retdata.m_pDataText.data(), nConvertedSize, NULL, NULL);
+				if (nFinalConvertedSize > 0) retdata.m_pDataText.resize(nFinalConvertedSize);
+				else retdata.m_pDataText.resize(0);
+			}
+			GlobalUnlock(hText);
 		}
 	}
-	else {
-		DEBUG_MSG("Error %", GetLastError());
-	}
-	SetTimer(_WindowHandle, 1001, 500, NULL); //every 500 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
-	MSG msg;
-	while (_Running){
-		if (PeekMessage(&msg, _WindowHandle, 0, 0, PM_REMOVE))
-		{
-			if (msg.message == WM_TIMER)
-			{
+
+	_INTERNAL::LoadClip(retdata.m_pDataRTF, ::GetClipboardData, formatRTF);
+	_INTERNAL::LoadClip(retdata.m_pDataHTML, ::GetClipboardData, formatHTML);
+	_INTERNAL::LoadClip(retdata.m_pDataDIB, ::GetClipboardData, formatDIB);
+
+	DEBUG_MSG("END Loading Clipboard");
+	return retdata;
+}
+
+void RemoteDesktop::Clipboard::Restore(void* hwnd, const Clipboard_Data& c){
+	DEBUG_MSG("BEGIN Restore Clipboard");
+	Clipboard_Wrapper clipwrap(hwnd);
+	if (!clipwrap.IsValid()) return;
+	if (!::EmptyClipboard()) return;
+
+	if (!c.m_pDataText.empty()){
+		int nConvertedSize = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)c.m_pDataText.data(), c.m_pDataText.size(), NULL, 0);
+		if (nConvertedSize > 0) {
+			HGLOBAL hData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, nConvertedSize * sizeof(wchar_t));
+			if (hData) {
+				BYTE* pData = (BYTE*)GlobalLock(hData);
+				if (pData) {
+					int nFinalConvertedSize = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)c.m_pDataText.data(), c.m_pDataText.size(), (LPWSTR)pData, nConvertedSize);
+					GlobalUnlock(hData);
+					if (nFinalConvertedSize > 0) {
+						if (::SetClipboardData(formatUnicodeText, hData))
+						{
+							hData = NULL;
+							DEBUG_MSG("BEGIN Restore Clipboard formatUnicodeText");
+						}
+					}
+				}
 			}
-			else if (msg.message == WM_QUIT || msg.message == WM_CLOSE || msg.message == WM_DESTROY){
-				break;//get out of the loop and destroy
-			}
-			else if (WM_CLIPBOARDUPDATE){
-				DEBUG_MSG("gotclip update!!");
-			}
-			else
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
+			if (hData) {
+				GlobalFree(hData);
 			}
 		}
-		else WaitMessage();
 	}
-	if (_WindowHandle != NULL) {
-		RemoveClipboardFormatListener(_WindowHandle);	
-		KillTimer(_WindowHandle, 1001);
-		DestroyWindow(_WindowHandle);
-	}
+	_INTERNAL::RestoreClip(c.m_pDataRTF, ::SetClipboardData, formatRTF);
+	_INTERNAL::RestoreClip(c.m_pDataHTML, ::SetClipboardData, formatHTML);
+	_INTERNAL::RestoreClip(c.m_pDataDIB, ::SetClipboardData, formatDIB);
 
+	DEBUG_MSG("END Restore Clipboard");
 }

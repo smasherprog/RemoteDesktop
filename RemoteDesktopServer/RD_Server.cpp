@@ -9,7 +9,9 @@
 #include "Rect.h"
 #include "CommonNetwork.h"
 #include "Event_Wrapper.h"
-#include "Clipboard.h"
+#include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
+#include "..\RemoteDesktop_Library\Delegate.h"
+#include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 
 #if _DEBUG
 #include "Console.h"
@@ -32,12 +34,11 @@ RemoteDesktop::RD_Server::RD_Server(){
 	mousecapturing = std::make_unique<MouseCapture>();
 	_DesktopMonitor = std::make_unique<DesktopMonitor>();
 	_NetworkServer = std::make_unique<BaseServer>(
-		std::bind(&RemoteDesktop::RD_Server::OnConnect, this, std::placeholders::_1),
-		std::bind(&RemoteDesktop::RD_Server::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-		std::bind(&RemoteDesktop::RD_Server::OnDisconnect, this, std::placeholders::_1)
-		);
+		DELEGATE(&RemoteDesktop::RD_Server::OnConnect, this),
+		DELEGATE(&RemoteDesktop::RD_Server::OnReceive, this),
+		DELEGATE(&RemoteDesktop::RD_Server::OnDisconnect, this));
 	_ScreenCapture = std::make_unique<ScreenCapture>();
-	_ClipboardMonitor = std::make_unique<Clipboard>();		
+	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
 
 	_CADEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad");
 
@@ -45,6 +46,51 @@ RemoteDesktop::RD_Server::RD_Server(){
 RemoteDesktop::RD_Server::~RD_Server(){
 	if (_CADEventHandle != NULL) CloseHandle(_CADEventHandle);
 }
+void RemoteDesktop::RD_Server::_OnClipboardChanged(const Clipboard_Data& c){
+	NetworkMsg msg;
+	int dibsize(c.m_pDataDIB.size()), htmlsize(c.m_pDataHTML.size()), rtfsize(c.m_pDataRTF.size()), textsize(c.m_pDataText.size());
+
+	msg.push_back(dibsize);
+	msg.data.push_back(DataPackage(c.m_pDataDIB.data(), dibsize));
+	msg.push_back(htmlsize);
+	msg.data.push_back(DataPackage(c.m_pDataHTML.data(), htmlsize));
+	msg.push_back(rtfsize);
+	msg.data.push_back(DataPackage(c.m_pDataRTF.data(), rtfsize));
+	msg.push_back(textsize);
+	msg.data.push_back(DataPackage(c.m_pDataText.data(), textsize));
+
+	_NetworkServer->SendToAll(NetworkMessages::CLIPBOARDCHANGED, msg);
+}
+void RemoteDesktop::RD_Server::_Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	Clipboard_Data clip;
+	int dibsize(0), htmlsize(0), rtfsize(0), textsize(0);
+
+	dibsize = (*(int*)data);
+	data+=sizeof(dibsize);
+	clip.m_pDataDIB.resize(dibsize);
+	memcpy(clip.m_pDataDIB.data(), data, dibsize);
+	data += dibsize;
+
+	htmlsize = (*(int*)data);
+	data += sizeof(htmlsize);
+	clip.m_pDataHTML.resize(htmlsize);
+	memcpy(clip.m_pDataHTML.data(), data, htmlsize);
+	data += htmlsize;
+
+	rtfsize = (*(int*)data);
+	data += sizeof(rtfsize);
+	clip.m_pDataRTF.resize(rtfsize);
+	memcpy(clip.m_pDataRTF.data(), data, rtfsize);
+	data += rtfsize;
+
+	textsize = (*(int*)data);
+	data += sizeof(textsize);
+	clip.m_pDataText.resize(textsize);
+	memcpy(clip.m_pDataText.data(), data, textsize);
+	data += textsize;
+	_ClipboardMonitor->Restore(clip);
+}
+
 
 void RemoteDesktop::RD_Server::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	std::lock_guard<std::mutex> lock(_NewClientLock);
@@ -112,6 +158,7 @@ void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header
 	f.write(data, isize);
 
 }
+
 void RemoteDesktop::RD_Server::_Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	char size = *data;
 	data++;
@@ -136,6 +183,9 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 		break;
 	case NetworkMessages::FOLDER:
 		_Handle_Folder(header, data, sh);
+		break;
+	case NetworkMessages::CLIPBOARDCHANGED:
+		_Handle_ClipBoard(header, data, sh);
 		break;
 	default:
 		break;

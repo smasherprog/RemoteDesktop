@@ -4,9 +4,9 @@
 #include "CommonNetwork.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 
-RemoteDesktop::BaseClient::BaseClient(std::function<void(std::shared_ptr<SocketHandler>&)> c,
-	std::function<void(Packet_Header*, const char*, std::shared_ptr<SocketHandler>&)> r,
-	std::function<void()> d){
+RemoteDesktop::BaseClient::BaseClient(Delegate<void, std::shared_ptr<SocketHandler>&> c,
+	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
+	Delegate<void> d){
 	Connected_CallBack = c;
 	Receive_CallBack = r;
 	Disconnect_CallBack = d;
@@ -84,9 +84,11 @@ bool RemoteDesktop::BaseClient::_Connect(){
 
 	WSACloseEvent(newevent);
 	Socket = std::make_shared<SocketHandler>(ConnectSocket, true);
-	Socket->Connected_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnConnectHandler, this, std::placeholders::_1);
-	Socket->Receive_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnReceiveHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	Socket->Disconnect_CallBack = std::bind(&RemoteDesktop::BaseClient::_OnDisconnectHandler, this, std::placeholders::_1);
+
+	Socket->Connected_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnConnectHandler, this);
+	Socket->Receive_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnReceiveHandler, this);
+	Socket->Disconnect_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnDisconnectHandler, this);
+
 	Socket->Exchange_Keys();
 	return true;
 }

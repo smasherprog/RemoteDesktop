@@ -5,7 +5,7 @@ namespace RemoteDesktop{
 	class Event_Wrapper{
 		void* Handle = NULL;
 	public:
-		Event_Wrapper(void* h) : Handle(h){}
+		explicit Event_Wrapper(void* h) : Handle(h){}
 		~Event_Wrapper();
 		void* get_Handle() const { return Handle;  }
 	};

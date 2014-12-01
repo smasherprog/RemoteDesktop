@@ -39,8 +39,11 @@ namespace RemoteDesktop_Viewer
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate void _OnCursorChanged(int c_type);
 
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        delegate void _OnDisplayChanged(int x, int y);
+
         [DllImport("RemoteDesktopViewer_Library.dll", CallingConvention = CallingConvention.StdCall)]
-        static extern IntPtr Create_Client(IntPtr hwnd, _OnConnect onconnect, _OnDisconnect ondisconnect, _OnCursorChanged oncursorchange);
+        static extern IntPtr Create_Client(IntPtr hwnd, _OnConnect onconnect, _OnDisconnect ondisconnect, _OnCursorChanged oncursorchange, _OnDisplayChanged ondisplaychanged);
         [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void Destroy_Client(IntPtr client);
         [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Unicode)]
@@ -69,6 +72,7 @@ namespace RemoteDesktop_Viewer
         private _OnConnect OnConnect_CallBack;
         private _OnDisconnect OnDisconnect_CallBack;
         private _OnCursorChanged OnCursorChanged_CallBack;
+        private _OnDisplayChanged OnDisplayChanged_CallBack;
 
         private IntPtr _Client = IntPtr.Zero;
         private object _PendingFiles_Lock = new object();
@@ -97,8 +101,9 @@ namespace RemoteDesktop_Viewer
             OnConnect_CallBack = OnConnect;
             OnDisconnect_CallBack = OnDisconnect;
             OnCursorChanged_CallBack = OnCursorChanged;
+            OnDisplayChanged_CallBack = OnDisplayChanged;
 
-            _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack);
+            _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack, OnDisplayChanged_CallBack);
             Running = true;
 
         }
@@ -141,6 +146,26 @@ namespace RemoteDesktop_Viewer
             viewPort1.UIThread(() =>
             {
                 viewPort1.Cursor = CursorManager.Get_Cursor(c_type);
+            });
+        }
+        private void OnDisplayChanged(int x, int y)
+        {
+            var maxh = y + 10;
+            var maxx = x + 14;
+            if(maxx > Screen.PrimaryScreen.Bounds.Width - 40)
+                maxx = Screen.PrimaryScreen.Bounds.Width - 40;
+            if(maxh > Screen.PrimaryScreen.Bounds.Height - 50)
+                maxh = Screen.PrimaryScreen.Bounds.Height - 50;
+            viewPort1.UIThread(() =>
+            {
+                viewPort1.Size = new Size(x, y);
+            });
+    
+            this.UIThread(() => {
+                Rectangle screenRectangle = RectangleToScreen(this.ClientRectangle);
+
+                int titleHeight = screenRectangle.Top - this.Top;
+                this.Size = new Size(maxx, titleHeight + maxh); 
             });
         }
         private void Form1_DragDrop(object sender, DragEventArgs e)
