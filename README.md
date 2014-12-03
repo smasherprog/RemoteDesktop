@@ -14,4 +14,6 @@ Open RemoteDesktopServer.sln and build the RemoteDesktopServer project. This res
 
 After building, run the server, then run the viewer. In the dialog box, enter 127.0.0.1 and press connect.  Please Note, that when connected to yourself, you cant really do much because the keyboard and mouse will goto the viewer, which will send to the server and move your mouse relative to the primary monitor.
 
+NOTE: IF YOU RUN THE SERVER, IT WILL INSTALL ITSELF AS A SERVICE IF IT HAS SUFFICENT PRIVILEGES!!! This is by design...
+
 If you really want to test this, get another machine and run the server on it, then use the viewer to connect to that IP address. VMPlayer is free and can get you up and running fast with another machine to test this on.
