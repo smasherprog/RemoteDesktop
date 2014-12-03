@@ -31,9 +31,6 @@
     <Filter Include="Source Files\Compression">
       <UniqueIdentifier>{3177129f-fe86-4bfe-a122-49e2daa513af}</UniqueIdentifier>
     </Filter>
-    <Filter Include="tests">
-      <UniqueIdentifier>{f2aa0dd2-7a8d-4a79-b6da-b1cc92b8e9eb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Utilities">
       <UniqueIdentifier>{d77c6cde-7c11-4748-8539-52f88d62f5fb}</UniqueIdentifier>
     </Filter>
@@ -63,12 +60,6 @@
     <ClInclude Include="Ping.h">
       <Filter>Header Files\Network</Filter>
     </ClInclude>
-    <ClInclude Include="Event_Wrapper.h">
-      <Filter>Header Files\Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="Desktop_Wrapper.h">
-      <Filter>Header Files\Wrappers</Filter>
-    </ClInclude>
     <ClInclude Include="Desktop_Monitor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -86,9 +77,6 @@
     </ClInclude>
     <ClInclude Include="Compression_Handler.h">
       <Filter>Header Files\Compression</Filter>
-    </ClInclude>
-    <ClInclude Include="stb_image.h">
-      <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="Console.h">
       <Filter>Header Files\Utilities</Filter>
@@ -120,6 +108,12 @@
     <ClInclude Include="Clipboard_Wrapper.h">
       <Filter>Header Files\Wrappers</Filter>
     </ClInclude>
+    <ClInclude Include="Desktop_Wrapper.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="Event_Wrapper.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -136,12 +130,6 @@
     </ClCompile>
     <ClCompile Include="Ping.cpp">
       <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Event_Wrapper.cpp">
-      <Filter>Source Files\Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="Desktop_Wrapper.cpp">
-      <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="Desktop_Monitor.cpp">
       <Filter>Source Files</Filter>
@@ -180,6 +168,12 @@
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="Clipboard_Wrapper.cpp">
+      <Filter>Source Files\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="Desktop_Wrapper.cpp">
+      <Filter>Source Files\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="Event_Wrapper.cpp">
       <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
   </ItemGroup>

@@ -19,27 +19,6 @@
 
 #define FRAME_CAPTURE_INTERVAL 100 //ms between checking for screen changes
 
-
-#define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 3000 > Nul & Del \"%s\"")
-
-void DeleteMe(){
-
-	TCHAR szModuleName[MAX_PATH];
-	TCHAR szCmd[2 * MAX_PATH];
-	STARTUPINFO si = { 0 };
-	PROCESS_INFORMATION pi = { 0 };
-
-	GetModuleFileName(NULL, szModuleName, MAX_PATH);
-
-	StringCbPrintf(szCmd, 2 * MAX_PATH, SELF_REMOVE_STRING, szModuleName);
-
-	CreateProcess(NULL, szCmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
-
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-
-}
-
 RemoteDesktop::RD_Server::RD_Server(){
 
 #if _DEBUG
@@ -62,21 +41,10 @@ RemoteDesktop::RD_Server::RD_Server(){
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
 
 	_CADEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad");
-	_SelfRemoveEventHandle = OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRemoveSelf");
+
 }
 RemoteDesktop::RD_Server::~RD_Server(){
 	if (_CADEventHandle != NULL) CloseHandle(_CADEventHandle);
-	if (_RemoveOnExit) {
-		if (_SelfRemoveEventHandle != NULL) {
-			SetEvent(_SelfRemoveEventHandle);//signal the self removal process 
-			CloseHandle(_SelfRemoveEventHandle);
-		}
-		else DeleteMe();//try a self removal 
-	}
-}
-void RemoteDesktop::RD_Server::_Handle_DisconnectandRemove(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	_RemoveOnExit = true;
-	_NetworkServer->GracefulStop();//this will cause the main loop to stop and the program to exit
 }
 void RemoteDesktop::RD_Server::_OnClipboardChanged(const Clipboard_Data& c){
 	NetworkMsg msg;
@@ -219,10 +187,6 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	case NetworkMessages::CLIPBOARDCHANGED:
 		_Handle_ClipBoard(header, data, sh);
 		break;
-	case NetworkMessages::DISCONNECTANDREMOVE:
-		_Handle_DisconnectandRemove(header, data, sh);
-		break;
-		
 	default:
 		break;
 	}
@@ -327,7 +291,7 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port) {
 		else {
 			dwEvent = WaitForSingleObject(shutdownhandle.get_Handle(), lastwaittime);
 			if (dwEvent == 0){
-				_NetworkServer->GracefulStop();//stop program!
+				_NetworkServer->Stop();//stop program!
 				break;
 			}
 		}
@@ -369,5 +333,5 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port) {
 		lastwaittime = FRAME_CAPTURE_INTERVAL - tim;
 		if (lastwaittime < 0) lastwaittime = 0;
 	}
-	_NetworkServer->ForceStop();
+	_NetworkServer->Stop();
 }

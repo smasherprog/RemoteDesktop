@@ -27,7 +27,7 @@ void RemoteDesktop::Image::UnOptimize(std::vector<int>& buffer){
 	auto buf = buffer.data();
 	union rgba {
 		int data;
-		char cdata[4];
+		unsigned char cdata[4];
 	};
 	
 	for (auto y = 0; y < height; y++){

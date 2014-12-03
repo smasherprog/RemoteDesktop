@@ -22,7 +22,7 @@ void RemoteDesktop::BaseClient::Connect(std::wstring host, std::wstring port){
 	_Host = host;
 	_Port = port;
 	Running = true;
-	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this, 3);//3 initial connect attempts, this is about 3-4 seconds
+	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this);
 
 }
 
@@ -93,21 +93,21 @@ bool RemoteDesktop::BaseClient::_Connect(){
 	return true;
 }
 
-void RemoteDesktop::BaseClient::_RunWrapper(int connectattempts){
+void RemoteDesktop::BaseClient::_RunWrapper(){
 	int counter = 0;
 
-	while (Running && counter++ < connectattempts){
+	while (Running && counter++ < RemainingConnectAttempts){
 		if (!_Connect()){
 			DEBUG_MSG("socket failed with error = %\n", WSAGetLastError());
 		}
 		else {
 			counter = 0;//reset timer
 			DisconnectReceived = false;
-			connectattempts = 15;//set this to a specific value
+			RemainingConnectAttempts = 15;//set this to a specific value
 			_Run();
 		}
 	}
-	if (counter >= connectattempts)	Disconnect_CallBack();
+	if (counter >= RemainingConnectAttempts)	Disconnect_CallBack();
 	Running = false;
 
 }

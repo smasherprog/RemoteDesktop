@@ -42,14 +42,12 @@ namespace RemoteDesktop{
 		void _Handle_File(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh); 
 		void _Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
 		void _Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
-		void _Handle_DisconnectandRemove(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
-		
+
 		void _OnClipboardChanged(const Clipboard_Data& c);
 
 		bool _RunningAsService = false;
 		HANDLE _CADEventHandle;
-		HANDLE _SelfRemoveEventHandle;
-		bool _RemoveOnExit = false;
+
 
 	public:
 		RD_Server();
@@ -59,8 +57,6 @@ namespace RemoteDesktop{
 		void OnConnect(std::shared_ptr<SocketHandler>&  sh);
 		void OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>&  sh) ;
 		void Listen(unsigned short port);
-
-	
 	};
 
 };

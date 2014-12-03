@@ -121,6 +121,13 @@ void RemoteDesktop::Client::SendCAD(){
 	NetworkMsg msg;
 	_NetworkClient->Send(NetworkMessages::CAD, msg);
 }
+void RemoteDesktop::Client::SendRemoveService(){
+	NetworkMsg msg;
+	_NetworkClient->Send(NetworkMessages::DISCONNECTANDREMOVE, msg);
+	_NetworkClient->RemainingConnectAttempts = 1;//this will cause a quick disconnect
+}
+
+
 RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
 	auto s = _NetworkClient->Socket;
 	if (s) return s->Traffic.get_TrafficStats();

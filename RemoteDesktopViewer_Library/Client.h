@@ -43,6 +43,7 @@ namespace RemoteDesktop{
 		void KeyEvent(int VK, bool down) ;
 		void MouseEvent(unsigned int action, int x, int y, int wheel=0);
 
+		void SendRemoveService();
 		void SendCAD();
 		void SendFile(const char* absolute_path, const char* relative_path);
 		Traffic_Stats get_TrafficStats() const;

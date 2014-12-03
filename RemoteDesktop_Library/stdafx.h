@@ -20,3 +20,4 @@
 #include "Utilities.h"
 #include <vector>
 #include <string>
+#include <strsafe.h>

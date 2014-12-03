@@ -1,14 +1,12 @@
 #include "stdafx.h"
-
 #include <iphlpapi.h>
 #include <icmpapi.h>
 #include <stdio.h>
-
 #include "Ping.h"
 #include "NetworkSetup.h"
 
 #pragma comment(lib, "iphlpapi.lib")
-#pragma comment(lib, "ws2_32.lib")
+
 
 bool RemoteDesktop::Ping(wchar_t* ip){
 StartupNetwork();

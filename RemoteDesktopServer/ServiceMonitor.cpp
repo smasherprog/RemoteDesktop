@@ -1,14 +1,11 @@
 #include "stdafx.h"
 #include "ServiceMonitor.h"
 #include "ServiceHelpers.h"
-#include "Userenv.h"
 #include <fstream>
 #include "..\RemoteDesktop_Library\Event_Wrapper.h"
 
-RemoteDesktop::ServiceMonitor::ServiceMonitor() : lpfnWTSGetActiveConsoleSessionId("kernel32", "WTSGetActiveConsoleSessionId") {
-	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
-	memset(&StartUPInfo, 0, sizeof(STARTUPINFO));
-	memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
+RemoteDesktop::ServiceMonitor::ServiceMonitor(){
+
 
 }
 RemoteDesktop::ServiceMonitor::~ServiceMonitor(){
@@ -21,7 +18,9 @@ void RemoteDesktop::ServiceMonitor::Start(){
 }
 void RemoteDesktop::ServiceMonitor::Stop(){
 	Running = false;
-	if (ProcessInfo.hProcess != 0) TerminateProcess(ProcessInfo.hProcess, 0);
+	auto a = _App;
+
+	if (a) TerminateProcess(a->hProcess, 0);
 	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
 		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
 	}
@@ -37,16 +36,22 @@ void wait_for_existing_process()
 		Sleep(1000);
 	}
 }
+#define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 9000 > Nul & Del \"%s\"")
 void RemoteDesktop::ServiceMonitor::_Run(){
 
 	wait_for_existing_process();//wait for any existing program to stop running
 
 	Event_Wrapper exitprog(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram"));
 	Event_Wrapper cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRDCad"));
+	Event_Wrapper selfremovaltrigger(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRemoveSelf"));
+	HANDLE evs[2];
+	evs[0] = cardreq.get_Handle();
+	evs[1] = selfremovaltrigger.get_Handle();
 
 	while (Running){
 		DEBUG_MSG("Waiting for CAD Event");
-		auto Index = WaitForSingleObject(cardreq.get_Handle(), 1000);
+		
+		auto Index = WaitForMultipleObjects(2, evs, false, 1000);
 		if (Index == 0){
 			typedef VOID(WINAPI *SendSas)(BOOL asUser);
 			HINSTANCE Inst = LoadLibrary(L"sas.dll");
@@ -54,75 +59,58 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 			if (sendSas) sendSas(FALSE);
 			if (Inst) FreeLibrary(Inst);
 		}
-		if (lpfnWTSGetActiveConsoleSessionId.isValid())
-			_LastSession = (*lpfnWTSGetActiveConsoleSessionId)();
+		else if (Index == 1){
+			Running = false;
+			_LaunchProcess(L" -delayed_uninstall");
+
+			wchar_t szModuleName[MAX_PATH];
+			wchar_t szCmd[2 * MAX_PATH];
+			GetModuleFileName(NULL, szModuleName, MAX_PATH);
+			StringCbPrintf(szCmd, 2 * MAX_PATH, SELF_REMOVE_STRING, szModuleName);
+			LaunchProcess(szCmd, _CurrentSession);
+
+			break;
+		}
+		
+		_LastSession = WTSGetActiveConsoleSessionId();
 
 		if ((_LastSession != 0xFFFFFFFF) && (_LastSession >= 0) && (_LastSession != _CurrentSession)){
 			_CurrentSession = _LastSession;
 			DWORD exitcode = 0;
 			SetEvent(exitprog.get_Handle()); // signal to shut down if running
 			Sleep(3000);
-			if (ProcessInfo.hProcess == 0) {//this is the first launch of the application
-				_LaunchProcess();
+			if (!_App){//this is the first launch of the application
+				_App = _LaunchProcess(L" -run");
 			}
-			else if (GetExitCodeProcess(ProcessInfo.hProcess, &exitcode) != 0)
+			else if (GetExitCodeProcess(_App->hProcess, &exitcode) != 0)
 			{//the program is running and the service will wait for it to exit
 				if (exitcode != STILL_ACTIVE)
 				{
 					Sleep(1000);
-					WaitForSingleObject(ProcessInfo.hProcess, 5000);
-					if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
-					if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
-					_LaunchProcess();
+					WaitForSingleObject(_App->hProcess, 5000);
+					_App = _LaunchProcess(L" -run");
 				}
 				else {
 		
-					TerminateProcess(ProcessInfo.hProcess, 0);
+					TerminateProcess(_App->hProcess, 0);
 					Sleep(3000);
-					if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
-					if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
-					_LaunchProcess();
+					_App = _LaunchProcess(L" -run");
 				}
 			}
 			else {//the application is not running, a new process can be started 
 				Sleep(3000);
-
-				if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
-				if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
-				_LaunchProcess();
+				_App = _LaunchProcess(L" -run");
 			}
 		}
 
 	}
 	if (exitprog.get_Handle()) SetEvent(exitprog.get_Handle()); // signal to shut down if running
-
-	if (ProcessInfo.hProcess)
-	{
-		WaitForSingleObject(ProcessInfo.hProcess, 5000);
-		if (ProcessInfo.hProcess) CloseHandle(ProcessInfo.hProcess);
-		if (ProcessInfo.hThread) CloseHandle(ProcessInfo.hThread);
-	}
+	if (_App) WaitForSingleObject(_App->hProcess, 5000);
 }
 
-void RemoteDesktop::ServiceMonitor::_LaunchProcess(){
-
-	memset(&StartUPInfo, 0, sizeof(STARTUPINFO));
-	memset(&ProcessInfo, 0, sizeof(PROCESS_INFORMATION));
-
-	StartUPInfo.lpDesktop = L"Winsta0\\Winlogon";
-	StartUPInfo.cb = sizeof(STARTUPINFO);
-	HANDLE winloginhandle = NULL;
-	PVOID	lpEnvironment = NULL;
-
-	if (GetWinlogonHandle(&winloginhandle, _CurrentSession)){
-
-		if (CreateEnvironmentBlock(&lpEnvironment, winloginhandle, FALSE) == FALSE) lpEnvironment = NULL;
-		SetLastError(0);
-
-		CreateProcessAsUser(winloginhandle, NULL, szPath, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | DETACHED_PROCESS, lpEnvironment, NULL, &StartUPInfo, &ProcessInfo);
-
-	}
-	if (lpEnvironment) DestroyEnvironmentBlock(lpEnvironment);
-	CloseHandle(winloginhandle);
-
+std::shared_ptr<PROCESS_INFORMATION> RemoteDesktop::ServiceMonitor::_LaunchProcess(wchar_t* args){
+	wchar_t szPath[MAX_PATH];
+	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));	
+	if (args != nullptr) wcscat_s(szPath, args);
+	return LaunchProcess(szPath, _CurrentSession);
 }

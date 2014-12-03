@@ -68,12 +68,12 @@ namespace _INTERNAL{
 	}
 }
 
-inline std::wstring FormatBytes(long bytes)
+inline std::wstring FormatBytes(long long bytes)
 {
 	const auto scale = 1024.0;
 	static std::wstring orders[] =  { L"GB/s", L"MB/s", L"KB/s", L"Bytes/s" };
 
-	auto max = (long)pow(scale, 3.0);
+	auto max = (long long)pow(scale, 3.0);
 	for(auto& order : orders)
 	{
 		if (bytes > max){

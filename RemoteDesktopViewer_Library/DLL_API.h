@@ -13,7 +13,8 @@ extern "C" {
 	DLLEXPORT void Draw(void* client, HDC hdc);
 	DLLEXPORT void KeyEvent(void* client, int VK, bool down);
 	DLLEXPORT void MouseEvent(void* client, unsigned int action, int x, int y, int wheel);
-	DLLEXPORT void SendCAD(void* client);
+	DLLEXPORT void SendCAD(void* client); 
+	DLLEXPORT void SendRemoveService(void* client);
 	DLLEXPORT void SendFile(void* client, const char* absolute_path, const char* relative_path);
 	DLLEXPORT RemoteDesktop::Traffic_Stats get_TrafficStats(void* client);
 }

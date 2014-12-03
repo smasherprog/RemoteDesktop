@@ -2,21 +2,19 @@
 #define SERVICE_MONITOR_H
 #include <thread>
 #include "../RemoteDesktop_Library/Utilities.h"
+#include <memory>
 
 namespace RemoteDesktop{
 	class ServiceMonitor{
+
+		std::shared_ptr<PROCESS_INFORMATION> _App;
+
 		void _Run();
-		void _LaunchProcess();
+		std::shared_ptr<PROCESS_INFORMATION> _LaunchProcess(wchar_t* args);
+		std::shared_ptr<PROCESS_INFORMATION> _LaunchDeleteProcess();
 		bool Running = false;
 		bool StartProcess = false;
-
-		STARTUPINFO          StartUPInfo;
-		PROCESS_INFORMATION ProcessInfo;
-
-		wchar_t szPath[MAX_PATH]; 
 		
-		typedef DWORD(*WTSGETACTIVECONSOLESESSIONID)();
-		DynamicFn<WTSGETACTIVECONSOLESESSIONID> lpfnWTSGetActiveConsoleSessionId;
 		std::thread _BackGroundNetworkWorker;
 		DWORD _CurrentSession = 0xFFFFFFFF;
 		DWORD _LastSession = 999;

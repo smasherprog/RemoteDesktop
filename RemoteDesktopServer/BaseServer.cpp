@@ -16,11 +16,11 @@ RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandl
 }
 
 RemoteDesktop::BaseServer::~BaseServer(){
-	BaseServer::Stop();
+	BaseServer::ForceStop();
 	ShutDownNetwork();
 	DEBUG_MSG("Stopping Server");
-}
-void RemoteDesktop::BaseServer::Stop(){
+}		
+void RemoteDesktop::BaseServer::ForceStop(){
 	Running = false;
 	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
 		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
@@ -34,7 +34,7 @@ void RemoteDesktop::BaseServer::Stop(){
 
 void RemoteDesktop::BaseServer::StartListening(unsigned short port, HDESK h){
 	_NetworkCurrentDesktop = h;
-	Stop();
+	ForceStop();
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port);
 }
@@ -140,7 +140,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 		}
 	}
 
-	Stop();
+	ForceStop();
 	DEBUG_MSG("_Listen Exiting");
 	return true;
 }
@@ -159,7 +159,7 @@ void RemoteDesktop::BaseServer::_OnDisconnect(int index){
 	if (ev != NULL) WSACloseEvent(ev);
 	DEBUG_MSG("_OnDisconnect Finished");
 }
-#include "..\RemoteDesktop_Library\Delegate.h"
+
 
 void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 	DEBUG_MSG("BaseServer OnConnect Called");

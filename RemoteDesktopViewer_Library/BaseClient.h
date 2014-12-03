@@ -20,7 +20,7 @@ namespace RemoteDesktop{
 		Delegate<void> Disconnect_CallBack;
 	
 		void _Run();
-		void _RunWrapper(int connectattempts);
+		void _RunWrapper();
 		std::thread _BackGroundNetworkWorker;
 
 		std::wstring _Host, _Port;
@@ -40,6 +40,8 @@ namespace RemoteDesktop{
 		bool NetworkRunning() const { return Running; }
 		void Send(NetworkMessages m, NetworkMsg& msg);
 		void Stop();
+		int RemainingConnectAttempts = 3;
+
 	};
 
 };

@@ -56,6 +56,9 @@ namespace RemoteDesktop_Viewer
         static extern void MouseEvent(IntPtr client, int action, int x, int y, int wheel);
         [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void SendCAD(IntPtr client);
+           [DllImport("RemoteDesktopViewer_Library.dll")]
+        static extern void SendRemoveService(IntPtr client);
+        
         [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Ansi)]
         static extern void SendFile(IntPtr client, string absolute_path, string relative_path);
         [DllImport("RemoteDesktopViewer_Library.dll")]
@@ -365,11 +368,6 @@ namespace RemoteDesktop_Viewer
             }
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            OnDisconnect();
-        }
-
         private void button3_Click(object sender, EventArgs e)
         {
             SendCAD(_Client);
@@ -386,6 +384,12 @@ namespace RemoteDesktop_Viewer
                 max /= scale;
             }
             return "0 Bytes";
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var result =MessageBox.Show("Remove Service?", "Are you sure that you want to remove the service from the target machine? This will completely remove the service deleting all associated files. ", MessageBoxButtons.YesNoCancel);
+            if(result == System.Windows.Forms.DialogResult.OK) SendRemoveService(_Client);
         }
     }
 }

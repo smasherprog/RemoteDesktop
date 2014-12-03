@@ -21,7 +21,7 @@
 //   NOTE: If the function fails to install the service, it prints the error 
 //   in the standard output stream for users to diagnose the problem.
 //
-void InstallService(PWSTR pszServiceName,
+bool InstallService(PWSTR pszServiceName,
 	PWSTR pszDisplayName,
 	DWORD dwStartType,
 	PWSTR pszDependencies,
@@ -31,7 +31,7 @@ void InstallService(PWSTR pszServiceName,
 	wchar_t szPath[MAX_PATH];
 	SC_HANDLE schSCManager = NULL;
 	SC_HANDLE schService = NULL;
-
+	bool ret = false;
 	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)) == 0)
 	{
 		wprintf(L"GetModuleFileName failed w/err 0x%08lx\n", GetLastError());
@@ -79,10 +79,11 @@ Cleanup:
 	}
 	if (schService)
 	{
-		StartService(schService, 0, NULL);
+		ret = StartService(schService, 0, NULL) == TRUE;
 		CloseServiceHandle(schService);
 		schService = NULL;
 	}
+	return ret;
 }
 
 

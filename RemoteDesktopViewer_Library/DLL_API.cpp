@@ -37,6 +37,12 @@ void SendCAD(void* client){
 	auto c = (RemoteDesktop::Client*)client;
 	c->SendCAD();
 }
+void SendRemoveService(void* client){
+	if (client == NULL)return;
+	auto c = (RemoteDesktop::Client*)client;
+	c->SendRemoveService();
+}
+
 void SendFile(void* client, const char* absolute_path, const char* relative_path){
 	if (client == NULL)return;
 	auto c = (RemoteDesktop::Client*)client;

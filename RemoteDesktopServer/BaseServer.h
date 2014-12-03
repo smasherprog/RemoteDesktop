@@ -46,7 +46,9 @@ namespace RemoteDesktop{
 		void SetThreadDesktop(HDESK h){ _NetworkCurrentDesktop = h; }
 		size_t Client_Count() const { return  SocketArray.empty() ? 0 : SocketArray.size() -1; }
 		void StartListening(unsigned short port, HDESK h);
-		void Stop();
+		void ForceStop();
+		void GracefulStop(){ Running = false; }
+		
 		void SendToAll(NetworkMessages m, NetworkMsg& msg );
 
 	

@@ -197,7 +197,6 @@
     <ClInclude Include="Rect.h" />
     <ClInclude Include="NetworkSetup.h" />
     <ClInclude Include="SocketHandler.h" />
-    <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Traffic_Monitor.h" />

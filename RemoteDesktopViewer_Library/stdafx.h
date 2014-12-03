@@ -12,8 +12,6 @@
 	#include <crtdbg.h>
 #endif
 
-#include "targetver.h"
-
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
 #include <winsock2.h>
