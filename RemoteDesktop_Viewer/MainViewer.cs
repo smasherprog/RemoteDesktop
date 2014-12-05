@@ -42,8 +42,11 @@ namespace RemoteDesktop_Viewer
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate void _OnDisplayChanged(int x, int y);
 
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        delegate void _OnConnectingAttempt(int attempt, int maxattempts);
+
         [DllImport("RemoteDesktopViewer_Library.dll", CallingConvention = CallingConvention.StdCall)]
-        static extern IntPtr Create_Client(IntPtr hwnd, _OnConnect onconnect, _OnDisconnect ondisconnect, _OnCursorChanged oncursorchange, _OnDisplayChanged ondisplaychanged);
+        static extern IntPtr Create_Client(IntPtr hwnd, _OnConnect onconnect, _OnDisconnect ondisconnect, _OnCursorChanged oncursorchange, _OnDisplayChanged ondisplaychanged, _OnConnectingAttempt onconnectingattempt);
         [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void Destroy_Client(IntPtr client);
         [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Unicode)]
@@ -56,9 +59,9 @@ namespace RemoteDesktop_Viewer
         static extern void MouseEvent(IntPtr client, int action, int x, int y, int wheel);
         [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void SendCAD(IntPtr client);
-           [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void SendRemoveService(IntPtr client);
-        
+
         [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Ansi)]
         static extern void SendFile(IntPtr client, string absolute_path, string relative_path);
         [DllImport("RemoteDesktopViewer_Library.dll")]
@@ -67,12 +70,15 @@ namespace RemoteDesktop_Viewer
         public delegate void OnConnectHandler();
         public delegate void OnDisconnectHandler();
         public delegate void OnCursorChangedHandler(int c_type);
+        public delegate void OnConnectingAttemptHandler(int attempt, int maxattempts);
 
         public event OnConnectHandler OnConnectEvent;
         public event OnDisconnectHandler OnDisconnectEvent;
         public event OnCursorChangedHandler OnCursorChangedEvent;
+        public event OnConnectingAttemptHandler OnConnectingAttemptEvent;
 
         private _OnConnect OnConnect_CallBack;
+        private _OnConnectingAttempt OnConnectingAttempt_CallBack;
         private _OnDisconnect OnDisconnect_CallBack;
         private _OnCursorChanged OnCursorChanged_CallBack;
         private _OnDisplayChanged OnDisplayChanged_CallBack;
@@ -105,11 +111,41 @@ namespace RemoteDesktop_Viewer
             OnDisconnect_CallBack = OnDisconnect;
             OnCursorChanged_CallBack = OnCursorChanged;
             OnDisplayChanged_CallBack = OnDisplayChanged;
+            OnDisplayChanged_CallBack = OnDisplayChanged;
+            OnConnectingAttempt_CallBack = OnConnectingAttempt;
 
-            _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack, OnDisplayChanged_CallBack);
+            _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack, OnDisplayChanged_CallBack, OnConnectingAttempt_CallBack);
             Running = true;
 
+            button3.MouseEnter += button3_MouseEnter;
+            button3.MouseLeave += button3_MouseLeave;
+            button1.MouseEnter += button1_MouseEnter;
+            button1.MouseLeave += button1_MouseLeave;
         }
+
+        void button1_MouseLeave(object sender, EventArgs e)
+        {
+            button1.Location = new Point(button1.Location.X, -(button1.Size.Height / 3 + button1.Size.Height / 3));
+        }
+
+        void button1_MouseEnter(object sender, EventArgs e)
+        {
+            button1.Location = new Point(button1.Location.X, 0);
+        }
+
+
+
+        void button3_MouseLeave(object sender, EventArgs e)
+        {
+            button3.Location = new Point(button3.Location.X, -(button3.Size.Height / 3 + button3.Size.Height / 3));
+        }
+
+        void button3_MouseEnter(object sender, EventArgs e)
+        {
+            button3.Location = new Point(button3.Location.X, 0);
+        }
+
+
 
         void _TrafficTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
@@ -151,6 +187,11 @@ namespace RemoteDesktop_Viewer
                 viewPort1.Cursor = CursorManager.Get_Cursor(c_type);
             });
         }
+        private void OnConnectingAttempt(int attempt, int maxattempts)
+        {
+            if(OnConnectingAttemptEvent != null)
+                OnConnectingAttemptEvent(attempt, maxattempts);
+        }
         private void OnDisplayChanged(int x, int y)
         {
             var maxh = y + 10;
@@ -163,12 +204,13 @@ namespace RemoteDesktop_Viewer
             {
                 viewPort1.Size = new Size(x, y);
             });
-    
-            this.UIThread(() => {
+
+            this.UIThread(() =>
+            {
                 Rectangle screenRectangle = RectangleToScreen(this.ClientRectangle);
 
                 int titleHeight = screenRectangle.Top - this.Top;
-                this.Size = new Size(maxx, titleHeight + maxh); 
+                this.Size = new Size(maxx, titleHeight + maxh);
             });
         }
         private void Form1_DragDrop(object sender, DragEventArgs e)
@@ -388,8 +430,9 @@ namespace RemoteDesktop_Viewer
 
         private void button1_Click(object sender, EventArgs e)
         {
-            var result =MessageBox.Show("Remove Service?", "Are you sure that you want to remove the service from the target machine? This will completely remove the service deleting all associated files. ", MessageBoxButtons.YesNoCancel);
-            if(result == System.Windows.Forms.DialogResult.OK) SendRemoveService(_Client);
+            var result = MessageBox.Show("Remove Service?", "Are you sure that you want to remove the service from the target machine? This will completely remove the service deleting all associated files. ", MessageBoxButtons.YesNoCancel);
+            if(result == System.Windows.Forms.DialogResult.OK)
+                SendRemoveService(_Client);
         }
     }
 }

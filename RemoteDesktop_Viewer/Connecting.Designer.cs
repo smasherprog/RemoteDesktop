@@ -28,28 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.label1 = new System.Windows.Forms.Label();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(101, 9);
+            this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label1.Location = new System.Drawing.Point(0, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(61, 13);
+            this.label1.Size = new System.Drawing.Size(294, 56);
             this.label1.TabIndex = 0;
             this.label1.Text = "Connecting";
             this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             this.label1.UseWaitCursor = true;
-            // 
-            // timer1
-            // 
-            this.timer1.Enabled = true;
-            this.timer1.Interval = 400;
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // progressBar1
             // 
@@ -60,6 +52,7 @@
             this.progressBar1.Size = new System.Drawing.Size(270, 23);
             this.progressBar1.Step = 1;
             this.progressBar1.TabIndex = 1;
+            this.progressBar1.UseWaitCursor = true;
             this.progressBar1.Value = 1;
             // 
             // Connecting
@@ -78,14 +71,12 @@
             this.TopMost = true;
             this.UseWaitCursor = true;
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
 
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.ProgressBar progressBar1;
     }
 }

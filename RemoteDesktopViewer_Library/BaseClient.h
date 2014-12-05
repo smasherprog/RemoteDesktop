@@ -18,7 +18,8 @@ namespace RemoteDesktop{
 		Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> Receive_CallBack;
 		Delegate<void, std::shared_ptr<SocketHandler>&> Connected_CallBack;
 		Delegate<void> Disconnect_CallBack;
-	
+		void(__stdcall * _OnConnectingAttempt)(int attempt, int maxattempts);
+
 		void _Run();
 		void _RunWrapper();
 		std::thread _BackGroundNetworkWorker;
@@ -28,9 +29,9 @@ namespace RemoteDesktop{
 		bool Running = false;
 		bool DisconnectReceived = false;
 	public:
-		explicit BaseClient(Delegate<void, std::shared_ptr<SocketHandler>&> c,
+		BaseClient(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 			Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
-			Delegate<void> d);
+			Delegate<void> d, void(__stdcall * onconnectingattempt)(int, int));
 
 		~BaseClient();
 
@@ -40,7 +41,7 @@ namespace RemoteDesktop{
 		bool NetworkRunning() const { return Running; }
 		void Send(NetworkMessages m, NetworkMsg& msg);
 		void Stop();
-		int RemainingConnectAttempts = 3;
+		int MaxConnectAttempts = 3;
 
 	};
 

@@ -51,7 +51,7 @@
             this.button1.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.button1.BackColor = System.Drawing.Color.Crimson;
             this.button1.ImageIndex = 1;
-            this.button1.Location = new System.Drawing.Point(836, 3);
+            this.button1.Location = new System.Drawing.Point(836, -16);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(24, 24);
             this.button1.TabIndex = 2;
@@ -65,7 +65,7 @@
             this.button3.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.button3.ImageIndex = 2;
             this.button3.ImageList = this.imageList1;
-            this.button3.Location = new System.Drawing.Point(624, 3);
+            this.button3.Location = new System.Drawing.Point(435, -16);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(24, 24);
             this.button3.TabIndex = 1;

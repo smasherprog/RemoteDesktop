@@ -7,7 +7,7 @@
 
 extern "C" {
 
-	DLLEXPORT void* Create_Client(void* hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int));
+	DLLEXPORT void* Create_Client(void* hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int), void(__stdcall * onconnectingattempt)(int, int));
 	DLLEXPORT void Destroy_Client(void* client);
 	DLLEXPORT void Connect(void* client, wchar_t* ip_or_host, wchar_t* port);
 	DLLEXPORT void Draw(void* client, HDC hdc);

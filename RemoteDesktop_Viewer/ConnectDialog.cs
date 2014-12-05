@@ -29,10 +29,24 @@ namespace RemoteDesktop_Viewer
             
             _LastMainViewer.OnConnectEvent += OnConnect;
             _LastMainViewer.OnDisconnectEvent += OnDisconnect;
+            _LastMainViewer.OnConnectingAttemptEvent += _LastMainViewer_OnConnectingAttemptEvent;
             _LastMainViewer.Connect(textBox1.Text);
             _Connecting.Show();
-
+            _Connecting.Hide();
             this.Hide();
+        }
+
+        private void _LastMainViewer_OnConnectingAttemptEvent(int attempt, int maxattempts)
+        {  
+            Debug.WriteLine("Connecting " + attempt + "  " + maxattempts);
+            _Connecting.MaxAttempts = maxattempts;
+            _Connecting.ConnectAttempt = attempt;
+          
+            _Connecting.UIThread(() => { _Connecting.Show(); });
+     
+            this.UIThread(() => { this.Hide(); });
+            _LastMainViewer.UIThread(() => { _LastMainViewer.Hide(); });
+            
         }
         private void OnConnect()
         {

@@ -12,7 +12,8 @@
 RemoteDesktop::Client::Client(HWND hwnd,
 	void(__stdcall * onconnect)(),
 	void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int),
-	void(__stdcall * onprimchanged)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnPrimaryChanged(onprimchanged) {
+	void(__stdcall * onprimchanged)(int, int),
+	void(__stdcall * onconnectingattempt)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnPrimaryChanged(onprimchanged), _OnConnectingAttempt(onconnectingattempt) {
 	_Display = std::make_unique<Display>(hwnd, oncursorchange);
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Client::_OnClipboardChanged, this));
 	DEBUG_MSG("Client()");
@@ -30,7 +31,7 @@ void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port){
 	if (_NetworkClient) _NetworkClient.reset();
 	_NetworkClient = std::make_unique<BaseClient>(DELEGATE(&RemoteDesktop::Client::OnConnect, this),
 		DELEGATE(&RemoteDesktop::Client::OnReceive, this),
-		DELEGATE(&RemoteDesktop::Client::OnDisconnect, this));
+		DELEGATE(&RemoteDesktop::Client::OnDisconnect, this), _OnConnectingAttempt);
 	_NetworkClient->Connect(host, port);
 }
 void RemoteDesktop::Client::Stop(){
@@ -124,7 +125,7 @@ void RemoteDesktop::Client::SendCAD(){
 void RemoteDesktop::Client::SendRemoveService(){
 	NetworkMsg msg;
 	_NetworkClient->Send(NetworkMessages::DISCONNECTANDREMOVE, msg);
-	_NetworkClient->RemainingConnectAttempts = 1;//this will cause a quick disconnect
+	_NetworkClient->MaxConnectAttempts = 1;//this will cause a quick disconnect
 }
 
 

@@ -29,11 +29,12 @@ namespace RemoteDesktop{
 		void(__stdcall * _OnConnect)();
 		void(__stdcall * _OnDisconnect)();
 		void(__stdcall * _OnPrimaryChanged)(int x, int y);
+		void(__stdcall * _OnConnectingAttempt)(int attempt, int maxattempt);
 
 		void SendFileOrFolder(std::string root1, std::string fullpath);
 
 	public:
-		Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int));
+		Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int), void(__stdcall * onconnectingattempt)(int, int));
 		~Client();	
 	
 		void Connect(std::wstring host, std::wstring port = L"443");

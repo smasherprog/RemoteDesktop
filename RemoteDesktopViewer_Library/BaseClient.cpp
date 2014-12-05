@@ -6,10 +6,10 @@
 
 RemoteDesktop::BaseClient::BaseClient(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
-	Delegate<void> d){
-	Connected_CallBack = c;
-	Receive_CallBack = r;
-	Disconnect_CallBack = d;
+	Delegate<void> d,
+	void(__stdcall * onconnectingattempt)(int, int)) :
+	Connected_CallBack(c), Receive_CallBack(r), Disconnect_CallBack(d), _OnConnectingAttempt(onconnectingattempt) {
+
 }
 RemoteDesktop::BaseClient::~BaseClient(){
 	DEBUG_MSG("~BaseClient() Beg");
@@ -96,25 +96,26 @@ bool RemoteDesktop::BaseClient::_Connect(){
 void RemoteDesktop::BaseClient::_RunWrapper(){
 	int counter = 0;
 
-	while (Running && counter++ < RemainingConnectAttempts){
+	while (Running && counter++ < MaxConnectAttempts){
+		_OnConnectingAttempt(counter, MaxConnectAttempts);
 		if (!_Connect()){
 			DEBUG_MSG("socket failed with error = %\n", WSAGetLastError());
 		}
 		else {
 			counter = 0;//reset timer
 			DisconnectReceived = false;
-			RemainingConnectAttempts = 15;//set this to a specific value
+			MaxConnectAttempts = 15;//set this to a specific value
 			_Run();
 		}
 	}
-	if (counter >= RemainingConnectAttempts)	Disconnect_CallBack();
+	if (counter >= MaxConnectAttempts)	Disconnect_CallBack();
 	Running = false;
 
 }
 void RemoteDesktop::BaseClient::_Run(){
 	auto newevent = WSACreateEvent();
 
-		WSAEventSelect(Socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
+	WSAEventSelect(Socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
 
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
@@ -134,7 +135,7 @@ void RemoteDesktop::BaseClient::_Run(){
 				break;// get out of loop and try reconnecting
 			}
 		}
-	}	
+	}
 	DEBUG_MSG("Ending Loop");
 	WSACloseEvent(newevent);
 	Socket.reset();
@@ -166,6 +167,6 @@ void RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
 }
 
 void RemoteDesktop::BaseClient::Stop() {
-	Running = false; 
-	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join(); 
+	Running = false;
+	if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
 }
