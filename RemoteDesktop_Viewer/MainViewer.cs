@@ -111,7 +111,6 @@ namespace RemoteDesktop_Viewer
             OnDisconnect_CallBack = OnDisconnect;
             OnCursorChanged_CallBack = OnCursorChanged;
             OnDisplayChanged_CallBack = OnDisplayChanged;
-            OnDisplayChanged_CallBack = OnDisplayChanged;
             OnConnectingAttempt_CallBack = OnConnectingAttempt;
 
             _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack, OnDisplayChanged_CallBack, OnConnectingAttempt_CallBack);
@@ -430,7 +429,7 @@ namespace RemoteDesktop_Viewer
 
         private void button1_Click(object sender, EventArgs e)
         {
-            var result = MessageBox.Show("Remove Service?", "Are you sure that you want to remove the service from the target machine? This will completely remove the service deleting all associated files. ", MessageBoxButtons.YesNoCancel);
+            var result = MessageBox.Show("Remove Service?", "Are you sure that you want to remove the service from the target machine? This will completely remove the service deleting all associated files. ", MessageBoxButtons.OKCancel);
             if(result == System.Windows.Forms.DialogResult.OK)
                 SendRemoveService(_Client);
         }

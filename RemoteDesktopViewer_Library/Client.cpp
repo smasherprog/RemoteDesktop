@@ -11,7 +11,8 @@
 
 RemoteDesktop::Client::Client(HWND hwnd,
 	void(__stdcall * onconnect)(),
-	void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int),
+	void(__stdcall * ondisconnect)(), 
+	void(__stdcall * oncursorchange)(int),
 	void(__stdcall * onprimchanged)(int, int),
 	void(__stdcall * onconnectingattempt)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnPrimaryChanged(onprimchanged), _OnConnectingAttempt(onconnectingattempt) {
 	_Display = std::make_unique<Display>(hwnd, oncursorchange);
