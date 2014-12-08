@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
-#include "ServiceInstaller.h"
-#include "ServerService.h"
-#include "RD_Server.h"
+#include "..\RemoteDesktopServer_Library\ServiceInstaller.h"
+#include "..\RemoteDesktopServer_Library\ServerService.h"
+#include "..\RemoteDesktopServer_Library\RD_Server.h"
 
 // Internal name of the service
 #define SERVICE_NAME             L"RemoteDesktop_svc"

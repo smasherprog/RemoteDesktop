@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Header Files\Service">
       <UniqueIdentifier>{d7f01dfa-6377-45e6-810c-9202ceae8a5c}</UniqueIdentifier>
     </Filter>
@@ -85,9 +81,6 @@
     </ClCompile>
     <ClCompile Include="ScreenCapture.cpp">
       <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RD_Server.cpp">
       <Filter>Source Files\Server</Filter>

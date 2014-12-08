@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{A7E8BD14-EB3F-4CEA-876B-790218414B70}</ProjectGuid>
+    <ProjectGuid>{0A233DF0-1595-4E67-A13B-791A5247F0AB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>RemoteDesktopServer</RootNamespace>
+    <RootNamespace>RemoteDesktop_ServerProxy</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -102,7 +102,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RemoteDesktop_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
@@ -119,7 +119,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RemoteDesktop_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
@@ -142,7 +142,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>RemoteDesktop_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
@@ -165,37 +165,16 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>RemoteDesktop_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="BaseServer.h" />
-    <ClInclude Include="MouseCapture.h" />
-    <ClInclude Include="ScreenCapture.h" />
-    <ClInclude Include="RD_Server.h" />
-    <ClInclude Include="ServerService.h" />
-    <ClInclude Include="ServiceBase.h" />
-    <ClInclude Include="ServiceHelpers.h" />
-    <ClInclude Include="ServiceInstaller.h" />
-    <ClInclude Include="ServiceMonitor.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BaseServer.cpp" />
-    <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ScreenCapture.cpp" />
-    <ClCompile Include="RD_Server.cpp" />
-    <ClCompile Include="ServerService.cpp" />
-    <ClCompile Include="ServiceBase.cpp" />
-    <ClCompile Include="ServiceHelpers.cpp" />
-    <ClCompile Include="ServiceInstaller.cpp" />
-    <ClCompile Include="ServiceMonitor.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

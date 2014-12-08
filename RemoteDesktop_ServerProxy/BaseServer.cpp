@@ -48,14 +48,13 @@ void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
 }
 
 void RemoteDesktop::BaseServer::_ListenWrapper(unsigned short port){
-	DEBUG_MSG("_ListenWrapper threadid %", std::this_thread::get_id());
+	DEBUG_MSG("_ListenWrapper thread id %", std::this_thread::get_id());
 	if (!_Listen(port)){
 		DEBUG_MSG("socket failed with error = %d\n", WSAGetLastError());
 	}
 	ShutDownNetwork();
 	Running = false;
 }
-#include <fstream>
 
 bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 	if (!StartupNetwork()) return false;
