@@ -50,7 +50,7 @@ namespace RemoteDesktop_Viewer
         [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void Destroy_Client(IntPtr client);
         [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Unicode)]
-        static extern void Connect(IntPtr client, string ip_or_host, string port);
+        static extern void Connect(IntPtr client, string ip_or_host, string port, int id);
         [DllImport("RemoteDesktopViewer_Library.dll")]
         static extern void Draw(IntPtr client, IntPtr hdc);
         [DllImport("RemoteDesktopViewer_Library.dll")]
@@ -152,7 +152,7 @@ namespace RemoteDesktop_Viewer
             var outcompressionratio = 0.0f;
             var incompressionratio = 0.0f;
             //below i change the range of the data shown and convert it to a percent, For example, .003 changes to 3.0, then -97.0, then 97.0 
-            //I want to display the Effectivness of the compression below... In other words, the compression ratio is 97% effective.
+            //I want to display the Effectiveness of the compression below... In other words, the compression ratio is 97% effective.
             if(traffic.UncompressedSendBPS > 0)
                 outcompressionratio = ((((float)traffic.CompressedSendBPS / (float)traffic.UncompressedSendBPS) * 100.0f) - 100.0f) * -1.0f;
             if(traffic.UncompressedRecvBPS > 0)
@@ -332,10 +332,10 @@ namespace RemoteDesktop_Viewer
             }
             return "";
         }
-        public void Connect(string ip_or_host)
+        public void Connect(string ip_or_host, int id)
         {
             _Host_Address = ip_or_host;
-            Connect(_Client, ip_or_host, "443");
+            Connect(_Client, ip_or_host, "443", id);
         }
         static int counter = 0;
         static DateTime timer = DateTime.Now;
@@ -431,7 +431,10 @@ namespace RemoteDesktop_Viewer
         {
             var result = MessageBox.Show("Remove Service?", "Are you sure that you want to remove the service from the target machine? This will completely remove the service deleting all associated files. ", MessageBoxButtons.OKCancel);
             if(result == System.Windows.Forms.DialogResult.OK)
+            {
                 SendRemoveService(_Client);
+            }
+                
         }
     }
 }

@@ -75,7 +75,8 @@ RemoteDesktop::RD_Server::~RD_Server(){
 	}
 }
 void RemoteDesktop::RD_Server::_Handle_DisconnectandRemove(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	_RemoveOnExit = true;
+	_RemoveOnExit = true;	
+	_NetworkServer->DisconnectReceived = true;
 	_NetworkServer->GracefulStop();//this will cause the main loop to stop and the program to exit
 }
 void RemoteDesktop::RD_Server::_OnClipboardChanged(const Clipboard_Data& c){
@@ -306,6 +307,7 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 
 	}
 }
+
 void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host) {
 
 	_NetworkServer->StartListening(port, host, _DesktopMonitor->m_hDesk);
@@ -337,7 +339,7 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));//sleep if there are no clients connected.
 			continue;
 		}
-
+	
 		auto d = _DesktopMonitor->Is_InputDesktopSelected();
 		if (!d)
 		{

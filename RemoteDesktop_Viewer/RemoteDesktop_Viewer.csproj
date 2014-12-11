@@ -71,11 +71,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Code\Client.cs" />
     <Compile Include="Code\ControlExtension.cs" />
     <Compile Include="Code\CursorManager.cs" />
     <Compile Include="Code\InputListener.cs" />
     <Compile Include="Code\ProxyAuth.cs" />
+    <Compile Include="Code\Settings.cs" />
     <Compile Include="Code\ViewPort.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -156,6 +156,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cad.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RemoteDesktop_CSLibrary\RemoteDesktop_CSLibrary.csproj">
+      <Project>{8e748da1-9a21-42c7-b89a-94cb72bc954f}</Project>
+      <Name>RemoteDesktop_CSLibrary</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

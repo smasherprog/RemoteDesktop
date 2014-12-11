@@ -43,7 +43,7 @@ namespace RemoteDesktop{
 		CAD,
 		INIT_ENCRYPTION,
 		CLIPBOARDCHANGED,
-		DISCONNECTANDREMOVE,
+		DISCONNECTANDREMOVE
 	};
 	enum Network_Return{
 		FAILED,

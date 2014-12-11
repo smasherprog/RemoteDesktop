@@ -11,6 +11,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_ServerP2P", "RemoteDesktop_ServerP2P\RemoteDesktop_ServerP2P.vcxproj", "{A7E8BD14-EB3F-4CEA-876B-790218414B70}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_ServerProxy", "RemoteDesktop_ServerProxy\RemoteDesktop_ServerProxy.vcxproj", "{0A233DF0-1595-4E67-A13B-791A5247F0AB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7D92BB1-BAB3-412E-B3B1-B4E9683F87FC} = {D7D92BB1-BAB3-412E-B3B1-B4E9683F87FC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktopServer_Library", "RemoteDesktopServer_Library\RemoteDesktopServer_Library.vcxproj", "{D7D92BB1-BAB3-412E-B3B1-B4E9683F87FC}"
 EndProject

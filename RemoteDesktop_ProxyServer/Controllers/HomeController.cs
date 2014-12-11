@@ -22,6 +22,7 @@ namespace RemoteDesktop_ProxyServer.Controllers
         [HttpPost]
         public ActionResult Authenticate(string Username, string Password)
         {
+      
             Debug.WriteLine("Received auth request " + Username + "  " + Password);
             bool result = false;
             //BELOW IS TESTING OF THE SERVICE.. Code should be replaced with real authentication code

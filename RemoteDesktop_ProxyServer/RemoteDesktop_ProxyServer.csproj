@@ -120,6 +120,9 @@
       <Private>True</Private>
       <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.2\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
     </Reference>
+    <Reference Include="WebActivatorEx">
+      <HintPath>..\packages\WebActivatorEx.2.0.6\lib\net40\WebActivatorEx.dll</HintPath>
+    </Reference>
     <Reference Include="WebGrease, Version=1.6.5135.21930, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
@@ -143,9 +146,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Model\Client.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Signalr\ProxyHub.cs" />
+    <Compile Include="Signalr\ProxyWatcher.cs" />
     <Compile Include="Signalr\SignalrAuth.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -196,7 +199,12 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Shared\_LoginPartial.cshtml" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\RemoteDesktop_CSLibrary\RemoteDesktop_CSLibrary.csproj">
+      <Project>{7be9d1dd-5d03-4070-b471-f4bf98c408d3}</Project>
+      <Name>RemoteDesktop_CSLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
   </ItemGroup>

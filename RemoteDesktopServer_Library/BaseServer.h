@@ -35,7 +35,9 @@ namespace RemoteDesktop{
 		int MaxConnectAttempts = 3;
 		std::vector<std::shared_ptr<SocketHandler>> SocketArray;
 		bool Running = false;
-		bool ReserveConnection = false;
+		bool ReverseConnection = false;
+	
+
 		HDESK _NetworkCurrentDesktop = NULL;
 		
 		Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> Receive_CallBack;
@@ -51,15 +53,13 @@ namespace RemoteDesktop{
 		bool Is_Running() const{ return Running; }
 
 		void SetThreadDesktop(HDESK h){ _NetworkCurrentDesktop = h; }
-		size_t Client_Count() const { return  SocketArray.empty() ? 0 : (ReserveConnection ? SocketArray.size() : SocketArray.size() -1); }
+		size_t Client_Count() const { return  SocketArray.empty() ? 0 : (ReverseConnection ? SocketArray.size() : SocketArray.size() - 1); }
 		void StartListening(unsigned short port, std::wstring host, HDESK h);
 		void ForceStop();
 		void GracefulStop(){ Running = false; }
 		
 		void SendToAll(NetworkMessages m, NetworkMsg& msg );
-
-	
-
+		bool DisconnectReceived = false;
 	};
 
 };

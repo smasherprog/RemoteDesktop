@@ -52,6 +52,7 @@ SOCKET RemoteDesktop::Connect(std::wstring port, std::wstring host){
 			DEBUG_MSG("Server Down....");
 			continue;
 		}
+		else DEBUG_MSG("Connect Success!");
 		break;
 	}
 

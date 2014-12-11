@@ -53,7 +53,7 @@ namespace RemoteDesktop{
 	public:
 		explicit SocketHandler(SOCKET socket, bool client);
 
-		Network_Return Exchange_Keys();
+		Network_Return Exchange_Keys(int id);
 		PeerState State = PEER_STATE_DISCONNECTED;
 		Network_Return Send(NetworkMessages m, const NetworkMsg& msg);
 		Network_Return Receive();
@@ -64,7 +64,7 @@ namespace RemoteDesktop{
 		Delegate<void, SocketHandler*> Disconnect_CallBack;
 	
 		Traffic_Monitor Traffic;
-
+		Network_Return CheckState();
 	};
 };
 

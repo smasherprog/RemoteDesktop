@@ -10,11 +10,15 @@ using System.Diagnostics;
 using Microsoft.AspNet.SignalR.Client;
 using System.Net;
 using RemoteDesktop_Viewer.Code;
+using RemoteDesktop_CSLibrary;
 
 namespace RemoteDesktop_Viewer
 {
     public partial class ProxyClients : UserControl
     {
+        public delegate void OnConnectAttemptHandler(string ip_or_host, int id);
+        public event OnConnectAttemptHandler OnConnectAttemptEvent;
+
         public ProxyAuth _ProxyAuth = null;
         public ProxyAuth ProxyAuth
         {
@@ -54,9 +58,9 @@ namespace RemoteDesktop_Viewer
                 {
                     if(_ProxyAuth.Authenticated)
                     {
-                        _Hub = new Microsoft.AspNet.SignalR.Client.HubConnection("http://localhost:1466/");
-                        _ProxyHub = _Hub.CreateHubProxy("ProxyHub");
-                        _ProxyHub.On<List<Client>>("AvailableClients", ReceivedClients);
+                        _Hub = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.URIScheme + Settings.ProxyServer);
+                        _ProxyHub = _Hub.CreateHubProxy(Settings.SignalRHubName);
+                        _ProxyHub.On<List<Client_Pair>>("AvailableClients", ReceivedClients);
 
                         if(ProxyAuth.UsingWindowsAuth)
                         {
@@ -74,20 +78,42 @@ namespace RemoteDesktop_Viewer
                 Debug.WriteLine(e.Message);
             }
         }
-        private void ReceivedClients(List<Client> clients)
+        private void ReceivedClients(List<Client_Pair> clients)
         {
             listView1.UIThread(() =>
             {
                 listView1.Items.Clear();//clear all items
                 foreach(var item in clients)
                 {
-                    listView1.Items.Add(new ListViewItem(new string[] { item.Name, item.IP, item.ConnectTime.ToShortTimeString(), item.Status }));
+                    var left = new List<string>() { "*", "*", "*", "<------>" };
+                    var right = new List<string>() { "*", "*", "*" };
+                    if(item.Pair == null)
+                        continue;
+                    var first = item.Pair.FirstOrDefault();
+                    if(first != null)
+                    {
+                        left.Clear();
+                        left.Add(first.ID.ToString());
+                        left.Add(first.IP);
+                        left.Add(first.ConnectTime.ToShortTimeString());
+                        left.Add("<------>");
+                    }
+                    var sec = (item.Pair.Count == 2 ? item.Pair.LastOrDefault() : null);
+                    if(sec != null)
+                    {
+                        right.Clear();
+                        right.Add(sec.ID.ToString());
+                        right.Add(sec.IP);
+                        right.Add(sec.ConnectTime.ToShortTimeString());
+                    }
+                    left.AddRange(right);
+                    listView1.Items.Add(new ListViewItem(left.ToArray()));
                 }
                 if(clients.Any())
                     listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
                 else
                     listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-                
+
             });
 
         }
@@ -101,9 +127,18 @@ namespace RemoteDesktop_Viewer
         {
             if(listView1.SelectedItems.Count > 0)
             {
-                var name = listView1.SelectedItems[0].Text.ToLower();
-                Debug.WriteLine(name);
+                var id = listView1.SelectedItems[0].Text;
+                int idout = 0;
+                if(Int32.TryParse(id, out idout))
+                {
+                    Debug.WriteLine("Attempting connect to " + Settings.ProxyServer + " id: " + idout);
+                    if(OnConnectAttemptEvent != null)
+                    {
+                        var splits = Settings.ProxyServer.Split(':');
+                        OnConnectAttemptEvent(splits.FirstOrDefault(), idout);
+                    }
 
+                }
             }
 
         }

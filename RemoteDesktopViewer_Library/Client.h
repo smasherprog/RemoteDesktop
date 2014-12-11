@@ -37,7 +37,7 @@ namespace RemoteDesktop{
 		Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int), void(__stdcall * onconnectingattempt)(int, int));
 		~Client();	
 	
-		void Connect(std::wstring host, std::wstring port = L"443");
+		void Connect(std::wstring host, std::wstring port = L"443", int id = -1);
 		void Stop();
 
 		void Draw(HDC hdc);

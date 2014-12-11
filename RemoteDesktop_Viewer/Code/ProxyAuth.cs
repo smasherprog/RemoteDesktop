@@ -32,9 +32,10 @@ namespace RemoteDesktop_Viewer.Code
             {
                 try
                 {
-                    using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection("http://localhost:1466/"))
+                    using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.URIScheme + Settings.ProxyServer))
                     {
-                        IHubProxy stockTickerHubProxy = connection.CreateHubProxy("ProxyHub");
+                       
+                        IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
                         connection.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
                         connection.Error += connection_Error;
                         DateTime dt = DateTime.Now;
@@ -50,7 +51,7 @@ namespace RemoteDesktop_Viewer.Code
             } else
             {
 
-                var request = WebRequest.Create("http://localhost:1466/Home/Authenticate") as HttpWebRequest;
+                var request = WebRequest.Create(Settings.URIScheme + Settings.ProxyServer + Settings.AuthenticationPath) as HttpWebRequest;
 
                 request.Method = "POST";
                 request.ContentType = "application/x-www-form-urlencoded";

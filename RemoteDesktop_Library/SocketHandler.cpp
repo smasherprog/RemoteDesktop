@@ -44,7 +44,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_SendLoop(char* data
 	return RemoteDesktop::Network_Return::COMPLETED;
 }
 
-RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(){
+RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int id){
 
 	NetworkMsg msg;
 	auto EphemeralPublicKeyLength = _Encyption.get_EphemeralPublicKeyLength();
@@ -54,12 +54,25 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(){
 	memcpy(_SendBuffer.data(), _Encyption.get_Static_PublicKey(), StaticPublicKeyLength);
 	memcpy(_SendBuffer.data() + StaticPublicKeyLength, _Encyption.get_Ephemeral_PublicKey(), EphemeralPublicKeyLength);
 
-	auto ret = _SendLoop(_SendBuffer.data(), _SendBuffer.size());
+	auto ret = _SendLoop((char*)&id, sizeof(id));//id is always sent at the beginning of a connection. This is to accommodate proxy sever
+	if (ret == FAILED) return _Disconnect();
+	ret = _SendLoop(_SendBuffer.data(), _SendBuffer.size());
 	State = PEER_STATE_EXCHANGING_KEYS;
 	if (ret == FAILED) return _Disconnect();
 	return ret;
 }
-
+RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::CheckState(){
+	auto amtrec = recv(_Socket->socket,nullptr, 0, 0);//check if the socket is in a disconnected state
+	if (amtrec == 0) return Network_Return::FAILED;
+	else {
+		auto errmsg = WSAGetLastError();
+		//DEBUG_MSG("_ProcessPacketHeader %", errmsg);
+		if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE || errmsg == WSAENOTCONN)  return Network_Return::PARTIALLY_COMPLETED;
+		DEBUG_MSG("_ProcessPacketHeader DISCONNECTING");
+		return _Disconnect();
+	}
+	return RemoteDesktop::Network_Return::COMPLETED;
+}
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Send(NetworkMessages m, const NetworkMsg& msg){
 	if (State == PEER_STATE_DISCONNECTED) return Network_Return::FAILED;
 	else if (State == PEER_STATE_EXCHANGING_KEYS) return Network_Return::PARTIALLY_COMPLETED;
@@ -138,7 +151,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Receive(){
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Disconnect(){
 	State = PEER_STATE_DISCONNECTED;//force disconnect
-	DEBUG_MSG("DebugCalled SocketHandler");
+	DEBUG_MSG("_Disconnect SocketHandler");
 	if (Disconnect_CallBack) Disconnect_CallBack(this);
 	return Network_Return::FAILED;//disconnect!RemoteDesktop_Viewer
 }
@@ -147,13 +160,14 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 	if (State == PEER_STATE_EXCHANGING_KEYS) {//any data received should be the key exchange... if not the connection will terminate
 		auto EphemeralPublicKeyLength = _Encyption.get_EphemeralPublicKeyLength();
 		auto StaticPublicKeyLength = _Encyption.get_StaticPublicKeyLength();
-
-		if (_ReceivedBufferCounter < StaticPublicKeyLength + EphemeralPublicKeyLength) return Network_Return::PARTIALLY_COMPLETED;
-		else {//enough data was recieved for a key exchange..
-			if (!_Encyption.Agree(_ReceivedBuffer.data(), _ReceivedBuffer.data() + StaticPublicKeyLength)) return _Disconnect();
+		auto totalsizepending = StaticPublicKeyLength + EphemeralPublicKeyLength + sizeof(int);
+		//extra int is here to support proxy servers, just ignore it completely
+		if (_ReceivedBufferCounter < totalsizepending) return Network_Return::PARTIALLY_COMPLETED;
+		else {//enough data was received for a key exchange..
+			if (!_Encyption.Agree(_ReceivedBuffer.data() + sizeof(int), _ReceivedBuffer.data() + sizeof(int) + StaticPublicKeyLength)) return _Disconnect();
 			if (Connected_CallBack) Connected_CallBack(this);//client is now connected
-			_ReceivedBufferCounter -= (StaticPublicKeyLength + EphemeralPublicKeyLength);
-			memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + StaticPublicKeyLength + EphemeralPublicKeyLength, _ReceivedBufferCounter);//this will shift down the data 
+			_ReceivedBufferCounter -= totalsizepending;
+			memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + totalsizepending, _ReceivedBufferCounter);//this will shift down the data 
 			State = PEER_STATE_CONNECTED;
 		}
 	}

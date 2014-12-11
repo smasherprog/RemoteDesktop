@@ -183,8 +183,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RemoteDesktop_Library\RemoteDesktop_Library.vcxproj">
-      <Project>{d75e5ad6-ee2a-46ce-8eaf-9bd3d5777b37}</Project>
+    <ProjectReference Include="..\RemoteDesktopServer_Library\RemoteDesktopServer_Library.vcxproj">
+      <Project>{d7d92bb1-bab3-412e-b3b1-b4e9683f87fc}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
