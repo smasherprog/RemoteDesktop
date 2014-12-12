@@ -45,26 +45,26 @@ namespace RemoteDesktop_Viewer
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate void _OnConnectingAttempt(int attempt, int maxattempts);
 
-        [DllImport("RemoteDesktopViewer_Library.dll", CallingConvention = CallingConvention.StdCall)]
+        [DllImport(Settings.DLL_Name, CallingConvention = CallingConvention.StdCall)]
         static extern IntPtr Create_Client(IntPtr hwnd, _OnConnect onconnect, _OnDisconnect ondisconnect, _OnCursorChanged oncursorchange, _OnDisplayChanged ondisplaychanged, _OnConnectingAttempt onconnectingattempt);
-        [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport(Settings.DLL_Name)]
         static extern void Destroy_Client(IntPtr client);
-        [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Unicode)]
+        [DllImport(Settings.DLL_Name, CharSet = CharSet.Unicode)]
         static extern void Connect(IntPtr client, string ip_or_host, string port, int id);
-        [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport(Settings.DLL_Name)]
         static extern void Draw(IntPtr client, IntPtr hdc);
-        [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport(Settings.DLL_Name)]
         static extern void KeyEvent(IntPtr client, int VK, bool down);
-        [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport(Settings.DLL_Name)]
         static extern void MouseEvent(IntPtr client, int action, int x, int y, int wheel);
-        [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport(Settings.DLL_Name)]
         static extern void SendCAD(IntPtr client);
-        [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport(Settings.DLL_Name)]
         static extern void SendRemoveService(IntPtr client);
 
-        [DllImport("RemoteDesktopViewer_Library.dll", CharSet = CharSet.Ansi)]
+        [DllImport(Settings.DLL_Name, CharSet = CharSet.Ansi)]
         static extern void SendFile(IntPtr client, string absolute_path, string relative_path);
-        [DllImport("RemoteDesktopViewer_Library.dll")]
+        [DllImport(Settings.DLL_Name)]
         static extern Traffic_Stats get_TrafficStats(IntPtr client);
 
         public delegate void OnConnectHandler();

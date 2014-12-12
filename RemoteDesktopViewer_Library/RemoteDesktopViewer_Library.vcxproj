@@ -72,6 +72,7 @@
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
     <IncludePath>..\RemoteDesktop_Library;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)_$(PlatformArchitecture)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\RemoteDesktop_Library;$(IncludePath)</IncludePath>
@@ -79,12 +80,14 @@
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_$(PlatformArchitecture)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
     <IncludePath>..\RemoteDesktop_Library;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)_$(PlatformArchitecture)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\RemoteDesktop_Library;$(IncludePath)</IncludePath>
@@ -92,6 +95,7 @@
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_$(PlatformArchitecture)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
