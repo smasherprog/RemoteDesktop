@@ -137,6 +137,14 @@ RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
 	memset(&tmp, 0, sizeof(tmp));
 	return tmp;
 }
+void RemoteDesktop::Client::SendImageSettings(int quality, bool grayascale){
+	NetworkMsg msg;
+	char g = grayascale ? 1 : 0;
+	msg.push_back(quality);
+	msg.push_back(g);
+	_NetworkClient->Send(NetworkMessages::IMAGESETTINGS, msg);
+}
+
 void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path){
 	std::string filename = absolute_path;
 	std::string relative = relative_path;

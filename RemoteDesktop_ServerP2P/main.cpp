@@ -2,18 +2,10 @@
 //
 
 #include "stdafx.h"
+#include "..\RemoteDesktop_Library\Config.h"
 #include "..\RemoteDesktopServer_Library\ServiceInstaller.h"
 #include "..\RemoteDesktopServer_Library\ServerService.h"
 #include "..\RemoteDesktopServer_Library\RD_Server.h"
-
-// Internal name of the service
-#define SERVICE_NAME             L"RemoteDesktop_svc"
-// Displayed name of the service
-#define SERVICE_DISPLAY_NAME     L"RemoteDesktop Service"
-// Service start options.
-#define SERVICE_START_TYPE       SERVICE_DEMAND_START
-#define DEFAULTPORT 443
-
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,

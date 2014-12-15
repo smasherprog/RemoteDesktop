@@ -67,6 +67,9 @@ namespace RemoteDesktop_Viewer
         [DllImport(Settings.DLL_Name)]
         static extern Traffic_Stats get_TrafficStats(IntPtr client);
 
+        [DllImport(Settings.DLL_Name)]
+        static extern void SendImageSettings(IntPtr client, int quality, bool grayascale);
+
         public delegate void OnConnectHandler();
         public delegate void OnDisconnectHandler();
         public delegate void OnCursorChangedHandler(int c_type);
@@ -116,34 +119,26 @@ namespace RemoteDesktop_Viewer
             _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack, OnDisplayChanged_CallBack, OnConnectingAttempt_CallBack);
             Running = true;
 
-            button3.MouseEnter += button3_MouseEnter;
-            button3.MouseLeave += button3_MouseLeave;
-            button1.MouseEnter += button1_MouseEnter;
-            button1.MouseLeave += button1_MouseLeave;
+            button3.MouseEnter += button_MouseEnter;
+            button3.MouseLeave += button_MouseLeave;
+            button1.MouseEnter += button_MouseEnter;
+            button1.MouseLeave += button_MouseLeave;
+
+            button2.MouseEnter += button_MouseEnter;
+            button2.MouseLeave += button_MouseLeave;
         }
 
-        void button1_MouseLeave(object sender, EventArgs e)
+        void button_MouseLeave(object sender, EventArgs e)
         {
-            button1.Location = new Point(button1.Location.X, -(button1.Size.Height / 3 + button1.Size.Height / 3));
+            var but = (Button)sender;
+            but.Location = new Point(but.Location.X, -(but.Size.Height / 3 + but.Size.Height / 3));
         }
 
-        void button1_MouseEnter(object sender, EventArgs e)
+        void button_MouseEnter(object sender, EventArgs e)
         {
-            button1.Location = new Point(button1.Location.X, 0);
+            var but = (Button)sender;
+            but.Location = new Point(but.Location.X, 0);
         }
-
-
-
-        void button3_MouseLeave(object sender, EventArgs e)
-        {
-            button3.Location = new Point(button3.Location.X, -(button3.Size.Height / 3 + button3.Size.Height / 3));
-        }
-
-        void button3_MouseEnter(object sender, EventArgs e)
-        {
-            button3.Location = new Point(button3.Location.X, 0);
-        }
-
 
 
         void _TrafficTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -435,6 +430,17 @@ namespace RemoteDesktop_Viewer
                 SendRemoveService(_Client);
             }
                 
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            var f = new ImageSettings(); 
+            f.OnSettingsChangedEvent += OnImageSettingsChanged;
+            f.ShowDialog(this);
+        }
+        private void OnImageSettingsChanged(int quality, bool grayascale)
+        {
+            SendImageSettings(_Client, quality, grayascale);
         }
     }
 }

@@ -42,8 +42,10 @@ void RemoteDesktop::BaseServer::StartListening(unsigned short port, std::wstring
 
 void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
 	std::lock_guard<std::mutex> lo(_SocketArrayLock);
-	for (auto& c : SocketArray) {
-		c->Send(m, msg);
+	auto startindex = 1;
+	if (ReverseConnection)startindex = 0;
+	for (; startindex < SocketArray.size(); startindex++){
+		SocketArray[startindex]->Send(m, msg);
 	}
 }
 

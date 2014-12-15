@@ -16,6 +16,8 @@ extern "C" {
 	DLLEXPORT void __stdcall SendCAD(void* client);
 	DLLEXPORT void __stdcall SendRemoveService(void* client);
 	DLLEXPORT void __stdcall SendFile(void* client, const char* absolute_path, const char* relative_path);
+	DLLEXPORT void __stdcall SendImageSettings(void* client, int quality, bool grayascale);
+	
 	DLLEXPORT RemoteDesktop::Traffic_Stats __stdcall get_TrafficStats(void* client);
 }
 

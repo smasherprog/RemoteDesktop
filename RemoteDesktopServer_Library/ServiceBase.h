@@ -8,16 +8,8 @@ class CServiceBase
 {
 public:
 
-	// Register the executable for a service with the Service Control Manager 
-	// (SCM). After you call Run(ServiceBase), the SCM issues a Start command, 
-	// which results in a call to the OnStart method in the service. This 
-	// method blocks until the service has stopped.
 	static BOOL Run(CServiceBase &service);
 
-	// Service object constructor. The optional parameters (fCanStop, 
-	// fCanShutdown and fCanPauseContinue) allow you to specify whether the 
-	// service can be stopped, paused and continued, or be notified when 
-	// system shutdown occurs.
 	CServiceBase(PWSTR pszServiceName,
 		BOOL fCanStop = TRUE,
 		BOOL fCanShutdown = TRUE,

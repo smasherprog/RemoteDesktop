@@ -48,6 +48,12 @@ void __stdcall SendFile(void* client, const char* absolute_path, const char* rel
 	auto c = (RemoteDesktop::Client*)client;
 	c->SendFile(absolute_path, relative_path);
 }
+void __stdcall SendImageSettings(void* client, int quality, bool grayascale){
+	if (client == NULL)return;
+	auto c = (RemoteDesktop::Client*)client;
+	c->SendImageSettings(quality, grayascale);
+}
+
 RemoteDesktop::Traffic_Stats __stdcall get_TrafficStats(void* client){
 	if (client == NULL){
 		RemoteDesktop::Traffic_Stats tmp;

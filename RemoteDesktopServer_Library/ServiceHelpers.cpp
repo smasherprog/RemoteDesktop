@@ -3,27 +3,7 @@
 #include <tlhelp32.h>
 #include "Wtsapi32.h"
 #include "Userenv.h"
-
-unsigned int GetProcessesByName(wchar_t* process){
-	PROCESSENTRY32 entry;
-	entry.dwSize = sizeof(PROCESSENTRY32);
-
-	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
-	auto pid = 0;
-	if (Process32First(snapshot, &entry) == TRUE)
-	{
-		while (Process32Next(snapshot, &entry) == TRUE)
-		{
-			if (_wcsicmp(entry.szExeFile, process) == 0)
-			{
-				pid = entry.th32ProcessID;
-				break;
-			}
-		}
-	}
-	CloseHandle(snapshot);
-	return pid;
-}
+#include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 
 DWORD
 Find_winlogon(DWORD SessionId)
@@ -93,20 +73,17 @@ bool GetWinlogonHandle(LPHANDLE  lphUserToken, DWORD sessionid)
 {
 	BOOL   bResult = FALSE;
 
-	HANDLE hAccessToken = NULL;
 	HANDLE hTokenThis = NULL;
-//	DWORD Id = GetProcessesByName(L"winlogon.exe");
 	DWORD Id = Find_winlogon(sessionid);
-
-	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, Id);
-	if (hProcess)
+	#include "..\RemoteDesktop_Library\Config.h"
+	RemoteDesktop::RAIIHANDLE hProcess(OpenProcess(PROCESS_ALL_ACCESS, FALSE, Id));
+	if (hProcess.get_Handle())
 	{
-		if (OpenProcessToken(hProcess, TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, &hTokenThis))
+		if (OpenProcessToken(hProcess.get_Handle(), TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, &hTokenThis))
 		{
 			bResult = DuplicateTokenEx(hTokenThis, TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, NULL, SecurityImpersonation, TokenPrimary, lphUserToken);
 			CloseHandle(hTokenThis);
 		}
-		CloseHandle(hProcess);
 	}
 	return bResult == 1;
 }

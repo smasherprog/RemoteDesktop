@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "ServerService.h"
 #include "ServiceMonitor.h"
-#include <fstream>
 
 ServerService::ServerService(PWSTR pszServiceName,
 	BOOL fCanStop,

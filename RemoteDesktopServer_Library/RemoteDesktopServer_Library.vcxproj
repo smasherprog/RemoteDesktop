@@ -73,6 +73,7 @@
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetExt>.lib</TargetExt>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -80,7 +81,7 @@
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetExt>.lib</TargetExt>
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -88,6 +89,7 @@
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetExt>.lib</TargetExt>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -95,7 +97,7 @@
     <LibraryPath>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetExt>.lib</TargetExt>
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -113,6 +115,10 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -130,6 +136,10 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -153,6 +163,10 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -176,10 +190,11 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="MouseCapture.h" />
@@ -208,6 +223,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SystemTray.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RemoteDesktop_Library\RemoteDesktop_Library.vcxproj">

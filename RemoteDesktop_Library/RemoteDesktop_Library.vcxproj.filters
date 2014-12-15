@@ -108,13 +108,16 @@
     <ClInclude Include="Clipboard_Wrapper.h">
       <Filter>Header Files\Wrappers</Filter>
     </ClInclude>
-    <ClInclude Include="Desktop_Wrapper.h">
-      <Filter>Header Files\Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="Event_Wrapper.h">
-      <Filter>Header Files\Wrappers</Filter>
-    </ClInclude>
     <ClInclude Include="AdminStatus.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Handle_Wrapper.h">
+      <Filter>Header Files\Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="VectorPool.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
   </ItemGroup>
@@ -173,13 +176,10 @@
     <ClCompile Include="Clipboard_Wrapper.cpp">
       <Filter>Source Files\Wrappers</Filter>
     </ClCompile>
-    <ClCompile Include="Desktop_Wrapper.cpp">
-      <Filter>Source Files\Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="Event_Wrapper.cpp">
-      <Filter>Source Files\Wrappers</Filter>
-    </ClCompile>
     <ClCompile Include="AdminStatus.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="VectorPool.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
   </ItemGroup>

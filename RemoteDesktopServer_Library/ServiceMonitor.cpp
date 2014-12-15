@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "ServiceMonitor.h"
 #include "ServiceHelpers.h"
-#include <fstream>
-#include "..\RemoteDesktop_Library\Event_Wrapper.h"
+#include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 
 RemoteDesktop::ServiceMonitor::ServiceMonitor(){
 
@@ -40,10 +39,10 @@ void wait_for_existing_process()
 void RemoteDesktop::ServiceMonitor::_Run(){
 
 	wait_for_existing_process();//wait for any existing program to stop running
-
-	Event_Wrapper exitprog(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram"));
-	Event_Wrapper cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRDCad"));
-	Event_Wrapper selfremovaltrigger(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRemoveSelf"));
+	
+	RAIIHANDLE exitprog(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram"));
+	RAIIHANDLE cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRDCad"));
+	RAIIHANDLE selfremovaltrigger(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRemoveSelf"));
 	HANDLE evs[2];
 	evs[0] = cardreq.get_Handle();
 	evs[1] = selfremovaltrigger.get_Handle();

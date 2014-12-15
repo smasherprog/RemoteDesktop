@@ -21,9 +21,9 @@
     <Filter Include="Source Files\Server">
       <UniqueIdentifier>{08388162-7190-4f84-a024-b46101efd16b}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <Filter Include="Source Files\SysTray">
+      <UniqueIdentifier>{28c569a5-24bc-4956-a7be-f3524e2450da}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -87,6 +87,9 @@
     </ClCompile>
     <ClCompile Include="ServiceHelpers.cpp">
       <Filter>Source Files\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemTray.cpp">
+      <Filter>Source Files\SysTray</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

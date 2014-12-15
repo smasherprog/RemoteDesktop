@@ -1,7 +1,14 @@
 #include "stdafx.h"
 #include "Image.h"
+#include "..\libjpeg-turbo\turbojpeg.h"
+#include <memory>
+#include "Timer.h"
 
-void RemoteDesktop::Image::Optimize(){//this just removes the alpha component
+
+int RemoteDesktop::Image_Settings::Quality = 70;
+bool RemoteDesktop::Image_Settings::GrazyScale = false;
+
+void RemoteDesktop::Image::Compress(){
 	if (stride == 3) return;//already done
 	int dstoffset = 0;
 	auto src = (const int*)data;//src data will always be rgba
@@ -17,14 +24,67 @@ void RemoteDesktop::Image::Optimize(){//this just removes the alpha component
 	assert(data + dstoffset < data + size_in_bytes);//ensure I did not stomp over memory
 	stride = 3;
 	size_in_bytes = height*width*stride;
+	
+
+	//I Kind of cheat below by using static variables. . .  This means the compress and decompress functions are NOT THREAD SAFE, but this isnt a problem yet because I never access these functions from different threads at the same time
+
+	static std::shared_ptr<void> _jpegCompressor;
+	if (_jpegCompressor.get() == nullptr) _jpegCompressor = std::shared_ptr<void>(tjInitCompress(), [](void* handle){tjDestroy(handle); });
+	static std::vector<char> compressBuffer;
+
+	auto maxsize = width * height * 4;
+	long unsigned int _jpegSize = maxsize;
+	
+	if (compressBuffer.capacity() < maxsize) compressBuffer.reserve(maxsize);
+
+	auto t = Timer(true);
+	
+	auto ptr = (unsigned char*)compressBuffer.data();
+	auto set = Image_Settings::GrazyScale ? TJSAMP_GRAY : TJSAMP_420;
+	if (tjCompress2(_jpegCompressor.get(), data, width, 0, height, TJPF_BGR, &ptr, &_jpegSize, set, Image_Settings::Quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) {
+		DEBUG_MSG("Err msg %", tjGetErrorStr());
+	}
+	size_in_bytes = _jpegSize;
+	memcpy(data, ptr, size_in_bytes);
+
+	t.Stop();
+	DEBUG_MSG("Time Taken Compress %", std::to_string(t.Elapsed_milli()));
+
 }
-void RemoteDesktop::Image::UnOptimize(std::vector<int>& buffer){
+void RemoteDesktop::Image::Decompress(std::vector<int>& buffer){
 	if (stride == 4) return;//already done
+
 	buffer.reserve(width*height);
 	
+	//I Kind of cheat below by using static variables. . .  This means the compress and decompress functions are NOT THREAD SAFE, but this isnt a problem yet
+	static std::shared_ptr<void> _jpegDecompressor;
+	static std::vector<unsigned char> decompressBuffer;
+	if (_jpegDecompressor.get() == nullptr) _jpegDecompressor = std::shared_ptr<void>(tjInitDecompress(), [](void* handle){tjDestroy(handle); });
+	
+	auto maxsize = width * height * 4;
+	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize);
+
+	int jpegSubsamp = 0;
+	auto width = 0;
+	auto height = 0;
+	auto t = Timer(true);
+
+	if (tjDecompressHeader2(_jpegDecompressor.get(), data, size_in_bytes, &width, &height, &jpegSubsamp) == -1) {
+		DEBUG_MSG("Err msg %", tjGetErrorStr());
+	}
+
+
+	if (tjDecompress2(_jpegDecompressor.get(), data, size_in_bytes, decompressBuffer.data(), width, 0, height, TJPF_BGR, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1){
+		DEBUG_MSG("Err msg %", tjGetErrorStr());
+	}
+
+	t.Stop();
+	DEBUG_MSG("Time Taken Decompress %", std::to_string(t.Elapsed_milli()));
+
+
 	int srcoffset = 0;
-	auto src = (const char*)data;//src data will always be rgb
-	auto buf = buffer.data();
+	auto src = (const char*)decompressBuffer.data();//src data will always be rgb
+	auto dst = buffer.data();
 	union rgba {
 		int data;
 		unsigned char cdata[4];
@@ -35,7 +95,7 @@ void RemoteDesktop::Image::UnOptimize(std::vector<int>& buffer){
 			rgba d;
 			d.data = *((int*)(src + srcoffset));
 			d.cdata[3] = 255;
-			buf[y * width + x] = d.data;
+			dst[y * width + x] = d.data;
 			srcoffset += 3;//advance by three bytes
 		}
 	}
@@ -43,7 +103,13 @@ void RemoteDesktop::Image::UnOptimize(std::vector<int>& buffer){
 	stride = 4;
 	size_in_bytes = height*width*stride;
 }
-//this just removes the alpha component, but a buffer is needed because the image is going to grow
+
+RemoteDesktop::Image RemoteDesktop::Image::Clone(std::vector<char>& buffer) const{
+	buffer.reserve(size_in_bytes);
+	memcpy(buffer.data(), data, size_in_bytes);
+	return Image((unsigned char*)buffer.data(), size_in_bytes, height, width);
+}
+
 RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image first, Image second){
 	int top = -1;
 	int bottom = -1;

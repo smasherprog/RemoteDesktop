@@ -7,7 +7,19 @@
 #include "Rect.h"
 
 namespace RemoteDesktop{
-	class HBITMAP_wrapper;
+	class HBITMAP_wrapper{
+	public:
+		HBITMAP Bitmap = nullptr;
+		int height = 0;
+		int width = 0;
+		unsigned char* raw_data = nullptr;
+		explicit HBITMAP_wrapper(HBITMAP s) : Bitmap(s) { }
+		~HBITMAP_wrapper()
+		{
+			if (Bitmap != nullptr)DeleteObject(Bitmap);
+		}
+
+	};
 	class Image;
 	struct Image_Diff_Header;
 	struct MouseEvent_Header;

@@ -115,7 +115,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 	auto enph = (Packet_Encrypt_Header*)_SendBuffer.data();
 
 	enph->PayloadLen = _Encyption.Ecrypt(_SendCompressionBuffer.data(), _SendBuffer.data() + sizeof(Packet_Encrypt_Header), packetheader->PayloadLen + sizeof(Packet_Header), enph->IV) + IVSIZE;
-//	DEBUG_MSG("Final Outbound Size: %", enph->PayloadLen);
+	//DEBUG_MSG("Final Outbound Size: %", enph->PayloadLen);
 	if (enph->PayloadLen < 0)  return _Disconnect();
 	if (_SendLoop(_SendBuffer.data(), enph->PayloadLen + sizeof(enph->PayloadLen)) == RemoteDesktop::Network_Return::FAILED) return _Disconnect();
 	Traffic.UpdateSend(roundUp(msg.payloadlength() + TOTALHEADERSIZE, 16), enph->PayloadLen + sizeof(enph->PayloadLen));// an uncompressed message would be encrypted and rounded up to the nearest 16 bytes so adjust accordingly
@@ -204,7 +204,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 					ph->PayloadLen = beforesize;//restore
 				}
 				else if (Receive_CallBack) {
-				//	DEBUG_MSG("uncompressed size %", ph->PayloadLen);
+					//DEBUG_MSG("uncompressed size %", ph->PayloadLen);
 					Traffic.UpdateRecv(ph->PayloadLen + TOTALHEADERSIZE, ph->PayloadLen + TOTALHEADERSIZE);//same size for each if no compression occurs
 					Receive_CallBack(ph, beg, this);
 				}

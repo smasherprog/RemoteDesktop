@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "ServiceBase.h"
-#include <fstream>
 
 // Initialize the singleton service instance.
 CServiceBase *CServiceBase::s_service = NULL;

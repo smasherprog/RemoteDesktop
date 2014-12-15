@@ -47,6 +47,8 @@ namespace RemoteDesktop{
 		void SendRemoveService();
 		void SendCAD();
 		void SendFile(const char* absolute_path, const char* relative_path);
+		void SendImageSettings(int quality, bool grayascale);
+
 		Traffic_Stats get_TrafficStats() const;
 
 	};

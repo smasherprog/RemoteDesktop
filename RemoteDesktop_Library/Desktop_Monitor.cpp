@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "Desktop_Monitor.h"
-#include <fstream>
 #include <thread>
-#include "..\RemoteDesktop_Library\Desktop_Wrapper.h"
+#include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 #include "Wtsapi32.h"
 
 RemoteDesktop::DesktopMonitor::DesktopMonitor(){
@@ -39,7 +38,7 @@ bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected() const{
 	// Get the input and thread desktops
 	HDESK threaddesktop = GetThreadDesktop(GetCurrentThreadId());
 
-	Desktop_Wrapper inputdesktop(OpenInputDesktop(0, FALSE,
+	RAIIHDESKTOP inputdesktop(OpenInputDesktop(0, FALSE,
 		DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
 		DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
 		DESKTOP_WRITEOBJECTS | DESKTOP_READOBJECTS |

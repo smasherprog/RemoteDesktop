@@ -86,7 +86,14 @@ namespace RemoteDesktop_Viewer
             _LastMainViewer.Connect(iporhost, id);
             _Connecting.Show();
             _Connecting.Hide();
+            _Connecting.FormClosing += _Connecting_FormClosing;
             this.Hide();
+        }
+
+        void _Connecting_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            OnDisconnect();
         }
         private void _LastMainViewer_OnConnectingAttemptEvent(int attempt, int maxattempts)
         {
@@ -95,7 +102,6 @@ namespace RemoteDesktop_Viewer
             _Connecting.ConnectAttempt = attempt;
 
             _Connecting.UIThread(() => { _Connecting.Show(); });
-
             this.UIThread(() => { this.Hide(); });
             _LastMainViewer.UIThread(() => { _LastMainViewer.Hide(); });
 
@@ -140,7 +146,6 @@ namespace RemoteDesktop_Viewer
                     tabPage2.Controls.Clear();
                     tabPage2.Controls.Add(_Login);
                 }
-
             }
         }
 
