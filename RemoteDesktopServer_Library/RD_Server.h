@@ -4,6 +4,7 @@
 #include <mutex>
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 
+
 namespace RemoteDesktop{
 	class ScreenCapture;
 
@@ -16,6 +17,7 @@ namespace RemoteDesktop{
 	class Rect;
 	class ClipboardMonitor;
 	struct Clipboard_Data;
+	class SystemTray;
 
 #if _DEBUG
 	class CConsole;
@@ -31,6 +33,7 @@ namespace RemoteDesktop{
 		std::unique_ptr<BaseServer> _NetworkServer;
 		std::unique_ptr<ScreenCapture> _ScreenCapture;
 		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
+		std::unique_ptr<SystemTray> _SystemTray;
 
 		std::mutex _NewClientLock;
 

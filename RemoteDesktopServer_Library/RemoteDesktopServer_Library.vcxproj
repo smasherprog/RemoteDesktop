@@ -198,6 +198,7 @@
   <ItemGroup>
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="MouseCapture.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="RD_Server.h" />
     <ClInclude Include="ServerService.h" />
@@ -206,6 +207,7 @@
     <ClInclude Include="ServiceInstaller.h" />
     <ClInclude Include="ServiceMonitor.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="SystemTray.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseServer.cpp" />
@@ -229,6 +231,12 @@
     <ProjectReference Include="..\RemoteDesktop_Library\RemoteDesktop_Library.vcxproj">
       <Project>{d75e5ad6-ee2a-46ce-8eaf-9bd3d5777b37}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -10,6 +10,7 @@
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
+#include "..\RemoteDesktopServer_Library\SystemTray.h"
 
 #if _DEBUG
 #include "Console.h"
@@ -61,7 +62,8 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 		DELEGATE(&RemoteDesktop::RD_Server::OnDisconnect, this));
 	_ScreenCapture = std::make_unique<ScreenCapture>();
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
-
+	_SystemTray = std::make_unique<SystemTray>();
+	_SystemTray->Start();
 }
 RemoteDesktop::RD_Server::~RD_Server(){
 	if (_RemoveOnExit) {
@@ -134,7 +136,8 @@ void RemoteDesktop::RD_Server::_Handle_ClipBoard(Packet_Header* header, const ch
 
 void RemoteDesktop::RD_Server::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	std::lock_guard<std::mutex> lock(_NewClientLock);
-	_NewClients.push_back(sh);
+	_NewClients.push_back(sh); 
+	_SystemTray->Popup(L"Connection Established", L"To someone!", 2000);
 	DEBUG_MSG("New Client OnConnect");
 }
 void _HandleKeyEvent(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -239,7 +242,7 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	}
 }
 void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) {
-
+	_SystemTray->Popup(L"Connection Disconnected", L"To someone!", 2000);
 }
 
 void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg){

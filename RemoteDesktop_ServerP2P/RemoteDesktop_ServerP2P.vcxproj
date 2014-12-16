@@ -110,6 +110,9 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -127,6 +130,9 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -150,6 +156,9 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -173,8 +182,12 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +203,9 @@
     <ProjectReference Include="..\RemoteDesktopServer_Library\RemoteDesktopServer_Library.vcxproj">
       <Project>{d7d92bb1-bab3-412e-b3b1-b4e9683f87fc}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RemoteDesktop_ServerP2P.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

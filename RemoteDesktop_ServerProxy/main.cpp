@@ -40,25 +40,36 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		}
 		else if (_wcsicmp(L"run", argv[1] + 1) == 0)
 		{
+			
 			auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
 			_Server->Listen(DEFAULTPORT, DEFAULTPROXY);
 		}
 	}
 	else
 	{
-		//try to install the service if launched normally. If the service cannot be installed it is because its already installed, or the progrm was not launched with correct permissions.
-		//in which case, try to launch the program normally.
-		if (!InstallService(
-			SERVICE_NAME,               // Name of service
-			SERVICE_DISPLAY_NAME,       // Name to display
-			SERVICE_AUTO_START,
-			L"",
+		if (MessageBox(
 			NULL,
-			NULL
-			)){
-			auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
-			_Server->Listen(DEFAULTPORT, DEFAULTPROXY);
+			(LPCWSTR)L"Do you agree to allow a support technician to connection to your computer?",
+			(LPCWSTR)L"Disclaimer",
+			MB_ICONQUESTION | MB_YESNO
+			) == IDYES){
+			//try to install the service if launched normally. If the service cannot be installed it is because its already installed, or the progrm was not launched with correct permissions.
+			//in which case, try to launch the program normally.
+			if (!InstallService(
+				SERVICE_NAME,               // Name of service
+				SERVICE_DISPLAY_NAME,       // Name to display
+				SERVICE_AUTO_START,
+				L"",
+				NULL,
+				NULL
+				)){
+				auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
+				_Server->Listen(DEFAULTPORT, DEFAULTPROXY);
+			}
 		}
+
+
+
 	}
 
 	return 0;

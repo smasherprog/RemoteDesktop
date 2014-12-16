@@ -47,7 +47,7 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 			else if (msg.message == WM_QUIT || msg.message == WM_CLOSE || msg.message == WM_DESTROY){
 				break;//get out of the loop and destroy
 			}
-			else if (WM_CLIPBOARDUPDATE){
+			else if (msg.message == WM_CLIPBOARDUPDATE){
 				if (!_IgnoreClipUpdateNotice) {
 					Clipboard_Data c;
 					{//ensure lock is released timely

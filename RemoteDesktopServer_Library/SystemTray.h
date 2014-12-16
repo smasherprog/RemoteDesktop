@@ -1,0 +1,27 @@
+#ifndef SYSTEMTRAY_123_H
+#define SYSTEMTRAY_123_H
+#include <thread>
+
+namespace RemoteDesktop{
+	class SystemTray{
+		HWND Hwnd;
+		HMENU Hmenu;
+
+		bool _Running = false;	
+		std::thread _BackGroundThread; 
+		NOTIFYICONDATA notifyIconData;
+
+		void _Run();
+		void _CreateIcon(HWND hWnd);
+		
+	public:
+		SystemTray(){}
+		~SystemTray(){ Stop(); }
+		void Start();
+		void Stop();
+		void Popup(wchar_t* title, wchar_t* message, unsigned int timeout);
+		LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	};
+}
+
+#endif

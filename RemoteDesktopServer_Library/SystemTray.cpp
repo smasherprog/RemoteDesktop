@@ -1,215 +1,124 @@
 #include "stdafx.h"
-//#include "resource.h"
-//
-///*variables*/
-//UINT WM_TASKBAR = 0;
-//HWND Hwnd;
-//HMENU Hmenu;
-//NOTIFYICONDATA notifyIconData;
-//TCHAR szTIP[64] = TEXT("Snoopy.. \n Kicks Ass!");
-//char szClassName[] = "Snoopy's System Tray Demo.";
-//
-//
-//
-///*procedures  */
-//LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
-//void minimize();
-//void restore();
-//void InitNotifyIconData();
-//
-//
-//
-//int WINAPI WinMain(HINSTANCE hThisInstance,
-//	HINSTANCE hPrevInstance,
-//	LPSTR lpszArgument,
-//	int nCmdShow)
-//{
-//	/* This is the handle for our window */
-//	MSG messages;            /* Here messages to the application are saved */
-//	WNDCLASSEX wincl;        /* Data structure for the windowclass */
-//	WM_TASKBAR = RegisterWindowMessageA("TaskbarCreated");
-//	/* The Window structure */
-//	wincl.hInstance = hThisInstance;
-//	wincl.lpszClassName = szClassName;
-//	wincl.lpfnWndProc = WindowProcedure;      /* This function is called by windows */
-//	wincl.style = CS_DBLCLKS;                 /* Catch double-clicks */
-//	wincl.cbSize = sizeof(WNDCLASSEX);
-//
-//	/* Use default icon and mouse-pointer */
-//	wincl.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(ICO1));
-//	wincl.hIconSm = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(ICO1));
-//	wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
-//	wincl.lpszMenuName = NULL;                 /* No menu */
-//	wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
-//	wincl.cbWndExtra = 0;                      /* structure or the window instance */
-//	wincl.hbrBackground = (HBRUSH)(CreateSolidBrush(RGB(255, 255, 255)));
-//	/* Register the window class, and if it fails quit the program */
-//	if (!RegisterClassEx(&wincl))
-//		return 0;
-//
-//	/* The class is registered, let's create the program*/
-//	Hwnd = CreateWindowEx(
-//		0,                   /* Extended possibilites for variation */
-//		szClassName,         /* Classname */
-//		szClassName,       /* Title Text */
-//		WS_OVERLAPPEDWINDOW, /* default window */
-//		CW_USEDEFAULT,       /* Windows decides the position */
-//		CW_USEDEFAULT,       /* where the window ends up on the screen */
-//		544,                 /* The programs width */
-//		375,                 /* and height in pixels */
-//		HWND_DESKTOP,        /* The window is a child-window to desktop */
-//		NULL,                /* No menu */
-//		hThisInstance,       /* Program Instance handler */
-//		NULL                 /* No Window Creation data */
-//		);
-//	/*Initialize the NOTIFYICONDATA structure only once*/
-//	InitNotifyIconData();
-//	/* Make the window visible on the screen */
-//	ShowWindow(Hwnd, nCmdShow);
-//
-//	/* Run the message loop. It will run until GetMessage() returns 0 */
-//	while (GetMessage(&messages, NULL, 0, 0))
-//	{
-//		/* Translate virtual-key messages into character messages */
-//		TranslateMessage(&messages);
-//		/* Send message to WindowProcedure */
-//		DispatchMessage(&messages);
-//	}
-//
-//	return messages.wParam;
-//}
-//
-//
-///*  This function is called by the Windows function DispatchMessage()  */
-//
-//LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-//{
-//
-//	if (message == WM_TASKBAR && !IsWindowVisible(Hwnd))
-//	{
-//		minimize();
-//		return 0;
-//	}
-//
-//	switch (message)                  /* handle the messages */
-//	{
-//	case WM_ACTIVATE:
-//		Shell_NotifyIcon(NIM_ADD, &notifyIconData);
-//		break;
-//	case WM_CREATE:
-//
-//		ShowWindow(Hwnd, SW_HIDE);
-//		Hmenu = CreatePopupMenu();
-//		AppendMenu(Hmenu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit The Demo"));
-//
-//		break;
-//
-//	case WM_SYSCOMMAND:
-//		/*In WM_SYSCOMMAND messages, the four low-order bits of the wParam parameter
-//		are used internally by the system. To obtain the correct result when testing the value of wParam,
-//		an application must combine the value 0xFFF0 with the wParam value by using the bitwise AND operator.*/
-//
-//		switch (wParam & 0xFFF0)
-//		{
-//		case SC_MINIMIZE:
-//		case SC_CLOSE:
-//			minimize();
-//			return 0;
-//			break;
-//		}
-//		break;
-//
-//
-//		// Our user defined WM_SYSICON message.
-//	case WM_SYSICON:
-//	{
-//
-//		switch (wParam)
-//		{
-//		case ID_TRAY_APP_ICON:
-//			SetForegroundWindow(Hwnd);
-//
-//			break;
-//		}
-//
-//
-//		if (lParam == WM_LBUTTONUP)
-//		{
-//
-//			restore();
-//		}
-//		else if (lParam == WM_RBUTTONDOWN)
-//		{
-//			// Get current mouse position.
-//			POINT curPoint;
-//			GetCursorPos(&curPoint);
-//			SetForegroundWindow(Hwnd);
-//
-//			// TrackPopupMenu blocks the app until TrackPopupMenu returns
-//
-//			UINT clicked = TrackPopupMenu(Hmenu, TPM_RETURNCMD | TPM_NONOTIFY, curPoint.x, curPoint.y, 0, hwnd, NULL);
-//
-//
-//
-//			SendMessage(hwnd, WM_NULL, 0, 0); // send benign message to window to make sure the menu goes away.
-//			if (clicked == ID_TRAY_EXIT)
-//			{
-//				// quit the application.
-//				Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
-//				PostQuitMessage(0);
-//			}
-//		}
-//	}
-//	break;
-//
-//	// intercept the hittest message..
-//	case WM_NCHITTEST:
-//	{
-//		UINT uHitTest = DefWindowProc(hwnd, WM_NCHITTEST, wParam, lParam);
-//		if (uHitTest == HTCLIENT)
-//			return HTCAPTION;
-//		else
-//			return uHitTest;
-//	}
-//
-//	case WM_CLOSE:
-//
-//		minimize();
-//		return 0;
-//		break;
-//
-//	case WM_DESTROY:
-//
-//		PostQuitMessage(0);
-//		break;
-//
-//	}
-//
-//	return DefWindowProc(hwnd, message, wParam, lParam);
-//}
-//
-//
-//void minimize()
-//{
-//	// hide the main window
-//	ShowWindow(Hwnd, SW_HIDE);
-//}
-//
-//
-//void restore()
-//{
-//	ShowWindow(Hwnd, SW_SHOW);
-//}
-//
-//void InitNotifyIconData()
-//{
-//	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
-//
-//	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-//	notifyIconData.hWnd = Hwnd;
-//	notifyIconData.uID = ID_TRAY_APP_ICON;
-//	notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-//	notifyIconData.uCallbackMessage = WM_SYSICON; //Set up our invented Windows Message
-//	notifyIconData.hIcon = (HICON)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(ICO1));
-//	strncpy(notifyIconData.szTip, szTIP, sizeof(szTIP));
-//}
+#include "SystemTray.h"
+#include "resource.h"
+
+#define ID_TRAY_APP_ICON    1001
+#define ID_TRAY_EXIT        1002
+#define ID_TRAY_EXIT_REMOVE	1003
+#define ID_TRAY_BALLOON		1004
+#define ID_TRAY_APP_TIMER   1005
+#define WM_SYSICON          (WM_USER + 1)
+
+void RemoteDesktop::SystemTray::Start(){
+	_Running = true;
+	//_Run();
+	_BackGroundThread = std::thread(&SystemTray::_Run, this);
+}
+void RemoteDesktop::SystemTray::Stop(){
+	_Running = false;
+	if (std::this_thread::get_id() != _BackGroundThread.get_id()){
+		if (_BackGroundThread.joinable()) _BackGroundThread.join();
+	}
+}
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+
+	RemoteDesktop::SystemTray *c = (RemoteDesktop::SystemTray *)GetWindowLong(hWnd, GWLP_USERDATA);
+	if (c == NULL)
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	return c->WindowProc(hWnd, msg, wParam, lParam);
+}
+void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
+	
+	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
+
+	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+	notifyIconData.hWnd = hWnd;
+	notifyIconData.uID = ID_TRAY_APP_ICON;
+	notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	notifyIconData.uCallbackMessage = WM_SYSICON; //Set up our invented Windows Message
+	
+	notifyIconData.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
+	TCHAR szTIP[64] = TEXT("Remote Desktop Process");
+	wcscpy_s(notifyIconData.szTip, szTIP);
+	Shell_NotifyIcon(NIM_ADD, &notifyIconData); 
+	ShowWindow(Hwnd, SW_HIDE);
+}
+LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	if (msg == WM_TIMER)
+	{
+		return 0;
+	}
+	else if (msg == WM_QUIT || msg == WM_CLOSE || msg == WM_DESTROY || !_Running){
+		return 1;
+	}
+	else if (msg == WM_SYSICON)
+	{
+		if (lParam == WM_RBUTTONUP)
+		{
+			// Get current mouse position.
+			POINT curPoint;
+			GetCursorPos(&curPoint);
+			SetForegroundWindow(hWnd);
+			// TrackPopupMenu blocks the app until TrackPopupMenu returns
+			UINT clicked = TrackPopupMenu(Hmenu, TPM_RETURNCMD | TPM_NONOTIFY, curPoint.x, curPoint.y, 0, hWnd, NULL);
+			SendMessage(hWnd, WM_NULL, 0, 0); // send benign message to window to make sure the menu goes away.
+			if (clicked == ID_TRAY_EXIT || clicked == ID_TRAY_EXIT_REMOVE){
+				PostMessage(Hwnd, WM_QUIT, 0, 0);
+			}
+		}
+	}
+	return DefWindowProc(hWnd, msg, msg, lParam);
+}
+void RemoteDesktop::SystemTray::_Run(){
+
+	auto myclass = L"systrayclass";
+	WNDCLASSEX wndclass = {};
+	memset(&wndclass, 0, sizeof(wndclass));
+	wndclass.cbSize = sizeof(WNDCLASSEX);
+	wndclass.lpfnWndProc = WndProc;
+	wndclass.lpszClassName = myclass;
+
+	wndclass.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, 0);
+	wndclass.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
+
+	if (RegisterClassEx(&wndclass)) Hwnd = CreateWindowEx(0, myclass, L"systraywatcher", 0, 0, 0, 0, 0, HWND_DESKTOP, 0, GetModuleHandle(NULL), 0);
+	else return DEBUG_MSG("Error %", GetLastError());
+	
+
+	Hmenu = CreatePopupMenu();
+	AppendMenu(Hmenu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit"));
+	AppendMenu(Hmenu, MF_STRING, ID_TRAY_EXIT_REMOVE, TEXT("Exit and Remove"));
+	_CreateIcon(Hwnd);
+
+	SetWindowLongPtr(Hwnd, GWLP_USERDATA, (LONG_PTR)this);
+	SetTimer(Hwnd, ID_TRAY_APP_TIMER, 500, NULL); //every 500 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
+
+	MSG msg;
+	while (GetMessage(&msg, Hwnd, 0, 0) != 0)
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	KillTimer(Hwnd, ID_TRAY_APP_TIMER);
+	Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
+	DestroyWindow(Hwnd);
+}
+
+void RemoteDesktop::SystemTray::Popup(wchar_t* title, wchar_t* message, unsigned int timeout){
+	NOTIFYICONDATA notifyIconData;
+	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
+	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+	notifyIconData.hWnd = Hwnd;
+	notifyIconData.uID = ID_TRAY_APP_ICON;
+	notifyIconData.uVersion = NOTIFYICON_VERSION;
+
+	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
+	notifyIconData.uFlags = NIF_INFO;
+	notifyIconData.uTimeout = timeout;
+	wcscpy_s(notifyIconData.szInfo, message);
+	wcscpy_s(notifyIconData.szInfoTitle, title);
+	Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
+	notifyIconData.uVersion = 0;
+	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
+}
