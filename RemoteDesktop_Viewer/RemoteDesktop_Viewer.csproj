@@ -162,12 +162,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="newconnect.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="disconnect.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="cad.bmp" />
   </ItemGroup>
   <ItemGroup>

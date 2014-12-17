@@ -165,10 +165,10 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 		if (_ReceivedBufferCounter < totalsizepending) return Network_Return::PARTIALLY_COMPLETED;
 		else {//enough data was received for a key exchange..
 			if (!_Encyption.Agree(_ReceivedBuffer.data() + sizeof(int), _ReceivedBuffer.data() + sizeof(int) + StaticPublicKeyLength)) return _Disconnect();
-			if (Connected_CallBack) Connected_CallBack(this);//client is now connected
 			_ReceivedBufferCounter -= totalsizepending;
 			memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + totalsizepending, _ReceivedBufferCounter);//this will shift down the data 
 			State = PEER_STATE_CONNECTED;
+			if (Connected_CallBack) Connected_CallBack(this);//client is now connected
 		}
 	}
 	if (_ReceivedBufferCounter > 0 && State == PEER_STATE_CONNECTED){

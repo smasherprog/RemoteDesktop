@@ -9,6 +9,7 @@ namespace RemoteDesktop{
 	}
 	bool StartupNetwork();
 	void ShutDownNetwork();
+	void PrimeNetwork(unsigned short int port);
 	SOCKET Connect(std::wstring port, std::wstring host);
 	void StandardSocketSetup(SOCKET socket);
 }

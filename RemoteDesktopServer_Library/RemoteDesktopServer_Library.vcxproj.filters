@@ -65,6 +65,9 @@
     <ClInclude Include="SystemTray.h">
       <Filter>Header Files\SysTray</Filter>
     </ClInclude>
+    <ClInclude Include="MainServer.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -99,6 +102,9 @@
     </ClCompile>
     <ClCompile Include="SystemTray.cpp">
       <Filter>Source Files\SysTray</Filter>
+    </ClCompile>
+    <ClCompile Include="MainServer.cpp">
+      <Filter>Source Files\Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

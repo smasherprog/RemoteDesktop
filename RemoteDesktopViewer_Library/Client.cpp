@@ -8,6 +8,7 @@
 #include "..\RemoteDesktop_Library\Image.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
+#include <Lmcons.h>
 
 RemoteDesktop::Client::Client(HWND hwnd,
 	void(__stdcall * onconnect)(),
@@ -88,7 +89,16 @@ void RemoteDesktop::Client::_Handle_ClipBoard(Packet_Header* header, const char*
 
 void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	DEBUG_MSG("Connection Successful");
+	ConnectionInfo_Header h;
+	memset(&h, 0, sizeof(h));
 
+	DWORD username_len = UNAMELEN + 1;
+	GetUserName(h.UserName, &username_len);
+	h.UserName[username_len] = 0;
+
+	NetworkMsg msg;
+	msg.push_back(h);
+	_NetworkClient->Send(NetworkMessages::CONNECTIONINFO, msg);
 	_OnConnect();
 }
 

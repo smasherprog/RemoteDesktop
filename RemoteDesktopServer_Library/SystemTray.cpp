@@ -100,10 +100,9 @@ void RemoteDesktop::SystemTray::_Run(){
 	}
 	KillTimer(Hwnd, ID_TRAY_APP_TIMER);
 	Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
-	DestroyWindow(Hwnd);
 }
 
-void RemoteDesktop::SystemTray::Popup(wchar_t* title, wchar_t* message, unsigned int timeout){
+void RemoteDesktop::SystemTray::Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout){
 	NOTIFYICONDATA notifyIconData;
 	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);

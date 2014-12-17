@@ -49,6 +49,7 @@ namespace RemoteDesktop{
 		std::unique_ptr<socket_wrapper> _Socket;
 		Network_Return _Disconnect();
 		
+		
 
 	public:
 		explicit SocketHandler(SOCKET socket, bool client);
@@ -65,6 +66,8 @@ namespace RemoteDesktop{
 	
 		Traffic_Monitor Traffic;
 		Network_Return CheckState();
+		
+		std::wstring UserName;
 	};
 };
 

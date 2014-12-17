@@ -48,7 +48,7 @@ void RemoteDesktop::Image::Compress(){
 	memcpy(data, ptr, size_in_bytes);
 
 	t.Stop();
-	DEBUG_MSG("Time Taken Compress %", std::to_string(t.Elapsed_milli()));
+	//DEBUG_MSG("Time Taken Compress %", std::to_string(t.Elapsed_milli()));
 
 }
 void RemoteDesktop::Image::Decompress(std::vector<int>& buffer){
@@ -79,7 +79,7 @@ void RemoteDesktop::Image::Decompress(std::vector<int>& buffer){
 	}
 
 	t.Stop();
-	DEBUG_MSG("Time Taken Decompress %", std::to_string(t.Elapsed_milli()));
+	//DEBUG_MSG("Time Taken Decompress %", std::to_string(t.Elapsed_milli()));
 
 
 	int srcoffset = 0;

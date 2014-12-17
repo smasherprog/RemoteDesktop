@@ -137,7 +137,6 @@ void RemoteDesktop::RD_Server::_Handle_ClipBoard(Packet_Header* header, const ch
 void RemoteDesktop::RD_Server::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	std::lock_guard<std::mutex> lock(_NewClientLock);
 	_NewClients.push_back(sh); 
-	_SystemTray->Popup(L"Connection Established", L"To someone!", 2000);
 	DEBUG_MSG("New Client OnConnect");
 }
 void _HandleKeyEvent(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -210,6 +209,15 @@ void RemoteDesktop::RD_Server::_Handle_Folder(Packet_Header* header, const char*
 	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
 	CreateDirectoryA(path.c_str(), NULL);
 }
+void RemoteDesktop::RD_Server::_Handle_ConnectionInfo(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	ConnectionInfo_Header h;
+	assert(header->PayloadLen == sizeof(h));
+	memcpy(&h, data, header->PayloadLen);
+	h.UserName[UNAMELEN] = 0;
+	sh->UserName = std::wstring(h.UserName);
+	auto con = sh->UserName + L" has connected to your machine . . .";
+	_SystemTray->Popup(L"Connection Established", con.c_str() , 2000);
+}
 void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	switch (header->Packet_Type){
 	case NetworkMessages::KEYEVENT:
@@ -236,13 +244,17 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	case NetworkMessages::IMAGESETTINGS:
 		_Handle_ImageSettings(header, data, sh);
 		break;
-
+	case NetworkMessages::CONNECTIONINFO:
+		_Handle_ConnectionInfo(header, data, sh);
+		break;
+		
 	default:
 		break;
 	}
 }
 void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) {
-	_SystemTray->Popup(L"Connection Disconnected", L"To someone!", 2000);
+	auto con = sh->UserName + L" has Disconnected from your machine . . .";
+	_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
 }
 
 void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg){
@@ -296,7 +308,7 @@ void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, std
 		msg.push_back(rect);
 		msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes));
 
-		DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
+		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
 		_NetworkServer->SendToAll(NetworkMessages::UPDATEREGION, msg);
 	}
 

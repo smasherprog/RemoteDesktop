@@ -4,7 +4,7 @@
 #include <vector>
 
 #define IVSIZE 16
-
+#define UNAMELEN 256
 typedef void(__stdcall *OnConnectCB)();
 namespace RemoteDesktop{
 	//ensure ths is tighly packed
@@ -20,7 +20,10 @@ namespace RemoteDesktop{
 	struct KeyEvent_Header{
 		int VK;
 		char down = 0;
-	};	
+	};		
+	struct ConnectionInfo_Header{
+		wchar_t UserName[UNAMELEN + 1];
+	};
 	struct MouseEvent_Header{
 		Point pos;
 		int HandleID;
@@ -44,7 +47,8 @@ namespace RemoteDesktop{
 		INIT_ENCRYPTION,
 		CLIPBOARDCHANGED,
 		DISCONNECTANDREMOVE,
-		IMAGESETTINGS
+		IMAGESETTINGS,
+		CONNECTIONINFO
 	};
 	enum Network_Return{
 		FAILED,

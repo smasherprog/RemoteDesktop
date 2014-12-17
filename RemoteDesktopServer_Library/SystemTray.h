@@ -18,7 +18,7 @@ namespace RemoteDesktop{
 		~SystemTray(){ Stop(); }
 		void Start();
 		void Stop();
-		void Popup(wchar_t* title, wchar_t* message, unsigned int timeout);
+		void Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout);
 		LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	};
 }

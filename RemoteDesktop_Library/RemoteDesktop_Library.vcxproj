@@ -204,7 +204,6 @@
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Traffic_Monitor.h" />
     <ClInclude Include="Utilities.h" />
-    <ClInclude Include="VectorPool.h" />
     <ClInclude Include="xxhash.h" />
   </ItemGroup>
   <ItemGroup>
@@ -251,7 +250,6 @@
     </ClCompile>
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Traffic_Monitor.cpp" />
-    <ClCompile Include="VectorPool.cpp" />
     <ClCompile Include="xxhash.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

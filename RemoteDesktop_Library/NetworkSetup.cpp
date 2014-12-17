@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "NetworkSetup.h"
+#include <thread>
 
 bool RemoteDesktop::_INTERNAL::NetworkStarted = false;
 
@@ -12,6 +13,26 @@ bool RemoteDesktop::StartupNetwork(){
 void RemoteDesktop::ShutDownNetwork(){
 	WSACleanup();
 	RemoteDesktop::_INTERNAL::NetworkStarted = false;
+}
+void RemoteDesktop::PrimeNetwork(unsigned short int port){
+	if (!StartupNetwork()) return;
+
+	SOCKET listensocket = INVALID_SOCKET;
+
+	listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (listensocket == INVALID_SOCKET) return;
+	RemoteDesktop::StandardSocketSetup(listensocket);
+	sockaddr_in service;
+	service.sin_family = AF_INET;
+	service.sin_port = htons(port);
+	service.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(listensocket, (SOCKADDR *)& service, sizeof(SOCKADDR)) == 0) {
+		std::chrono::milliseconds dura(200);
+		std::this_thread::sleep_for(dura);
+		closesocket(listensocket);
+		std::this_thread::sleep_for(dura);
+	}
 }
 void RemoteDesktop::StandardSocketSetup(SOCKET socket){
 	//set to non blocking
