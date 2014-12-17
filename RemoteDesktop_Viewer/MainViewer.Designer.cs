@@ -105,6 +105,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1236, 784);
             this.Controls.Add(this.viewPort1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainViewer";
             this.ShowIcon = false;
             this.Text = "Remote Viewer";

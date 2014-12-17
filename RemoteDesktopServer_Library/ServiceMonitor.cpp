@@ -41,8 +41,8 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 	wait_for_existing_process();//wait for any existing program to stop running
 	
 	RAIIHANDLE exitprog(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram"));
-	RAIIHANDLE cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRDCad"));
-	RAIIHANDLE selfremovaltrigger(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEvenRemoveSelf"));
+	RAIIHANDLE cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDCad"));
+	RAIIHANDLE selfremovaltrigger(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRemoveSelf"));
 	HANDLE evs[2];
 	evs[0] = cardreq.get_Handle();
 	evs[1] = selfremovaltrigger.get_Handle();

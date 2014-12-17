@@ -40,8 +40,8 @@ void DeleteMe(){
 }
 
 RemoteDesktop::RD_Server::RD_Server() :
-_CADEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRDCad")),
-_SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEvenRemoveSelf"))
+_CADEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRDCad")),
+_SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRemoveSelf"))
 {
 
 #if _DEBUG

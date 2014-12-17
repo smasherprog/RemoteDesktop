@@ -7,7 +7,6 @@ namespace RemoteDesktop{
 		HWND Hwnd;
 		HMENU Hmenu;
 
-		bool _Running = false;	
 		std::thread _BackGroundThread; 
 		NOTIFYICONDATA notifyIconData;
 

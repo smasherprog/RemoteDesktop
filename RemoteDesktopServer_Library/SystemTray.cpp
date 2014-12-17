@@ -10,12 +10,10 @@
 #define WM_SYSICON          (WM_USER + 1)
 
 void RemoteDesktop::SystemTray::Start(){
-	_Running = true;
-	//_Run();
 	_BackGroundThread = std::thread(&SystemTray::_Run, this);
 }
 void RemoteDesktop::SystemTray::Stop(){
-	_Running = false;
+	PostMessage(Hwnd, WM_QUIT, 0, 0);
 	if (std::this_thread::get_id() != _BackGroundThread.get_id()){
 		if (_BackGroundThread.joinable()) _BackGroundThread.join();
 	}
@@ -49,7 +47,7 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 	{
 		return 0;
 	}
-	else if (msg == WM_QUIT || msg == WM_CLOSE || msg == WM_DESTROY || !_Running){
+	else if (msg == WM_QUIT || msg == WM_CLOSE || msg == WM_DESTROY){
 		return 1;
 	}
 	else if (msg == WM_SYSICON)
