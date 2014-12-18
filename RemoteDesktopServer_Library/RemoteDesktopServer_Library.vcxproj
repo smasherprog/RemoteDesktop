@@ -116,8 +116,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>sas.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -137,8 +136,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>sas.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -164,8 +162,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>sas.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -191,8 +188,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>sas.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -207,6 +203,7 @@
     <ClInclude Include="ServiceHelpers.h" />
     <ClInclude Include="ServiceInstaller.h" />
     <ClInclude Include="ServiceMonitor.h" />
+    <ClInclude Include="SoftwareCAD.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SystemTray.h" />
   </ItemGroup>
@@ -221,6 +218,7 @@
     <ClCompile Include="ServiceHelpers.cpp" />
     <ClCompile Include="ServiceInstaller.cpp" />
     <ClCompile Include="ServiceMonitor.cpp" />
+    <ClCompile Include="SoftwareCAD.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

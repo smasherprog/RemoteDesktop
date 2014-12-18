@@ -9,16 +9,17 @@ namespace RemoteDesktop{
 class ServerService : public CServiceBase
 {
 public:
-
+	
 	ServerService(PWSTR pszServiceName,
 		BOOL fCanStop = TRUE,
 		BOOL fCanShutdown = TRUE,
 		BOOL fCanPauseContinue = FALSE);
-	virtual ~ServerService(void);
+	virtual ~ServerService();
 
 	virtual void OnStart(DWORD dwArgc, PWSTR *pszArgv) override;
-	virtual void OnStop() override;
-	virtual void OnSessionChange() override;
+	virtual void OnStop() override; 
+	virtual void OnShutdown() override;
+	virtual void OnSessionChange(DWORD eventtype) override;
 
 	std::unique_ptr<RemoteDesktop::ServiceMonitor> _ServiceMonitor;
 

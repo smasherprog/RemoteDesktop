@@ -2,47 +2,46 @@
 #include "ServiceMonitor.h"
 #include "ServiceHelpers.h"
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
+#include "SoftwareCAD.h"
+#include "sas.h"
 
 RemoteDesktop::ServiceMonitor::ServiceMonitor(){
-
-
-}
-RemoteDesktop::ServiceMonitor::~ServiceMonitor(){
-	Stop();
-}
-void RemoteDesktop::ServiceMonitor::Start(){
-	Stop();
-	Running = true;
-	_BackGroundNetworkWorker = std::thread(&ServiceMonitor::_Run, this);
-}
-void RemoteDesktop::ServiceMonitor::Stop(){
-	Running = false;
-	auto a = _App;
-
-	if (a) TerminateProcess(a->hProcess, 0);
-	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
-		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
-	}
-
-}
-
-void wait_for_existing_process()
-{
+	if (!IsSASCadEnabled()) Enable_SASCAD();
+	//wait for any existing program to stop running
 	HANDLE hEvent = NULL;
 	while ((hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram")) != NULL) {
 		SetEvent(hEvent); // signal to shut down if running
 		CloseHandle(hEvent);
 		Sleep(1000);
 	}
+	ExitProgHandle = CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram");
 }
+RemoteDesktop::ServiceMonitor::~ServiceMonitor(){
+	Stop();
+	if(ExitProgHandle!=nullptr) CloseHandle(ExitProgHandle);
+}
+void RemoteDesktop::ServiceMonitor::Start(){
+
+	Stop(); 
+	Running = true;
+	_BackGroundNetworkWorker = std::thread(&ServiceMonitor::_Run, this);
+}
+void RemoteDesktop::ServiceMonitor::Stop(){
+	Running = false;
+	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
+		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
+	}
+
+}
+
+
 #define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 9000 > Nul & Del \"%s\"")
 void RemoteDesktop::ServiceMonitor::_Run(){
+	//make sure to enable software cad
 
-	wait_for_existing_process();//wait for any existing program to stop running
-	
-	RAIIHANDLE exitprog(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram"));
 	RAIIHANDLE cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDCad"));
 	RAIIHANDLE selfremovaltrigger(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRemoveSelf"));
+
 	HANDLE evs[2];
 	evs[0] = cardreq.get_Handle();
 	evs[1] = selfremovaltrigger.get_Handle();
@@ -52,11 +51,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		
 		auto Index = WaitForMultipleObjects(2, evs, false, 1000);
 		if (Index == 0){
-			typedef VOID(WINAPI *SendSas)(BOOL asUser);
-			HINSTANCE Inst = LoadLibrary(L"sas.dll");
-			SendSas sendSas = (SendSas)GetProcAddress(Inst, "SendSAS");
-			if (sendSas) sendSas(FALSE);
-			if (Inst) FreeLibrary(Inst);
+			SendSAS(FALSE);
 		}
 		else if (Index == 1){
 			Running = false;
@@ -76,7 +71,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		if ((_LastSession != 0xFFFFFFFF) && (_LastSession >= 0) && (_LastSession != _CurrentSession)){
 			_CurrentSession = _LastSession;
 			DWORD exitcode = 0;
-			SetEvent(exitprog.get_Handle()); // signal to shut down if running
+			SetEvent(ExitProgHandle); // signal to shut down if running
 			Sleep(3000);
 			if (!_App){//this is the first launch of the application
 				_App = _LaunchProcess(L" -run");
@@ -103,8 +98,9 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		}
 
 	}
-	if (exitprog.get_Handle()) SetEvent(exitprog.get_Handle()); // signal to shut down if running
-	if (_App) WaitForSingleObject(_App->hProcess, 5000);
+	if (ExitProgHandle) SetEvent(ExitProgHandle); // signal to shut down if running
+	if (_App) WaitForSingleObject(_App->hProcess, 5000);	
+
 }
 
 std::shared_ptr<PROCESS_INFORMATION> RemoteDesktop::ServiceMonitor::_LaunchProcess(wchar_t* args){

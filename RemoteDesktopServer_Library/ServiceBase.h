@@ -47,7 +47,7 @@ public:
 	// system shutting down.
 	virtual void OnShutdown();
 
-	virtual void OnSessionChange();
+	virtual void OnSessionChange(DWORD eventtype);
 	// Set the service status and report the status to the SCM.
 	void SetServiceStatus(DWORD dwCurrentState,
 		DWORD dwWin32ExitCode = NO_ERROR,

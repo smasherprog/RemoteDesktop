@@ -69,7 +69,6 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 	if (_Hwnd != NULL) {
 		RemoveClipboardFormatListener(_Hwnd);
 		KillTimer(_Hwnd, 1001);
-		DestroyWindow(_Hwnd);
 	}
 
 }

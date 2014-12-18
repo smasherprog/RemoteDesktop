@@ -29,8 +29,11 @@ void ServerService::OnStop()
 	WriteEventLogEntry(L"CppWindowsService in OnStop",
 		EVENTLOG_INFORMATION_TYPE);
 	_ServiceMonitor->Stop();
-	_ServiceMonitor.release();
+	_ServiceMonitor = nullptr;
 }
-void ServerService::OnSessionChange(){
-	
+void ServerService::OnSessionChange(DWORD eventtype){
+
+}
+void  ServerService::OnShutdown(){
+	OnStop();
 }

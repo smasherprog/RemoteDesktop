@@ -100,7 +100,7 @@ DWORD WINAPI CServiceBase::ServiceCtrlHandler(_In_  DWORD dwControl,
 	case SERVICE_CONTROL_PAUSE: s_service->Pause(); break;
 	case SERVICE_CONTROL_CONTINUE: s_service->Continue(); break;
 	case SERVICE_CONTROL_SHUTDOWN: s_service->Shutdown(); break;
-	case SERVICE_CONTROL_SESSIONCHANGE: s_service->OnSessionChange(); break;
+	case SERVICE_CONTROL_SESSIONCHANGE: s_service->OnSessionChange(dwEventType); break;
 
 	case SERVICE_CONTROL_INTERROGATE: break;
 	default: break;
@@ -435,10 +435,9 @@ void CServiceBase::OnShutdown()
 {
 }
 
-void CServiceBase::OnSessionChange()
+void CServiceBase::OnSessionChange(DWORD tyype)
 {
-	std::ofstream myfile("c:\\example.txt", std::ios::app);
-	myfile << "OnSessionChange base";
+
 }
 
 

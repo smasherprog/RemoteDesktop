@@ -21,6 +21,7 @@
 
 #define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 3000 > Nul & Del \"%s\"")
 
+
 void DeleteMe(){
 
 	TCHAR szModuleName[MAX_PATH];
@@ -62,8 +63,8 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 		DELEGATE(&RemoteDesktop::RD_Server::OnDisconnect, this));
 	_ScreenCapture = std::make_unique<ScreenCapture>();
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
-	_SystemTray = std::make_unique<SystemTray>();
-	_SystemTray->Start();
+	_SystemTray = std::make_unique<SystemTray>(_RunningAsService);
+	_SystemTray->Start();	
 }
 RemoteDesktop::RD_Server::~RD_Server(){
 	if (_RemoveOnExit) {

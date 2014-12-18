@@ -48,12 +48,12 @@ bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected() const{
 
 
 	DWORD dummy;
-	char threadname[256];
-	char inputname[256];
+	wchar_t threadname[256];
+	wchar_t inputname[256];
 
 	if (!GetUserObjectInformation(threaddesktop, UOI_NAME, &threadname, 256, &dummy)) return false;
 	if (!GetUserObjectInformation(inputdesktop.get_Handle(), UOI_NAME, &inputname, 256, &dummy)) return false;
-	return strcmp(threadname, inputname) == 0;
+	return wcscmp(threadname, inputname) == 0;
 }
 std::string RemoteDesktop::DesktopMonitor::get_ActiveUser(){
 	char* ptr = NULL;

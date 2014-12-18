@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SystemTray.h"
 #include "resource.h"
+#include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 
 #define ID_TRAY_APP_ICON    1001
 #define ID_TRAY_EXIT        1002
@@ -9,46 +10,64 @@
 #define ID_TRAY_APP_TIMER   1005
 #define WM_SYSICON          (WM_USER + 1)
 
+RemoteDesktop::SystemTray::SystemTray(bool runfromservice) : _RunningFromService(runfromservice){
+	_SystemTrayIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
+}
+
 void RemoteDesktop::SystemTray::Start(){
 	_BackGroundThread = std::thread(&SystemTray::_Run, this);
 }
 void RemoteDesktop::SystemTray::Stop(){
+	if (_SystemTrayIcon != nullptr) DestroyIcon(_SystemTrayIcon);
+
 	PostMessage(Hwnd, WM_QUIT, 0, 0);
 	if (std::this_thread::get_id() != _BackGroundThread.get_id()){
 		if (_BackGroundThread.joinable()) _BackGroundThread.join();
 	}
 }
 
+UINT s_uTaskbarRestart = 0;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-
+	if (msg == WM_CREATE) s_uTaskbarRestart = RegisterWindowMessage(TEXT("TaskbarCreated"));
 	RemoteDesktop::SystemTray *c = (RemoteDesktop::SystemTray *)GetWindowLong(hWnd, GWLP_USERDATA);
 	if (c == NULL)
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	return c->WindowProc(hWnd, msg, wParam, lParam);
 }
 void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
-	
-	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 
+	if (_TrayIconCreated) return;
 	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
 	notifyIconData.hWnd = hWnd;
 	notifyIconData.uID = ID_TRAY_APP_ICON;
 	notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	notifyIconData.uCallbackMessage = WM_SYSICON; //Set up our invented Windows Message
 	
-	notifyIconData.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
+	notifyIconData.hIcon = _SystemTrayIcon;
 	TCHAR szTIP[64] = TEXT("Remote Desktop Process");
 	wcscpy_s(notifyIconData.szTip, szTIP);
-	Shell_NotifyIcon(NIM_ADD, &notifyIconData); 
-	ShowWindow(Hwnd, SW_HIDE);
+
+	if (Shell_NotifyIcon(NIM_ADD, &notifyIconData)){
+		_TrayIconCreated = true;
+	}
+
 }
+
+
 LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (msg == WM_TIMER)
 	{
+		if (FindWindow(L"Shell_TrayWnd", 0)){
+			_CreateIcon(Hwnd);
+		}
 		return 0;
 	}
 	else if (msg == WM_QUIT || msg == WM_CLOSE || msg == WM_DESTROY){
 		return 1;
+	}
+	else if (msg == s_uTaskbarRestart){
+		_TrayIconCreated = false;		
+		_CreateIcon(Hwnd);
 	}
 	else if (msg == WM_SYSICON)
 	{
@@ -69,6 +88,8 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 	return DefWindowProc(hWnd, msg, msg, lParam);
 }
 void RemoteDesktop::SystemTray::_Run(){
+	dekstopmonitor.Switch_to_ActiveDesktop();
+	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 
 	auto myclass = L"systrayclass";
 	WNDCLASSEX wndclass = {};
@@ -76,46 +97,43 @@ void RemoteDesktop::SystemTray::_Run(){
 	wndclass.cbSize = sizeof(WNDCLASSEX);
 	wndclass.lpfnWndProc = WndProc;
 	wndclass.lpszClassName = myclass;
-
-	wndclass.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, 0);
-	wndclass.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
-
+	Sleep(3000);
 	if (RegisterClassEx(&wndclass)) Hwnd = CreateWindowEx(0, myclass, L"systraywatcher", 0, 0, 0, 0, 0, HWND_DESKTOP, 0, GetModuleHandle(NULL), 0);
-	else return DEBUG_MSG("Error %", GetLastError());
+	else 	return DEBUG_MSG("Error %", GetLastError());
 	
-
 	Hmenu = CreatePopupMenu();
 	AppendMenu(Hmenu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit"));
 	AppendMenu(Hmenu, MF_STRING, ID_TRAY_EXIT_REMOVE, TEXT("Exit and Remove"));
-	_CreateIcon(Hwnd);
 
+	//_CreateIcon(Hwnd);
+	
+	ShowWindow(Hwnd, SW_HIDE);
 	SetWindowLongPtr(Hwnd, GWLP_USERDATA, (LONG_PTR)this);
-	SetTimer(Hwnd, ID_TRAY_APP_TIMER, 500, NULL); //every 500 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
-
+	SetTimer(Hwnd, ID_TRAY_APP_TIMER, 5000, NULL); //every 5000 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
 	MSG msg;
 	while (GetMessage(&msg, Hwnd, 0, 0) != 0)
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
-	}
+	}	
 	KillTimer(Hwnd, ID_TRAY_APP_TIMER);
 	Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 }
 
 void RemoteDesktop::SystemTray::Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout){
-	NOTIFYICONDATA notifyIconData;
-	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
-	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-	notifyIconData.hWnd = Hwnd;
-	notifyIconData.uID = ID_TRAY_APP_ICON;
-	notifyIconData.uVersion = NOTIFYICON_VERSION;
+	NOTIFYICONDATA ni;
+	memset(&ni, 0, sizeof(NOTIFYICONDATA));
+	ni.cbSize = sizeof(NOTIFYICONDATA);
+	ni.hWnd = Hwnd;
+	ni.uID = ID_TRAY_APP_ICON;
+	ni.uVersion = NOTIFYICON_VERSION;
 
-	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
-	notifyIconData.uFlags = NIF_INFO;
-	notifyIconData.uTimeout = timeout;
-	wcscpy_s(notifyIconData.szInfo, message);
-	wcscpy_s(notifyIconData.szInfoTitle, title);
-	Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
-	notifyIconData.uVersion = 0;
-	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
+	Shell_NotifyIcon(NIM_SETVERSION, &ni);
+	ni.uFlags = NIF_INFO;
+	ni.uTimeout = timeout;
+	wcscpy_s(ni.szInfo, message);
+	wcscpy_s(ni.szInfoTitle, title);
+	Shell_NotifyIcon(NIM_MODIFY, &ni);
+	ni.uVersion = 0;
+	Shell_NotifyIcon(NIM_SETVERSION, &ni);
 }

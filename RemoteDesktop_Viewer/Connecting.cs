@@ -37,8 +37,6 @@ namespace RemoteDesktop_Viewer
                 _ConnectAttempt = value;
                 var s = "Connection Attempt -- " + _ConnectAttempt.ToString() + " of " + _MaxAttempts.ToString() + " --";
                 
-                for(var i = 0; i < counter; i++)
-                    s += " .";
                 label1.UIThread(() => { label1.Text = s; });
 
                 counter++;

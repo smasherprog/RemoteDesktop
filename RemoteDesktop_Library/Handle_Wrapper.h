@@ -21,6 +21,7 @@ namespace RemoteDesktop{
 	typedef Handle<HMODULE, &::FreeLibrary> RAIIHMODULE;
 	typedef Handle<HDESK, &::CloseDesktop> RAIIHDESKTOP;	
 	typedef Handle<SC_HANDLE, &::CloseServiceHandle> RAIISC_HANDLE;
+
 }
 
 #endif
