@@ -9,7 +9,7 @@ namespace RemoteDesktop{
 	class ServiceMonitor{
 
 		std::shared_ptr<PROCESS_INFORMATION> _App;
-		HANDLE ExitProgHandle = nullptr;
+	
 		void _Run();
 		std::shared_ptr<PROCESS_INFORMATION> _LaunchProcess(wchar_t* args);
 		std::shared_ptr<PROCESS_INFORMATION> _LaunchDeleteProcess();

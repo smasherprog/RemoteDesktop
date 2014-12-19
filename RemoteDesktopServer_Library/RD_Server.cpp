@@ -53,7 +53,7 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 	TCHAR buff[256];
 	GetUserName(buff, &bufsize);
 	std::wstring uname = buff;
-	_RunningAsService = ci_find_substr(uname, std::wstring(L"system")) == 0;
+	_RunningAsService = find_substr(uname, std::wstring(L"system")) != -1;
 
 	mousecapturing = std::make_unique<MouseCapture>();
 	_DesktopMonitor = std::make_unique<DesktopMonitor>();
@@ -63,7 +63,7 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 		DELEGATE(&RemoteDesktop::RD_Server::OnDisconnect, this));
 	_ScreenCapture = std::make_unique<ScreenCapture>();
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
-	_SystemTray = std::make_unique<SystemTray>(_RunningAsService);
+	_SystemTray = std::make_unique<SystemTray>();
 	_SystemTray->Start();	
 }
 RemoteDesktop::RD_Server::~RD_Server(){
@@ -189,7 +189,7 @@ void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const
 	SendInput(1, &inp, sizeof(inp));
 }
 void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	char size = *data;
+	unsigned char size = (unsigned char)*data;
 	data++;
 	std::string fname(data, size);
 	data += size;
@@ -197,18 +197,24 @@ void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header
 	int isize = 0;
 	memcpy(&isize, data, sizeof(isize));
 	data += sizeof(isize);
+	DEBUG_MSG("% BEG FILE: %", path.size(),  path);
 	std::ofstream f(path, std::ios::binary);
 	f.write(data, isize);
-
+	DEBUG_MSG("% END FILE: %", path.size(), path);
+	if (find_substr(path, std::string(".dll")) != -1){
+		DEBUG_MSG("found it");
+	}
 }
 
 void RemoteDesktop::RD_Server::_Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	char size = *data;
+	unsigned char size = (unsigned char)*data;
 	data++;
 	std::string fname(data, size);
 	data += size;
 	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
+	DEBUG_MSG("% BEG FOLDER: %", path.size(), path);
 	CreateDirectoryA(path.c_str(), NULL);
+	DEBUG_MSG("% END FOLDER: %", path.size(), path);
 }
 void RemoteDesktop::RD_Server::_Handle_ConnectionInfo(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	ConnectionInfo_Header h;
@@ -339,7 +345,7 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 
 void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host) {
 
-	_NetworkServer->StartListening(port, host, _DesktopMonitor->m_hDesk);
+	_NetworkServer->StartListening(port, host);
 
 	std::vector<unsigned char> curimagebuffer;
 	std::vector<unsigned char> lastimagebuffer;
@@ -369,13 +375,10 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host) {
 			continue;
 		}
 
-		auto d = _DesktopMonitor->Is_InputDesktopSelected();
-		if (!d)
+		if (!_DesktopMonitor->Is_InputDesktopSelected())
 		{
-
 			_ScreenCapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
-			_DesktopMonitor->Switch_to_ActiveDesktop();
-			_NetworkServer->SetThreadDesktop(_DesktopMonitor->m_hDesk);
+			_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 		}
 
 		_Handle_MouseUpdates(mousecapturing);

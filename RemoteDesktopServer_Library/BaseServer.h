@@ -6,8 +6,10 @@
 #include <mutex>
 #include "..\RemoteDesktop_Library\Delegate.h"
 
+
 namespace RemoteDesktop{
 	class SocketHandler;
+	class DesktopMonitor;
 	class BaseServer {
 
 		void _OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s);
@@ -26,6 +28,7 @@ namespace RemoteDesktop{
 		
 		std::mutex _DisconectClientLock;
 		std::vector<SocketHandler*> _DisconectClientList;
+		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
 
 		std::mutex _SocketArrayLock;
 		std::thread _BackGroundNetworkWorker;
@@ -36,10 +39,7 @@ namespace RemoteDesktop{
 		std::vector<std::shared_ptr<SocketHandler>> SocketArray;
 		bool Running = false;
 		bool ReverseConnection = false;
-	
-
-		HDESK _NetworkCurrentDesktop = NULL;
-		
+			
 		Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> Receive_CallBack;
 		Delegate<void, std::shared_ptr<SocketHandler>&> Connected_CallBack;
 		Delegate<void, std::shared_ptr<SocketHandler>&> Disconnect_CallBack;
@@ -52,9 +52,8 @@ namespace RemoteDesktop{
 
 		bool Is_Running() const{ return Running; }
 
-		void SetThreadDesktop(HDESK h){ _NetworkCurrentDesktop = h; }
 		size_t Client_Count() const { return  SocketArray.empty() ? 0 : (ReverseConnection ? SocketArray.size() : SocketArray.size() - 1); }
-		void StartListening(unsigned short port, std::wstring host, HDESK h);
+		void StartListening(unsigned short port, std::wstring host);
 		void ForceStop();
 		void GracefulStop(){ Running = false; }
 		

@@ -11,14 +11,14 @@ namespace RemoteDesktop{
 		bool _TrayIconCreated = false;
 		std::thread _BackGroundThread; 
 		NOTIFYICONDATA notifyIconData;
-		DesktopMonitor dekstopmonitor;
-	
+		
+		void _Cleanup();
 		void _Run();
 		void _CreateIcon(HWND hWnd);
-		bool _RunningFromService = false;
+
 	public:
-		SystemTray(bool runfromservice);
-		~SystemTray(){ Stop(); }
+		SystemTray();
+		~SystemTray();
 		void Start();
 		void Stop();
 		void Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout);

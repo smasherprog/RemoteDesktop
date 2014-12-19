@@ -167,8 +167,8 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 
 		std::ifstream in(absolute_path, std::ifstream::binary);
 		in.read(data.data(), fs);//read all the data
-		char size = relative.size();
-		msg.data.push_back(DataPackage(&size, sizeof(size)));
+		unsigned char size = relative.size();
+		msg.data.push_back(DataPackage((char*)&size, sizeof(size)));
 		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
 		int isize = data.size();
 		msg.data.push_back(DataPackage((char*)&isize, sizeof(isize)));
@@ -178,8 +178,8 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 	else {//this is a folder
 
 		NetworkMsg msg;
-		char size = relative.size();
-		msg.data.push_back(DataPackage(&size, sizeof(size)));
+		unsigned char size = relative.size();
+		msg.data.push_back(DataPackage((char*)&size, sizeof(size)));
 		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
 		_NetworkClient->Send(NetworkMessages::FOLDER, msg);
 	}

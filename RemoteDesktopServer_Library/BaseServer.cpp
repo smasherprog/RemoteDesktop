@@ -3,6 +3,7 @@
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\CommonNetwork.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
+#include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 
 RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
@@ -13,6 +14,7 @@ RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandl
 	DEBUG_MSG("Starting Server");
 	EventArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
 	SocketArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
+	_DesktopMonitor = std::make_unique<DesktopMonitor>();
 }
 
 RemoteDesktop::BaseServer::~BaseServer(){
@@ -32,8 +34,7 @@ void RemoteDesktop::BaseServer::ForceStop(){
 	SocketArray.resize(0);
 }
 
-void RemoteDesktop::BaseServer::StartListening(unsigned short port, std::wstring host, HDESK h){
-	_NetworkCurrentDesktop = h;
+void RemoteDesktop::BaseServer::StartListening(unsigned short port, std::wstring host){
 	ForceStop();
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port, host);
@@ -80,11 +81,9 @@ void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstrin
 	Running = false;
 }
 void RemoteDesktop::BaseServer::_HandleDisconnects_DesktopSwitches(){
-	if (_NetworkCurrentDesktop != NULL){
-		auto threadsk = GetThreadDesktop(GetCurrentThreadId());
-		if (threadsk != _NetworkCurrentDesktop){
-			::SetThreadDesktop(_NetworkCurrentDesktop);
-		}
+	if (!_DesktopMonitor->Is_InputDesktopSelected())
+	{
+		_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 	}
 	//handle client disconnects here
 	if (!_DisconectClientList.empty()){
