@@ -108,7 +108,7 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock){
 	socket->Connected_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnConnectHandler, this);
 	socket->Receive_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnReceiveHandler, this);
 	socket->Disconnect_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnDisconnectHandler, this);
-	socket->Exchange_Keys(-1);
+	socket->Exchange_Keys(ProxyID);
 	
 	WSAEventSelect(socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
 	EventArray.push_back(newevent);

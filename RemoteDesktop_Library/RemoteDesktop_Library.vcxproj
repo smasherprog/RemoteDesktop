@@ -109,7 +109,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -127,7 +127,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -151,7 +151,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -175,11 +175,12 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AdminStatus.h" />
+    <ClInclude Include="atlrx.h" />
     <ClInclude Include="Clipboard.h" />
     <ClInclude Include="Clipboard_Monitor.h" />
     <ClInclude Include="Clipboard_Wrapper.h" />
@@ -199,11 +200,14 @@
     <ClInclude Include="Ping.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="NetworkSetup.h" />
+    <ClInclude Include="RegExp.h" />
     <ClInclude Include="SocketHandler.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StringProcess.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Traffic_Monitor.h" />
     <ClInclude Include="Utilities.h" />
+    <ClInclude Include="WinHttpClient.h" />
     <ClInclude Include="xxhash.h" />
   </ItemGroup>
   <ItemGroup>
@@ -248,8 +252,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="StringProcess.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Traffic_Monitor.cpp" />
+    <ClCompile Include="WinHttpClient.cpp" />
     <ClCompile Include="xxhash.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

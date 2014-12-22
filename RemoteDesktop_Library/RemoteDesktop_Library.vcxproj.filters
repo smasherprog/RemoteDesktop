@@ -37,6 +37,12 @@
     <Filter Include="Header Files\Utilities">
       <UniqueIdentifier>{948d43d5-9c0c-4db8-a2c7-618077331f88}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Network\HTTP">
+      <UniqueIdentifier>{0fa59c14-5e83-440e-a2ee-47805e4b00cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Network\HTTP">
+      <UniqueIdentifier>{75827cc7-ad96-4453-9516-38500b410181}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -117,6 +123,18 @@
     <ClInclude Include="Handle_Wrapper.h">
       <Filter>Header Files\Wrappers</Filter>
     </ClInclude>
+    <ClInclude Include="RegExp.h">
+      <Filter>Header Files\Network\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="StringProcess.h">
+      <Filter>Header Files\Network\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="WinHttpClient.h">
+      <Filter>Header Files\Network\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="atlrx.h">
+      <Filter>Header Files\Network\HTTP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -175,6 +193,12 @@
     </ClCompile>
     <ClCompile Include="AdminStatus.cpp">
       <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="StringProcess.cpp">
+      <Filter>Source Files\Network\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="WinHttpClient.cpp">
+      <Filter>Source Files\Network\HTTP</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

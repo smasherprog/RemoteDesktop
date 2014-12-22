@@ -56,6 +56,8 @@ namespace RemoteDesktop{
 		RAIIHANDLE _CADEventHandle;
 		RAIIHANDLE _SelfRemoveEventHandle;
 		bool _RemoveOnExit = false;
+		
+		int GetProxyID(std::wstring url);
 
 	public:
 		RD_Server();
@@ -64,7 +66,7 @@ namespace RemoteDesktop{
 		void OnDisconnect(std::shared_ptr<SocketHandler>& sh);
 		void OnConnect(std::shared_ptr<SocketHandler>&  sh);
 		void OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>&  sh) ;
-		void Listen(unsigned short port, std::wstring host = L"");
+		void Listen(unsigned short port, std::wstring host = L"", std::wstring proxy = L"");
 
 	
 	};

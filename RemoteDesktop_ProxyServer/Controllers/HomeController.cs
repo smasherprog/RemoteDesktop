@@ -14,6 +14,11 @@ namespace RemoteDesktop_ProxyServer.Controllers
         {
             return View();
         }
+        public ActionResult GetID(string computername, string username, string mac)
+        {
+            var id = 5;
+            return Content(id.ToString());
+        }
         //ALWAYS REQUIRE HTTPS for release builds
 #if !DEBUG
         [RequireHttps]

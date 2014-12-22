@@ -36,10 +36,12 @@ namespace RemoteDesktop{
 
 	protected:
 		int MaxConnectAttempts = 3;
+		
 		std::vector<std::shared_ptr<SocketHandler>> SocketArray;
 		bool Running = false;
 		bool ReverseConnection = false;
-			
+			bool DisconnectReceived = false;
+
 		Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> Receive_CallBack;
 		Delegate<void, std::shared_ptr<SocketHandler>&> Connected_CallBack;
 		Delegate<void, std::shared_ptr<SocketHandler>&> Disconnect_CallBack;
@@ -55,10 +57,10 @@ namespace RemoteDesktop{
 		size_t Client_Count() const { return  SocketArray.empty() ? 0 : (ReverseConnection ? SocketArray.size() : SocketArray.size() - 1); }
 		void StartListening(unsigned short port, std::wstring host);
 		void ForceStop();
-		void GracefulStop(){ Running = false; }
+		void GracefulStop(){ DisconnectReceived = true; Running = false; }
 		
 		void SendToAll(NetworkMessages m, NetworkMsg& msg );
-		bool DisconnectReceived = false;
+		int ProxyID = -1;
 	};
 
 };

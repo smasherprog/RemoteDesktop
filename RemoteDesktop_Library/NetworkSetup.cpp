@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "NetworkSetup.h"
 #include <thread>
+#include <Iphlpapi.h>
 
 bool RemoteDesktop::_INTERNAL::NetworkStarted = false;
 
@@ -94,4 +95,35 @@ SOCKET RemoteDesktop::Connect(std::wstring port, std::wstring host){
 		return INVALID_SOCKET;
 	}
 	return ConnectSocket;
+}
+std::string RemoteDesktop::GetMAC(){
+
+	PIP_ADAPTER_INFO AdapterInfo;
+	DWORD dwBufLen = sizeof(AdapterInfo);
+
+	AdapterInfo = (IP_ADAPTER_INFO *)malloc(sizeof(IP_ADAPTER_INFO));
+
+	// Make an initial call to GetAdaptersInfo to get the necessary size into the dwBufLen     variable
+	if (GetAdaptersInfo(AdapterInfo, &dwBufLen) == ERROR_BUFFER_OVERFLOW) {
+		free(AdapterInfo);
+		AdapterInfo = (IP_ADAPTER_INFO *)malloc(dwBufLen);
+	}
+
+	if (GetAdaptersInfo(AdapterInfo, &dwBufLen) == NO_ERROR) {
+		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;// Contains pointer to current adapter info
+		do {
+			if (pAdapterInfo->Type == MIB_IF_TYPE_ETHERNET){//get an ethernet interface
+				char mac[20];
+				sprintf_s(mac, "%02X:%02X:%02X:%02X:%02X:%02X",
+					pAdapterInfo->Address[0], pAdapterInfo->Address[1],
+					pAdapterInfo->Address[2], pAdapterInfo->Address[3],
+					pAdapterInfo->Address[4], pAdapterInfo->Address[5]);
+				return std::string(mac);
+			}
+			pAdapterInfo = pAdapterInfo->Next;
+		} while (pAdapterInfo);
+	}
+	free(AdapterInfo);
+
+
 }

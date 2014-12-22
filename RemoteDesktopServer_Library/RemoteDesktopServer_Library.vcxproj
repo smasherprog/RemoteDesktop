@@ -116,7 +116,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>sas.lib</AdditionalDependencies>
+      <AdditionalDependencies>sas.lib;</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -136,7 +136,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>sas.lib</AdditionalDependencies>
+      <AdditionalDependencies>sas.lib;</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -162,7 +162,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>sas.lib</AdditionalDependencies>
+      <AdditionalDependencies>sas.lib;</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -188,7 +188,7 @@
       </EntryPointSymbol>
     </Link>
     <Lib>
-      <AdditionalDependencies>sas.lib</AdditionalDependencies>
+      <AdditionalDependencies>sas.lib;</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>

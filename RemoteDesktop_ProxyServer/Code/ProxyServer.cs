@@ -13,14 +13,9 @@ using System.Web;
 
 namespace RemoteDesktop_ProxyServer.Code
 {
-    public enum Sides { Left, Right };
+    public enum ClientState { Pending, PendingPair, Paired };
     public class StateObject
     {
-        public StateObject(Sides s, int id)
-        {
-            Side = s;
-            ID = id;
-        }
         public Socket Sock = null;
         public const int BufferSize = 1024 * 1024;
         public int BufferCount = 0;
@@ -28,42 +23,33 @@ namespace RemoteDesktop_ProxyServer.Code
         public DateTime LastTimeHeard = DateTime.Now;
         public DateTime ConnectTime = DateTime.Now;
         public int ID;
-        public Sides Side;
         public bool ShouldDisconnect = false;
+        public ClientState State = ClientState.Pending;
+        public StateObject OtherStateObject = null;
+    }
 
-    }
-    public class Pairing
-    {
-        public StateObject Left = null;
-        public StateObject Right = null;
-    }
     static public class ProxyServer
     {
-        public delegate void OnClientConnectHandler(StateObject c);
+        public const int MAXCLIENTS = 32;
+        public delegate bool OnClientConnectHandler(StateObject c);
         public delegate void OnClientDisconnectHandler(StateObject c);
-        public delegate void OnClientsPairedHandler(Pairing p);
+
 
         public static event OnClientDisconnectHandler OnClientDisconnectEvent;
         public static event OnClientConnectHandler OnClientConnectEvent;
-        public static event OnClientsPairedHandler OnClientsPairedEvent;
+
 
         private static System.Threading.Thread _Thread = null;
         private static bool _Running = false;
         private static ManualResetEvent allDone = new ManualResetEvent(false);
-        private static System.Collections.Concurrent.ConcurrentQueue<int> SocketIds = new System.Collections.Concurrent.ConcurrentQueue<int>();
-        private static Pairing[] SocketPairs = new Pairing[32];
-
+        private static StateObject[] Connected = new StateObject[MAXCLIENTS];
+        private static int ConnectedCount = 0;
+        private static object PendingConnectionsLock = new object();
+        private static List<StateObject> PendingConnections = new List<StateObject>();
 
         public static void Start()
         {
-
             _Running = true;
-            for(var i = 0; i < SocketPairs.Length; i++)
-            {
-                SocketPairs[i] = new Pairing();
-                SocketIds.Enqueue(i);
-            }
-
             _Thread = new System.Threading.Thread(new System.Threading.ThreadStart(_Run));
             _Thread.Start();
 
@@ -103,30 +89,34 @@ namespace RemoteDesktop_ProxyServer.Code
 
         static void _Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            var i = -1;
-            foreach(var item in SocketPairs)
-            {   
-                i++;
-                if(item.Right == null && item.Left == null)
+            for(var i = 0; i < Connected.Length; i++)
+            {
+                if(Connected[i] == null)
                     continue;//allready disconnected
-                if(item.Left != null && (item.Left.ShouldDisconnect || !IsSocketConnected(item.Left.Sock) || (DateTime.Now - item.Left.LastTimeHeard).TotalSeconds > 60 * 3))
+
+                if(Connected[i].ShouldDisconnect || !IsSocketConnected(Connected[i].Sock) || (DateTime.Now - Connected[i].LastTimeHeard).TotalSeconds > 60 * 3)
                 {
-                    OnClientDisconnectEvent(item.Left);
-                    item.Left.Sock.Dispose();
-                    item.Left.Sock = null;
-                    item.Left = null;
+                    Disconnect(Connected[i]);
                 }
-                if(item.Right != null && (item.Right.ShouldDisconnect || !IsSocketConnected(item.Right.Sock) || (DateTime.Now - item.Right.LastTimeHeard).TotalSeconds > 60 * 3))
-                {
-                    OnClientDisconnectEvent(item.Right);
-                    item.Right.Sock.Dispose();
-                    item.Right.Sock = null;
-                    item.Right = null;
-                }
-                if(item.Right == null && item.Left == null)
-                    SocketIds.Enqueue(i);
-             
             }
+            var tmp = new List<StateObject>();
+            lock(PendingConnectionsLock)
+            {
+                foreach(var item in PendingConnections)
+                {
+                    if(item == null)
+                        continue;//allready disconnected
+
+                    if(item.ShouldDisconnect || !IsSocketConnected(item.Sock) || (DateTime.Now - item.LastTimeHeard).TotalSeconds > 60 * 3)
+                    {
+                        tmp.Add(item);
+                    }
+                }
+            }
+            foreach(var item in tmp)
+                Disconnect(item);
+                
+      
         }
         static bool IsSocketConnected(Socket s)
         {
@@ -144,8 +134,7 @@ namespace RemoteDesktop_ProxyServer.Code
         {
 
             allDone.Set();
-            if(!SocketIds.Any())
-                return;
+
             Socket listener = (Socket)ar.AsyncState;
             Socket handler = null;
             try
@@ -157,21 +146,20 @@ namespace RemoteDesktop_ProxyServer.Code
                     handler.Dispose();
                 return;
             }
-            int id = 0;
-            if(!SocketIds.TryDequeue(out id))
+            if(ConnectedCount >= MAXCLIENTS)
             {
+                Debug.WriteLine("Too man clients disconnecting new client ");
                 handler.Close();
                 return;
             }
             handler.NoDelay = true;
 
-            StateObject state = new StateObject(Sides.Left, id);
+            StateObject state = new StateObject();
             state.Sock = handler;
-            SocketPairs[id].Left = state;//always left side first
-            Debug.WriteLine("Adding Client to id " + id);
-            if(OnClientConnectEvent != null)
-                OnClientConnectEvent(state);
-
+            lock(PendingConnectionsLock)
+            {
+                PendingConnections.Add(state);
+            }
             try
             {
                 handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReadCallback), state);
@@ -190,26 +178,16 @@ namespace RemoteDesktop_ProxyServer.Code
             try
             {
                 state.BufferCount += handler.EndReceive(ar);
+                state.LastTimeHeard = DateTime.Now;
             } catch(Exception e)
             {
                 Disconnect(state);
                 Debug.WriteLine(e.Message);
                 return;
             }
-            StateObject otherside = null;
-            if(state.Side == Sides.Left)
-                otherside = SocketPairs[state.ID].Right;
-            else
-                otherside = SocketPairs[state.ID].Left;
-            if(SocketPairs[state.ID].Left == null)
-            {
-                Disconnect(state);
-                return;
-            }
-
+            var otherside = state.OtherStateObject;
             if(state.BufferCount > 0)
             {
-
                 if(otherside != null)
                 {//connection is paired.. send away
                     try
@@ -228,34 +206,29 @@ namespace RemoteDesktop_ProxyServer.Code
                     if(state.BufferCount >= 4)
                     {//if there are 4 bytes, then check it out to see if a pairing should be made
                         var id = BitConverter.ToInt32(state.buffer, 0);
-                        if(id >= 0 && id < SocketPairs.Length)
+                        if(id >= 0 && id < MAXCLIENTS)
                         {
                             Debug.WriteLine("Attempting to pair connections " + id);
-                            if(SocketPairs[id].Right == null)
-                            {//good pairing!!
-                                Debug.WriteLine("Successful pairing! " + id);
-
-                                otherside = SocketPairs[id].Left;
-                                if(otherside != null)
+                            lock(PendingConnectionsLock)
+                            {
+                                PendingConnections.Remove(state);
+                            }
+                            state.State = ClientState.PendingPair;
+                            state.ID = id;
+                            if(PendingConnections[id] != null)
+                            {
+                                if(OnClientConnectEvent(state))
                                 {
-                                    var oldid = state.ID;
-                                    SocketPairs[oldid].Left = null;//this has to be a left node
-                                    state.Side = Sides.Right;
-                                    state.ID = id;
-                                    SocketPairs[id].Right = state;//PAIR UP
-                                    SocketIds.Enqueue(oldid);//add this id back to the pool
-                                    //send out any pending data
-                                    otherside.Sock.Send(state.buffer, state.BufferCount, SocketFlags.None);
-                                    state.BufferCount = 0;
-
-                                    if(OnClientsPairedEvent != null)
-                                        OnClientsPairedEvent(SocketPairs[id]);
-                                    Debug.WriteLine("Finished Successful pairing! " + id);
+                                    Connected[id] = state;
+                                    ConnectedCount += 1;
                                 } else
                                 {
                                     Disconnect(state);
                                     return;
                                 }
+                            } else {
+                                Disconnect(state);
+                                return;
                             }
                         }
                     }
@@ -272,18 +245,24 @@ namespace RemoteDesktop_ProxyServer.Code
         }
         static void Disconnect(StateObject state)
         {
-            StateObject otherside = null;
-            if(state.Side == Sides.Left)
-                otherside = SocketPairs[state.ID].Right;
-            else
-                otherside = SocketPairs[state.ID].Left;
-            if(otherside != null)
+            if(state.State == ClientState.Pending)
             {
-                otherside.ShouldDisconnect = true;
-                otherside.LastTimeHeard = DateTime.Now.AddDays(-1);// the main loop will catch this and deal with it
+                lock(PendingConnectionsLock)
+                {
+                    PendingConnections.Remove(state);
+                }
+            } else
+            {
+                Connected[state.ID] = null;
+                ConnectedCount -= 1;
+                if(OnClientDisconnectEvent != null)
+                    OnClientDisconnectEvent(state);
+               
+                state.ShouldDisconnect = true;
+                state.LastTimeHeard = DateTime.Now.AddDays(-1);// the main loop will catch this and deal with it
             }
-            state.ShouldDisconnect = true;
-            state.LastTimeHeard = DateTime.Now.AddDays(-1);// the main loop will catch this and deal with it
+            if(state.Sock!=null)  state.Sock.Dispose();
+            state.Sock = null;
         }
     }
 }

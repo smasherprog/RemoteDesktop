@@ -12,5 +12,6 @@ namespace RemoteDesktop{
 	void PrimeNetwork(unsigned short int port);
 	SOCKET Connect(std::wstring port, std::wstring host);
 	void StandardSocketSetup(SOCKET socket);
+	std::string GetMAC();
 }
 #endif

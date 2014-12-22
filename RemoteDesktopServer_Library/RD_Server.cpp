@@ -11,6 +11,9 @@
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktopServer_Library\SystemTray.h"
+#include "..\RemoteDesktop_Library\WinHttpClient.h"
+#include "Lmcons.h"
+#include "..\RemoteDesktop_Library\NetworkSetup.h"
 
 #if _DEBUG
 #include "Console.h"
@@ -76,7 +79,7 @@ RemoteDesktop::RD_Server::~RD_Server(){
 }
 void RemoteDesktop::RD_Server::_Handle_DisconnectandRemove(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	_RemoveOnExit = true;
-	_NetworkServer->DisconnectReceived = true;
+	
 	_NetworkServer->GracefulStop();//this will cause the main loop to stop and the program to exit
 }
 void RemoteDesktop::RD_Server::_Handle_ImageSettings(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -343,7 +346,11 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 	}
 }
 
-void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host) {
+void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, std::wstring proxy) {
+	if (proxy.size() > 1){
+		_NetworkServer->ProxyID = GetProxyID(proxy);
+		if (_NetworkServer->ProxyID == -1) return;
+	}
 
 	_NetworkServer->StartListening(port, host);
 
@@ -404,4 +411,38 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host) {
 		if (lastwaittime < 0) lastwaittime = 0;
 	}
 	_NetworkServer->ForceStop();
+}
+
+int RemoteDesktop::RD_Server::GetProxyID(std::wstring url){
+
+	char comp[MAX_COMPUTERNAME_LENGTH + 1];
+	DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
+	GetComputerNameA(comp, &len);
+	std::string computername(comp);
+
+	char user[UNLEN + 1];
+	len = UNLEN + 1;
+	GetUserNameA(user, &len);
+	std::string username(user); 
+	auto mac = GetMAC();
+	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac;
+	WinHttpClient cl(url.c_str());
+
+	cl.SetAdditionalDataToSend((BYTE*)adddata.c_str(), adddata.size());
+	
+
+	// Set request headers.
+	wchar_t szSize[50] = L"";
+	swprintf_s(szSize, L"%d", adddata.size());
+	std::wstring headers = L"Content-Length: ";
+	headers += szSize;
+	headers += L"\r\nContent-Type: application/x-www-form-urlencoded\r\n";
+	cl.SetAdditionalRequestHeaders(headers);
+
+	cl.SendHttpRequest(L"POST");
+	auto httpResponseContent = cl.GetResponseContent();
+	if (httpResponseContent.size() > 0){
+		return std::stoi(httpResponseContent);
+	}
+	return -1;
 }
