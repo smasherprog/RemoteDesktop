@@ -44,7 +44,7 @@ namespace RemoteDesktop_ProxyServer.Code
         private static System.Threading.Thread _Thread = null;
         private static bool _Running = false;
         private static ManualResetEvent allDone = new ManualResetEvent(false);
-        private static StateObject[] Connected = new StateObject[MAXCLIENTS];
+        private static StateObject[] Connected = new StateObject[MAXCLIENTS];// this is an array so that I can perform operations on the container without having to lock it
         private static int ConnectedCount = 0;
         private static object PendingConnectionsLock = new object();
         private static object DisconectLock = new object();
@@ -61,17 +61,17 @@ namespace RemoteDesktop_ProxyServer.Code
         {
             try
             {
-                using (var timer = new System.Timers.Timer())
+                using(var timer = new System.Timers.Timer())
                 {
                     timer.Elapsed += _Timer_Elapsed;
                     timer.Interval = 500;//every half a second 
                     timer.Start();
-                    using (var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                    using(var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                     {
                         listener.Bind(new IPEndPoint(IPAddress.Any, 443));
                         listener.Listen(64);
 
-                        while (_Running)
+                        while(_Running)
                         {
                             allDone.Reset();
 
@@ -83,8 +83,7 @@ namespace RemoteDesktop_ProxyServer.Code
                     }
                     timer.Stop();
                 }
-            }
-            catch (Exception e)
+            } catch(Exception e)
             {
                 Debug.WriteLine(e.ToString());
             }
@@ -93,53 +92,55 @@ namespace RemoteDesktop_ProxyServer.Code
 
         static void _Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            for (var i = 0; i < Connected.Length; i++)
+            for(var i = 0; i < Connected.Length; i++)
             {
-                if (Connected[i] == null)
+                if(Connected[i] == null)
                     continue;//allready disconnected
 
-                if (Connected[i].ShouldDisconnect || !IsSocketConnected(Connected[i].Sock) || (DateTime.Now - Connected[i].LastTimeHeard).TotalSeconds > 60 * 3)
+                if(Connected[i].ShouldDisconnect || !IsSocketConnected(Connected[i].Sock) || (DateTime.Now - Connected[i].LastTimeHeard).TotalSeconds > 60 * 3)
                 {
                     Disconnect(Connected[i]);
                 }
             }
             var tmp = new List<StateObject>();
-            lock (PendingConnectionsLock)
+            lock(PendingConnectionsLock)
             {
-                foreach (var item in PendingConnections)
+                foreach(var item in PendingConnections)
                 {
-                    if (item == null)
+                    if(item == null)
                         continue;//allready disconnected
 
-                    if (item.ShouldDisconnect || !IsSocketConnected(item.Sock) || (DateTime.Now - item.LastTimeHeard).TotalSeconds > 60 * 3)
+                    if(item.ShouldDisconnect || !IsSocketConnected(item.Sock) || (DateTime.Now - item.LastTimeHeard).TotalSeconds > 60 * 3)
                     {
                         tmp.Add(item);
                     }
                 }
             }
-            foreach (var item in tmp)
+            foreach(var item in tmp)
                 Disconnect(item);
 
-            foreach (var item in Connected.Where(a => a != null && a.State == ClientState.PendingPair && a.Dst_ID > -1))
-            {//try to match up any connections if they are pending
+            foreach(var item in Connected.Where(a => a != null && a.State == ClientState.PendingPair && a.Dst_ID > -1))
+            {//try to match up any connections if they are pending, a viewer might be waiting on a server, or visa versa
                 Pair(item);
             }
         }
         static void Pair(StateObject state)
         {  //attempt to pair up!
-            var otherstate = Connected[state.Dst_ID];
-            if (otherstate != null)
+            if(state.Dst_ID < 0 || state.Dst_ID > MAXCLIENTS)
+                return;// invalid index
+            var otherstate = Connected[state.Dst_ID];//get the other if it exists
+            if(otherstate != null)
             {//PAIR UP!!
                 //send out any data before the pairing is complete to prevent any races
-
                 otherstate.Sock.Send(state.buffer, state.BufferCount, SocketFlags.None);
                 state.BufferCount = 0;
-
-                state.OtherStateObject = otherstate;
-                otherstate.OtherStateObject = state;
+                lock(DisconectLock)
+                {//protect this state
+                    state.OtherStateObject = otherstate;
+                    otherstate.OtherStateObject = state;
+                    otherstate.State = state.State = ClientState.Paired;
+                }
                 Debug.WriteLine("PAIRED!");
-                otherstate.State = state.State = ClientState.Paired;
-
             }
 
         }
@@ -151,7 +152,7 @@ namespace RemoteDesktop_ProxyServer.Code
         {
             allDone.Set();//ensure the main loop starts back up
             _Running = false;
-            if (_Thread != null)
+            if(_Thread != null)
                 _Thread.Join(3000);
             _Thread = null;
         }
@@ -165,14 +166,13 @@ namespace RemoteDesktop_ProxyServer.Code
             try
             {
                 handler = listener.EndAccept(ar);
-            }
-            catch (Exception e)
+            } catch(Exception e)
             {
-                if (handler != null)
+                if(handler != null)
                     handler.Dispose();
                 return;
             }
-            if (ConnectedCount >= MAXCLIENTS)
+            if(ConnectedCount >= MAXCLIENTS)
             {
                 Debug.WriteLine("Too man clients disconnecting new client ");
                 handler.Close();
@@ -183,17 +183,16 @@ namespace RemoteDesktop_ProxyServer.Code
             StateObject state = new StateObject();
             state.Sock = handler;
             Debug.WriteLine("Accept Connection");
-            lock (PendingConnectionsLock)
+            lock(PendingConnectionsLock)
             {
                 PendingConnections.Add(state);
             }
             try
             {
                 handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReadCallback), state);
-            }
-            catch (Exception e)
+            } catch(Exception e)
             {
-                if (handler != null)
+                if(handler != null)
                     state.LastTimeHeard = DateTime.Now.AddDays(-1);// main loop will deal with disconnects
             }
         }
@@ -208,24 +207,22 @@ namespace RemoteDesktop_ProxyServer.Code
             {
                 state.BufferCount += handler.EndReceive(ar);
                 state.LastTimeHeard = DateTime.Now;
-            }
-            catch (Exception e)
+            } catch(Exception e)
             {
                 Disconnect(state);
                 Debug.WriteLine(e.Message);
                 return;
             }
             var otherside = state.OtherStateObject;
-            if (state.BufferCount > 0)
+            if(state.BufferCount > 0)
             {
-                if (otherside != null)
+                if(otherside != null)
                 {//connection is paired.. send away
                     try
                     {
                         otherside.Sock.Send(state.buffer, state.BufferCount, SocketFlags.None);
                         state.BufferCount = 0;
-                    }
-                    catch (Exception e)
+                    } catch(Exception e)
                     {
                         Disconnect(otherside);
                         Debug.WriteLine(e.Message);
@@ -234,30 +231,36 @@ namespace RemoteDesktop_ProxyServer.Code
                 } // else connection is not paired.. examine header to see if a pairing should be made, or buffer data
                 else
                 {
-                    if (state.BufferCount >= 8 && state.State == ClientState.Pending)
+                    if(state.BufferCount >= 8 && state.State == ClientState.Pending)
                     {//if there are 8 bytes, then check it out to see if a pairing should be made
                         var dst_id = BitConverter.ToInt32(state.buffer, 0);
                         var src_id = BitConverter.ToInt32(state.buffer, 4);
-
+                        if(dst_id > -1 && Connected.Any(a => a != null && a.Dst_ID == dst_id))
+                        {
+                            Debug.WriteLine("Disconnecting connection because the dst id is already in use");
+                            Disconnect(state);
+                            return;//get out this client is disconnected
+                        }
                         Debug.WriteLine("Attempting to pair connections " + src_id);
-                        lock (PendingConnectionsLock)
+                        lock(PendingConnectionsLock)
                         {
                             PendingConnections.Remove(state);
                         }
-                        state.State = ClientState.PendingPair;
+                       
                         state.Src_ID = src_id;
                         state.Dst_ID = dst_id;
 
-                        if (OnClientConnectEvent(state))
+                        if(OnClientConnectEvent(state))
                         {//upper level will set src_id to a valid value
-                            Connected[state.Src_ID] = state;
-                            if (state.Dst_ID != -1)
+                            Connected[state.Src_ID] = state; 
+                            state.State = ClientState.PendingPair;
+                            if(state.Dst_ID != -1)
                                 Pair(state);
 
                             ConnectedCount += 1;
-                        }
-                        else
+                        } else
                         {
+                            Debug.WriteLine("Disconnecting connection because the OnClientConnectEvent returned false");
                             Disconnect(state);
                             return;
                         }
@@ -267,8 +270,7 @@ namespace RemoteDesktop_ProxyServer.Code
             try
             {
                 handler.BeginReceive(state.buffer, state.BufferCount, StateObject.BufferSize - state.BufferCount, 0, new AsyncCallback(ReadCallback), state);
-            }
-            catch (Exception e)
+            } catch(Exception e)
             {
                 Disconnect(state);
                 Debug.WriteLine(e.Message);
@@ -279,37 +281,39 @@ namespace RemoteDesktop_ProxyServer.Code
         {
             state.ShouldDisconnect = true;
             state.LastTimeHeard = DateTime.Now.AddDays(-1);
-            if (state.State == ClientState.Pending)
+            if(state.State == ClientState.Pending)
             {
-                lock (PendingConnectionsLock)
+                lock(PendingConnectionsLock)
                 {
                     PendingConnections.Remove(state);
                 }
             }
-            if (state.State != ClientState.Pending)
+            if(state.State != ClientState.Pending)
             {
                 Connected[state.Src_ID] = null;
                 ConnectedCount -= 1;
-                if (OnClientDisconnectEvent != null)
+                if(OnClientDisconnectEvent != null)
                     OnClientDisconnectEvent(state);
 
                 StateObject other = null;
-                lock (DisconectLock)
+                lock(DisconectLock)
                 {
                     //exclusive access to clear both sides
                     other = state.OtherStateObject;//make a copy
                     state.OtherStateObject = null;
-                    
-                    if (other != null) other.OtherStateObject = null;//dont let it come back
+
+                    if(other != null)
+                        other.OtherStateObject = null;//dont let it come back
                 }
                 //disconnect the other side
-                if (other != null)
+                if(other != null)
                 {
                     Connected[other.Src_ID] = null;
                     ConnectedCount -= 1;
-                    if (OnClientDisconnectEvent != null)
+                    if(OnClientDisconnectEvent != null)
                         OnClientDisconnectEvent(other);
-                    if (other.Sock != null) other.Sock.Dispose();
+                    if(other.Sock != null)
+                        other.Sock.Dispose();
                     other.ShouldDisconnect = true;
                     other.LastTimeHeard = DateTime.Now.AddDays(-1);
                     other.Sock = null;
@@ -317,7 +321,8 @@ namespace RemoteDesktop_ProxyServer.Code
 
 
             }
-            if (state.Sock != null) state.Sock.Dispose();
+            if(state.Sock != null)
+                state.Sock.Dispose();
             state.OtherStateObject = null;// make sure to clear this as well
             state.Sock = null;
         }

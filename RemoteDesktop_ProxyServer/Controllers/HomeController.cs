@@ -8,7 +8,11 @@ using System.Web.Mvc;
 using System.Web.Security;
 
 namespace RemoteDesktop_ProxyServer.Controllers
-{
+{       
+    //ALWAYS REQUIRE HTTPS for release builds
+#if !DEBUG
+        [RequireHttps]
+#endif
     public class HomeController : Controller
     {
         private string GetIP4Address()
@@ -41,20 +45,16 @@ namespace RemoteDesktop_ProxyServer.Controllers
         {
             return View();
         }
-        public ActionResult GetID(string computername, string username, string mac)
+        public ActionResult GetID(string computername, string username, string mac, int session)
         {
-
-            var c = RemoteDesktop_ProxyServer.Signalr.ProxyWatcher.ReserveID(GetIP4Address(), computername, username, mac);
+            var c = RemoteDesktop_ProxyServer.Signalr.ProxyWatcher.ReserveID(GetIP4Address(), computername, username, mac, session);
             if (c == null) return Content("");
             var st = c.Src_ID.ToString() + "\n";
             st += c.AES_Session_Key;
             Debug.WriteLine(c.AES_Session_Key);
             return Content(st);
         }
-        //ALWAYS REQUIRE HTTPS for release builds
-#if !DEBUG
-        [RequireHttps]
-#endif
+
 
         [HttpPost]
         public ActionResult Authenticate(string Username, string Password)

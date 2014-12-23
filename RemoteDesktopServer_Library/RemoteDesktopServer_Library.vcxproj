@@ -195,6 +195,7 @@
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="MainServer.h" />
     <ClInclude Include="MouseCapture.h" />
+    <ClInclude Include="ProxyConnectDialog.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="RD_Server.h" />
@@ -211,6 +212,7 @@
     <ClCompile Include="BaseServer.cpp" />
     <ClCompile Include="MainServer.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
+    <ClCompile Include="ProxyConnectDialog.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="RD_Server.cpp" />
     <ClCompile Include="ServerService.cpp" />
@@ -236,6 +238,7 @@
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="logo.bmp" />
     <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -19,6 +19,9 @@ namespace RemoteDesktop_Viewer
         public delegate void OnConnectAttemptHandler(string ip_or_host, Client c);
         public event OnConnectAttemptHandler OnConnectAttemptEvent;
 
+        public delegate void OnDisconnectHandler();
+        public event OnDisconnectHandler OnDisconnectEvent;
+
         private List<Client> _Clients = new List<Client>();
         public ProxyAuth _ProxyAuth = null;
         public ProxyAuth ProxyAuth
@@ -42,7 +45,12 @@ namespace RemoteDesktop_Viewer
             InitializeComponent();
             listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
             this.HandleDestroyed += ProxyClients_HandleDestroyed;
+            contextMenuStrip1.Opening += contextMenuStrip1_Opening;
+        }
 
+        void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
+        {
+            e.Cancel = listView1.SelectedIndices.Count == 0;
         }
 
         void ProxyClients_HandleDestroyed(object sender, EventArgs e)
@@ -62,7 +70,7 @@ namespace RemoteDesktop_Viewer
                         _Hub = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.URIScheme + Settings.ProxyServer);
                         _ProxyHub = _Hub.CreateHubProxy(Settings.SignalRHubName);
                         _ProxyHub.On<List<Client>>("AvailableClients", ReceivedClients);
-
+                        _Hub.Error += _Hub_Error;
                         if (ProxyAuth.UsingWindowsAuth)
                         {
                             _Hub.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
@@ -80,6 +88,12 @@ namespace RemoteDesktop_Viewer
             {
                 Debug.WriteLine(e.Message);
             }
+        }
+
+        void _Hub_Error(Exception obj)
+        {
+            if(OnDisconnectEvent!=null)
+                OnDisconnectEvent();
         }
         private void Fill(List<string> data, Client c)
         {
@@ -141,9 +155,6 @@ namespace RemoteDesktop_Viewer
                         OnConnectAttemptEvent(splits.FirstOrDefault(), c);
                     }
                 }
-
-
-
             }
 
         }

@@ -86,13 +86,17 @@ namespace RemoteDesktop_ProxyServer.Signalr
                 hex.AppendFormat("{0:x2}", b);
             return hex.ToString();
         }
-        public static Client ReserveID(string ip, string computername, string username, string mac)
+        public static Client ReserveID(string ip, string computername, string username, string mac, int sessionId)
         {
             var id = -1;
             //check for a previous connection
-            var prev = Clients.FirstOrDefault(a => a != null && a.Mac_Address == mac && a.ComputerName == computername && a.UserName == username && a.Host == Client.Host_Type.Server);
+            var prev = Clients.FirstOrDefault(a => a != null && a.Mac_Address == mac && a.SessionID == sessionId && a.Host == Client.Host_Type.Server);
             if (prev != null)
             {
+                if(prev.Status != Client.Connection_Status.Pending)
+                    return null;
+                prev.UserName = username;
+                prev.ComputerName = computername;
                 prev.ConnectTime = DateTime.Now;
                 prev.Status = Client.Connection_Status.Pending;
                 return prev;
@@ -103,8 +107,9 @@ namespace RemoteDesktop_ProxyServer.Signalr
                 c.ComputerName = computername;
                 c.UserName = username;
                 c.Mac_Address = mac;
+                c.SessionID = sessionId;
                 c.Host = Client.Host_Type.Server;
-                c.ConnectTime = DateTime.Now;//double duty.. if no connect attempt in 10 seconds.. timeout
+                c.ConnectTime = DateTime.Now;
                 c.Src_ID = id;
                 c.Firewall_IP = ip;
                 c.Status = Client.Connection_Status.Pending;
@@ -157,10 +162,10 @@ namespace RemoteDesktop_ProxyServer.Signalr
                 var pos = Clients[c.Src_ID];
                 if (pos == null)
                 {
-                    c.Src_ID = -1;
+                    pos.Dst_ID = c.Src_ID = -1;
                     ret = false;
                 }
-                if (pos.Status == Client.Connection_Status.Pending && pos.Firewall_IP == c.Sock.RemoteEndPoint.ToString().Split(':')[0])
+                else if (pos.Status == Client.Connection_Status.Pending && pos.Firewall_IP == c.Sock.RemoteEndPoint.ToString().Split(':')[0])
                 {
                     pos.Status = Client.Connection_Status.Connected;
                     pos.Host = Client.Host_Type.Server;
@@ -168,16 +173,18 @@ namespace RemoteDesktop_ProxyServer.Signalr
                 }
                 else
                 {
-                    c.Src_ID = -1;
+                    pos.Dst_ID = c.Src_ID = -1;
                     ret = false;
                 }
-                c.Dst_ID = -1;//always -1 just in case
+               pos.Dst_ID= c.Dst_ID = -1;//always -1 just in case
             }
             else
             {//must be a viewer connecting... check for valid mapping
                 if (c.Src_ID != -1 || c.Dst_ID < 0 || c.Dst_ID > ProxyServer.MAXCLIENTS) ret = false;
                 else
                 {
+                    if(Clients.Any(a => a != null && a.Dst_ID == c.Dst_ID))
+                        return false;// do not allow more than 1 pairing
                     var posclinet = new Client();
                     int id = -1;
                     if (Ids.TryDequeue(out id))

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7BE9D1DD-5D03-4070-B471-F4BF98C408D3}</ProjectGuid>
+    <ProjectGuid>{8E748DA1-9A21-42C7-B89A-94CB72BC954F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RemoteDesktop_CSLibrary</RootNamespace>

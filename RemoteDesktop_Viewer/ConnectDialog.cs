@@ -34,6 +34,7 @@ namespace RemoteDesktop_Viewer
             _ProxyClients.Size = new System.Drawing.Size(295, 34);
             _ProxyClients.TabIndex = 0;
             _ProxyClients.OnConnectAttemptEvent += _ProxyClients_OnConnectAttemptEvent;
+            _ProxyClients.OnDisconnectEvent += _ProxyClients_OnDisconnectEvent;
             _Login = new Login();
 
             _Login.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -44,6 +45,8 @@ namespace RemoteDesktop_Viewer
             _Login.TabIndex = 0;
             _Login.OnLoginSuccessEvent += _Login_OnLoginSuccessEvent;
         }
+
+  
 
         void _ProxyClients_OnConnectAttemptEvent(string ip_or_host, RemoteDesktop_CSLibrary.Client c)
         {
@@ -125,7 +128,16 @@ namespace RemoteDesktop_Viewer
             });
 
         }
+        void _ProxyClients_OnDisconnectEvent()
+        {
+            tabPage2.UIThread(() =>
+            {
+            tabPage2.Controls.Clear();
+            tabPage2.Controls.Add(_Login);
+            this.Size = new Size(600, 220);
+            });
 
+        }
         void _Login_OnLoginSuccessEvent(ProxyAuth auth)
         {
             tabPage2.Controls.Clear();
@@ -141,7 +153,7 @@ namespace RemoteDesktop_Viewer
                 this.Size = new Size(325, 100);
             } else
             {
-                this.Size = new Size(550, 200);
+                this.Size = new Size(600, 220);
                 if(_ProxyClients.ProxyAuth == null)
                 {
                     tabPage2.Controls.Clear();

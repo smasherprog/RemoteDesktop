@@ -160,10 +160,16 @@ template<class T>T StripFileExtention(const T& file){// this will only strip off
 	if (po == T::npos) return file;// no extention, return the entire std::string
 	return file.substr(0, po);
 }
-template<class T> T GetPath(const T& file){ // this will return the path of a std::string passed to ut
-	T::size_type po = file.find_last_of('\\');
-	if (po == T::npos) po = file.find_last_of('/');// couldnt find it with the double slashes, try a single forward slash
-	if (po == T::npos) return "\\";// no slashes.. must be something strange.. try to return something usefull
+inline std::wstring GetPath(const std::wstring& file){ // this will return the path of a std::string passed to ut
+	std::wstring::size_type po = file.find_last_of(L'\\');
+	if (po == std::wstring::npos) po = file.find_last_of(L'/');// couldnt find it with the double slashes, try a single forward slash
+	if (po == std::wstring::npos) return L"\\";// no slashes.. must be something strange.. try to return something usefull
+	return file.substr(0, po + 1);
+}
+inline std::string GetPath(const std::string& file){ // this will return the path of a std::string passed to ut
+	std::string::size_type po = file.find_last_of('\\');
+	if (po == std::string::npos) po = file.find_last_of('/');// couldnt find it with the double slashes, try a single forward slash
+	if (po == std::string::npos) return "\\";// no slashes.. must be something strange.. try to return something usefull
 	return file.substr(0, po + 1);
 }// utility function to return only the path
 template<class T>T StripPath(const T& file){// this will only strip off the entire path, so only a filename remains

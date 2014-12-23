@@ -15,6 +15,7 @@
 #include "Lmcons.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\Utilities.h"
+#include "ProxyConnectDialog.h"
 
 #if _DEBUG
 #include "Console.h"
@@ -346,24 +347,23 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 
 	}
 }
-void RemoteDesktop::RD_Server::_ShowConnectID(int id){
-	auto msg = std::wstring(L"Please give this number to your technician: ");
-	msg += std::to_wstring(id);
-	auto ret = MessageBox(
-		NULL,
-		msg.c_str(),
-		(LPCWSTR)L"Connection ID",
-		MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION
-		);
-}
+
 void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, std::wstring proxy) {
+	//switch to input desktop 
+	if (!_DesktopMonitor->Is_InputDesktopSelected())
+	{
+		_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
+	}
+
 	std::thread msgdialog;
 	if (proxy.size() > 1){
 		std::wstring aes;
 		GetProxyID(proxy, aes);
 		if (_NetworkServer->ProxyHeader.Src_Id == -1) return;
 		_NetworkServer->StartListening(port, host, aes);
-		msgdialog = std::thread(&RD_Server::_ShowConnectID, this, _NetworkServer->ProxyHeader.Src_Id);
+		if (_DesktopMonitor->get_InputDesktop() | RemoteDesktop::DesktopMonitor::Desktops::DEFAULT){//if the desktop is the default one, not the winlogon or screen saver
+			msgdialog = std::thread(ShowReverseConnectID_Dialog, _NetworkServer->ProxyHeader.Src_Id);
+		}
 	}
 	else {
 		_NetworkServer->StartListening(port, host);
@@ -428,8 +428,32 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, st
 	_NetworkServer->ForceStop();
 }
 
+int GetFileCreateTime()//used for randomness in session 
+{
+	wchar_t szPath[MAX_PATH];
+	bool ret = false;
+	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)) == 0) wprintf(L"GetModuleFileName failed w/err 0x%08lx\n", GetLastError());
+	RemoteDesktop::RAIIHANDLE hFile(CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL));
+	if (hFile.get_Handle() == INVALID_HANDLE_VALUE) return 0;
+
+	FILETIME ftCreate, ftAccess, ftWrite;
+	SYSTEMTIME stUTC, stLocal;
+	DWORD dwRet;
+
+	// Retrieve the file times for the file.
+	if (!GetFileTime(hFile.get_Handle(), &ftCreate, &ftAccess, &ftWrite))
+		return 0;
+
+
+	FileTimeToSystemTime(&ftCreate, &stUTC);
+	SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
+
+	return (int)stLocal.wMonth + (int)stLocal.wDay + (int)stLocal.wYear + (int)stLocal.wHour + (int)stLocal.wMinute + (int)stLocal.wSecond + (int)stLocal.wMilliseconds;//this is just some randomness to add into the mix
+
+}
+
 bool RemoteDesktop::RD_Server::GetProxyID(std::wstring url, std::wstring& aeskey){
-	_NetworkServer->ProxyHeader.Src_Id = _NetworkServer->ProxyHeader.Dst_Id= - 1;
+	_NetworkServer->ProxyHeader.Src_Id = _NetworkServer->ProxyHeader.Dst_Id = -1;
 	char comp[MAX_COMPUTERNAME_LENGTH + 1];
 	DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
 	GetComputerNameA(comp, &len);
@@ -440,7 +464,7 @@ bool RemoteDesktop::RD_Server::GetProxyID(std::wstring url, std::wstring& aeskey
 	GetUserNameA(user, &len);
 	std::string username(user);
 	auto mac = GetMAC();
-	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac;
+	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac + "&session=" + std::to_string(GetFileCreateTime());
 	WinHttpClient cl(url.c_str());
 
 	cl.SetAdditionalDataToSend((BYTE*)adddata.c_str(), adddata.size());
