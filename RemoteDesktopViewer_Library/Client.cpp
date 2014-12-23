@@ -29,12 +29,12 @@ RemoteDesktop::Client::~Client(){
 void RemoteDesktop::Client::OnDisconnect(){
 	_OnDisconnect();
 }
-void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port, int id){
+void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port, int id, std::wstring aeskey){
 	if (_NetworkClient) _NetworkClient.reset();
 	_NetworkClient = std::make_unique<BaseClient>(DELEGATE(&RemoteDesktop::Client::OnConnect, this),
 		DELEGATE(&RemoteDesktop::Client::OnReceive, this),
 		DELEGATE(&RemoteDesktop::Client::OnDisconnect, this), _OnConnectingAttempt);
-	_NetworkClient->Connect(host, port, id);
+	_NetworkClient->Connect(host, port, id, aeskey);
 }
 void RemoteDesktop::Client::Stop(){
 	_NetworkClient->Stop();

@@ -20,7 +20,6 @@ RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandl
 RemoteDesktop::BaseServer::~BaseServer(){
 	BaseServer::ForceStop();
 	ShutDownNetwork();
-	DEBUG_MSG("Stopping Server");
 }
 void RemoteDesktop::BaseServer::ForceStop(){
 	Running = false;
@@ -34,10 +33,11 @@ void RemoteDesktop::BaseServer::ForceStop(){
 	SocketArray.resize(0);
 }
 
-void RemoteDesktop::BaseServer::StartListening(unsigned short port, std::wstring host){
+void RemoteDesktop::BaseServer::StartListening(unsigned short port, std::wstring host, std::wstring aeskey ){
 	ForceStop();
 	Running = true;
-	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port, host);
+	_BackGroundNetworkWorker = std::thread(&BaseServer::_ListenWrapper, this, port, host, aeskey);
+
 }
 
 
@@ -50,7 +50,7 @@ void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
 	}
 }
 
-void RemoteDesktop::BaseServer::_ListenWrapper(unsigned short port, std::wstring host){
+void RemoteDesktop::BaseServer::_ListenWrapper(unsigned short port, std::wstring host, std::wstring aeskey){
 	DEBUG_MSG("_ListenWrapper thread id %", std::this_thread::get_id());
 	if (host.size() < 2){
 		if (!_Listen(port)){
@@ -58,14 +58,14 @@ void RemoteDesktop::BaseServer::_ListenWrapper(unsigned short port, std::wstring
 		}
 	}
 	else {
-		_ConnectWrapper(port, host);//try reverse connection
+		_ConnectWrapper(port, host, aeskey);//try reverse connection
 	}
 
 	ShutDownNetwork();
 	Running = false;
 }
 
-void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstring host){
+void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstring host, std::wstring aeskey){
 	ReverseConnection = true;
 	DisconnectReceived = false;
 	int counter = 0;
@@ -75,7 +75,7 @@ void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstrin
 		if (sock != INVALID_SOCKET){
 			counter = 0;//reset timer
 			MaxConnectAttempts = 15;//set this to a specific value
-			_RunReverse(sock);
+			_RunReverse(sock, aeskey);
 		}
 	}
 	Running = false;
@@ -101,14 +101,14 @@ void RemoteDesktop::BaseServer::_HandleDisconnects_DesktopSwitches(){
 		_DisconectClientList.clear();
 	}
 }
-void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock){
+void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aeskey){
 
 	auto newevent = WSACreateEvent();
 	auto socket = std::make_shared<SocketHandler>(sock, false);
 	socket->Connected_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnConnectHandler, this);
 	socket->Receive_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnReceiveHandler, this);
 	socket->Disconnect_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnDisconnectHandler, this);
-	socket->Exchange_Keys(ProxyID);
+	socket->Exchange_Keys(ProxyHeader.Dst_Id, ProxyHeader.Src_Id, aeskey);
 	
 	WSAEventSelect(socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
 	EventArray.push_back(newevent);
@@ -140,7 +140,6 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock){
 		}
 	}
 	ForceStop();
-	DEBUG_MSG("Ending Loop");
 	Running = true;// ForceStop setts running to false;
 }
 bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
@@ -256,7 +255,7 @@ void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 	auto sockptr = sock.get();
 	SocketArray.push_back(sock);
 	EventArray.push_back(newevent);
-	sockptr->Exchange_Keys(-1);
+	sockptr->Exchange_Keys(-1, -1, L"");
 	DEBUG_MSG("BaseServer OnConnect End");
 }
 void RemoteDesktop::BaseServer::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){

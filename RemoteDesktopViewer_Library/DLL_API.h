@@ -13,7 +13,7 @@ extern "C" {
 		void(__stdcall * onprimchanged)(int, int),
 		void(__stdcall * onconnectingattempt)(int, int));
 	DLLEXPORT void __stdcall Destroy_Client(void* client);
-	DLLEXPORT void __stdcall Connect(void* client, wchar_t* ip_or_host, wchar_t* port, int id);
+	DLLEXPORT void __stdcall Connect(void* client, wchar_t* ip_or_host, wchar_t* port, int id, wchar_t* aeskey);
 	DLLEXPORT void __stdcall Draw(void* client, HDC hdc);
 	DLLEXPORT void __stdcall KeyEvent(void* client, int VK, bool down);
 	DLLEXPORT void __stdcall MouseEvent(void* client, unsigned int action, int x, int y, int wheel);

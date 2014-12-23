@@ -56,8 +56,8 @@ namespace RemoteDesktop{
 		RAIIHANDLE _CADEventHandle;
 		RAIIHANDLE _SelfRemoveEventHandle;
 		bool _RemoveOnExit = false;
-		
-		int GetProxyID(std::wstring url);
+		bool GetProxyID(std::wstring url, std::wstring& aeskey);
+		void _ShowConnectID(int id);
 
 	public:
 		RD_Server();

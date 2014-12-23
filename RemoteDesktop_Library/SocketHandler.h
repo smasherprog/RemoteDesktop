@@ -19,6 +19,7 @@ namespace RemoteDesktop{
 		PEER_STATE_CONNECTING,
 		PEER_STATE_CONNECTED,
 		PEER_STATE_EXCHANGING_KEYS,
+		PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES
 	};
 	class socket_wrapper{
 	public:
@@ -54,7 +55,7 @@ namespace RemoteDesktop{
 	public:
 		explicit SocketHandler(SOCKET socket, bool client);
 
-		Network_Return Exchange_Keys(int id);
+		Network_Return Exchange_Keys(int dst_id, int src_id, std::wstring aeskey);
 		PeerState State = PEER_STATE_DISCONNECTED;
 		Network_Return Send(NetworkMessages m, const NetworkMsg& msg);
 		Network_Return Receive();

@@ -9,6 +9,7 @@ namespace RemoteDesktop_ProxyServer
         public static void RegisterBundles(BundleCollection bundles)
         {
             bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
+                "~/Scripts/jquery.signalR-2.1.2.min.js",
                         "~/Scripts/jquery-{version}.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(

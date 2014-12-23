@@ -108,5 +108,5 @@ bool RemoteDesktop::IsUserAdmin(){
 		return false;
 	}
 
-	return fReturn;
+	return fReturn == TRUE;
 }

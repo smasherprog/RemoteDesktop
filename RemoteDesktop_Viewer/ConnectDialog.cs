@@ -45,9 +45,9 @@ namespace RemoteDesktop_Viewer
             _Login.OnLoginSuccessEvent += _Login_OnLoginSuccessEvent;
         }
 
-        void _ProxyClients_OnConnectAttemptEvent(string ip_or_host, int id)
+        void _ProxyClients_OnConnectAttemptEvent(string ip_or_host, RemoteDesktop_CSLibrary.Client c)
         {
-            Connect(ip_or_host, id);
+            Connect(ip_or_host, c);
         }
 
 
@@ -72,9 +72,10 @@ namespace RemoteDesktop_Viewer
                 return;
             if(textBox1.Text.Length < 4)
                 return;
-            Connect(textBox1.Text);
+       
+            Connect(textBox1.Text, null);
         }
-        private void Connect(string iporhost, int id = 0)
+        private void Connect(string iporhost, RemoteDesktop_CSLibrary.Client c)
         {
             _LastMainViewer = new MainViewer();
             _LastMainViewer.Show(this);
@@ -83,7 +84,7 @@ namespace RemoteDesktop_Viewer
             _LastMainViewer.OnConnectEvent += OnConnect;
             _LastMainViewer.OnDisconnectEvent += OnDisconnect;
             _LastMainViewer.OnConnectingAttemptEvent += _LastMainViewer_OnConnectingAttemptEvent;
-            _LastMainViewer.Connect(iporhost, id);
+            _LastMainViewer.Connect(iporhost, c);
             _Connecting.Show();
             _Connecting.Hide();
             _Connecting.FormClosing += _Connecting_FormClosing;

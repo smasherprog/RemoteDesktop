@@ -14,6 +14,7 @@
 #include "..\RemoteDesktop_Library\WinHttpClient.h"
 #include "Lmcons.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
+#include "..\RemoteDesktop_Library\Utilities.h"
 
 #if _DEBUG
 #include "Console.h"
@@ -67,7 +68,7 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 	_ScreenCapture = std::make_unique<ScreenCapture>();
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
 	_SystemTray = std::make_unique<SystemTray>();
-	_SystemTray->Start();	
+	_SystemTray->Start();
 }
 RemoteDesktop::RD_Server::~RD_Server(){
 	if (_RemoveOnExit) {
@@ -79,7 +80,7 @@ RemoteDesktop::RD_Server::~RD_Server(){
 }
 void RemoteDesktop::RD_Server::_Handle_DisconnectandRemove(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	_RemoveOnExit = true;
-	
+
 	_NetworkServer->GracefulStop();//this will cause the main loop to stop and the program to exit
 }
 void RemoteDesktop::RD_Server::_Handle_ImageSettings(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -140,7 +141,7 @@ void RemoteDesktop::RD_Server::_Handle_ClipBoard(Packet_Header* header, const ch
 
 void RemoteDesktop::RD_Server::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	std::lock_guard<std::mutex> lock(_NewClientLock);
-	_NewClients.push_back(sh); 
+	_NewClients.push_back(sh);
 	DEBUG_MSG("New Client OnConnect");
 }
 void _HandleKeyEvent(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -200,7 +201,7 @@ void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header
 	int isize = 0;
 	memcpy(&isize, data, sizeof(isize));
 	data += sizeof(isize);
-	DEBUG_MSG("% BEG FILE: %", path.size(),  path);
+	DEBUG_MSG("% BEG FILE: %", path.size(), path);
 	std::ofstream f(path, std::ios::binary);
 	f.write(data, isize);
 	DEBUG_MSG("% END FILE: %", path.size(), path);
@@ -226,7 +227,7 @@ void RemoteDesktop::RD_Server::_Handle_ConnectionInfo(Packet_Header* header, con
 	h.UserName[UNAMELEN] = 0;
 	sh->UserName = std::wstring(h.UserName);
 	auto con = sh->UserName + L" has connected to your machine . . .";
-	_SystemTray->Popup(L"Connection Established", con.c_str() , 2000);
+	_SystemTray->Popup(L"Connection Established", con.c_str(), 2000);
 }
 void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	switch (header->Packet_Type){
@@ -257,7 +258,7 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	case NetworkMessages::CONNECTIONINFO:
 		_Handle_ConnectionInfo(header, data, sh);
 		break;
-		
+
 	default:
 		break;
 	}
@@ -345,14 +346,28 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 
 	}
 }
-
+void RemoteDesktop::RD_Server::_ShowConnectID(int id){
+	auto msg = std::wstring(L"Please give this number to your technician: ");
+	msg += std::to_wstring(id);
+	auto ret = MessageBox(
+		NULL,
+		msg.c_str(),
+		(LPCWSTR)L"Connection ID",
+		MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION
+		);
+}
 void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, std::wstring proxy) {
+	std::thread msgdialog;
 	if (proxy.size() > 1){
-		_NetworkServer->ProxyID = GetProxyID(proxy);
-		if (_NetworkServer->ProxyID == -1) return;
+		std::wstring aes;
+		GetProxyID(proxy, aes);
+		if (_NetworkServer->ProxyHeader.Src_Id == -1) return;
+		_NetworkServer->StartListening(port, host, aes);
+		msgdialog = std::thread(&RD_Server::_ShowConnectID, this, _NetworkServer->ProxyHeader.Src_Id);
 	}
-
-	_NetworkServer->StartListening(port, host);
+	else {
+		_NetworkServer->StartListening(port, host);
+	}
 
 	std::vector<unsigned char> curimagebuffer;
 	std::vector<unsigned char> lastimagebuffer;
@@ -413,8 +428,8 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, st
 	_NetworkServer->ForceStop();
 }
 
-int RemoteDesktop::RD_Server::GetProxyID(std::wstring url){
-
+bool RemoteDesktop::RD_Server::GetProxyID(std::wstring url, std::wstring& aeskey){
+	_NetworkServer->ProxyHeader.Src_Id = _NetworkServer->ProxyHeader.Dst_Id= - 1;
 	char comp[MAX_COMPUTERNAME_LENGTH + 1];
 	DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
 	GetComputerNameA(comp, &len);
@@ -423,13 +438,12 @@ int RemoteDesktop::RD_Server::GetProxyID(std::wstring url){
 	char user[UNLEN + 1];
 	len = UNLEN + 1;
 	GetUserNameA(user, &len);
-	std::string username(user); 
+	std::string username(user);
 	auto mac = GetMAC();
 	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac;
 	WinHttpClient cl(url.c_str());
 
 	cl.SetAdditionalDataToSend((BYTE*)adddata.c_str(), adddata.size());
-	
 
 	// Set request headers.
 	wchar_t szSize[50] = L"";
@@ -442,7 +456,13 @@ int RemoteDesktop::RD_Server::GetProxyID(std::wstring url){
 	cl.SendHttpRequest(L"POST");
 	auto httpResponseContent = cl.GetResponseContent();
 	if (httpResponseContent.size() > 0){
-		return std::stoi(httpResponseContent);
+		auto splits = split(httpResponseContent, L'\n');
+		if (splits.size() == 2){
+			_NetworkServer->ProxyHeader.Src_Id = std::stoi(splits[0]);
+			aeskey = splits[1];
+			return true;
+		}
+		else return false;
 	}
-	return -1;
+	return false;
 }

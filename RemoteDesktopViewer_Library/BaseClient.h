@@ -10,7 +10,7 @@ namespace RemoteDesktop{
 
 	class BaseClient{
 
-		bool _Connect(int id);
+		bool _Connect(int dst_id, std::wstring aeskey);
 
 		void _OnDisconnectHandler(SocketHandler* socket);
 		void _OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s);
@@ -22,7 +22,7 @@ namespace RemoteDesktop{
 		void(__stdcall * _OnConnectingAttempt)(int attempt, int maxattempts);
 
 		void _Run();
-		void _RunWrapper(int id);
+		void _RunWrapper(int dst_id, std::wstring aeskey);
 		std::thread _BackGroundNetworkWorker;
 
 		std::wstring _Host, _Port;
@@ -36,7 +36,7 @@ namespace RemoteDesktop{
 
 		~BaseClient();
 
-		void Connect(std::wstring host, std::wstring port = L"443", int id = -1);
+		void Connect(std::wstring host, std::wstring port, int dst_id, std::wstring aeskey);
 
 		std::shared_ptr<SocketHandler> Socket;
 		bool NetworkRunning() const { return Running; }

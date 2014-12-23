@@ -4,6 +4,7 @@
 #include <thread>
 #include "Compression_Handler.h"
 
+
 RemoteDesktop::socket_wrapper::~socket_wrapper(){
 	if (socket != INVALID_SOCKET){
 		shutdown(socket, SD_RECEIVE);
@@ -44,7 +45,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_SendLoop(char* data
 	return RemoteDesktop::Network_Return::COMPLETED;
 }
 
-RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int id){
+RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int dst_id, int src_id, std::wstring aeskey){
 
 	NetworkMsg msg;
 	auto EphemeralPublicKeyLength = _Encyption.get_EphemeralPublicKeyLength();
@@ -53,11 +54,21 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int id
 	_SendBuffer.resize(EphemeralPublicKeyLength + StaticPublicKeyLength);
 	memcpy(_SendBuffer.data(), _Encyption.get_Static_PublicKey(), StaticPublicKeyLength);
 	memcpy(_SendBuffer.data() + StaticPublicKeyLength, _Encyption.get_Ephemeral_PublicKey(), EphemeralPublicKeyLength);
-
-	auto ret = _SendLoop((char*)&id, sizeof(id));//id is always sent at the beginning of a connection. This is to accommodate proxy sever
+	Proxy_Header tmp;
+	tmp.Dst_Id = dst_id;
+	tmp.Src_Id = src_id;
+	auto ret = _SendLoop((char*)&tmp, sizeof(tmp));//id is always sent at the beginning of a connection. This is to accommodate proxy sever
 	if (ret == FAILED) return _Disconnect();
 	ret = _SendLoop(_SendBuffer.data(), _SendBuffer.size());
-	State = PEER_STATE_EXCHANGING_KEYS;
+
+	if (aeskey.size() > 1){
+		State = PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES;
+		char aes[48];
+		std::string tmpaes = ws2s(aeskey);
+		hex2bin(tmpaes.c_str(), aes);
+		_Encyption.set_AES_Key(aes);
+	}
+	else State = PEER_STATE_EXCHANGING_KEYS;
 	if (ret == FAILED) return _Disconnect();
 	return ret;
 }
@@ -75,7 +86,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::CheckState(){
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Send(NetworkMessages m, const NetworkMsg& msg){
 	if (State == PEER_STATE_DISCONNECTED) return Network_Return::FAILED;
-	else if (State == PEER_STATE_EXCHANGING_KEYS) return Network_Return::PARTIALLY_COMPLETED;
+	else if (State == PEER_STATE_EXCHANGING_KEYS || State == PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES) return Network_Return::PARTIALLY_COMPLETED;
 	else return _Encrypt_And_Send(m, msg);
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(NetworkMessages m, const NetworkMsg& msg){
@@ -157,14 +168,14 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Disconnect(){
 }
 
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Data(){
-	if (State == PEER_STATE_EXCHANGING_KEYS) {//any data received should be the key exchange... if not the connection will terminate
+	if (State == PEER_STATE_EXCHANGING_KEYS || State == PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES) {//any data received should be the key exchange... if not the connection will terminate
 		auto EphemeralPublicKeyLength = _Encyption.get_EphemeralPublicKeyLength();
 		auto StaticPublicKeyLength = _Encyption.get_StaticPublicKeyLength();
-		auto totalsizepending = StaticPublicKeyLength + EphemeralPublicKeyLength + sizeof(int);
+		auto totalsizepending = StaticPublicKeyLength + EphemeralPublicKeyLength + sizeof(Proxy_Header);
 		//extra int is here to support proxy servers, just ignore it completely
 		if (_ReceivedBufferCounter < totalsizepending) return Network_Return::PARTIALLY_COMPLETED;
 		else {//enough data was received for a key exchange..
-			if (!_Encyption.Agree(_ReceivedBuffer.data() + sizeof(int), _ReceivedBuffer.data() + sizeof(int) + StaticPublicKeyLength)) return _Disconnect();
+			if (!_Encyption.Agree(_ReceivedBuffer.data() + sizeof(Proxy_Header), _ReceivedBuffer.data() + sizeof(Proxy_Header) + StaticPublicKeyLength, State == PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES)) return _Disconnect();
 			_ReceivedBufferCounter -= totalsizepending;
 			memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + totalsizepending, _ReceivedBufferCounter);//this will shift down the data 
 			State = PEER_STATE_CONNECTED;

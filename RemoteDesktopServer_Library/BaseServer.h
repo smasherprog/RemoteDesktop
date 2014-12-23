@@ -19,12 +19,12 @@ namespace RemoteDesktop{
 		void _OnDisconnect(int index);
 		void _OnConnect(SOCKET listensocket);
 		bool _Listen(unsigned short port);
-		void _ConnectWrapper(unsigned short port, std::wstring host);
-		void _RunReverse(SOCKET sock);
+		void _ConnectWrapper(unsigned short port, std::wstring host, std::wstring aeskey);
+		void _RunReverse(SOCKET sock, std::wstring aeskey);
 
 		void _HandleDisconnects_DesktopSwitches();
 
-		void _ListenWrapper(unsigned short port, std::wstring host);
+		void _ListenWrapper(unsigned short port, std::wstring host, std::wstring aeskey);
 		
 		std::mutex _DisconectClientLock;
 		std::vector<SocketHandler*> _DisconectClientList;
@@ -55,12 +55,12 @@ namespace RemoteDesktop{
 		bool Is_Running() const{ return Running; }
 
 		size_t Client_Count() const { return  SocketArray.empty() ? 0 : (ReverseConnection ? SocketArray.size() : SocketArray.size() - 1); }
-		void StartListening(unsigned short port, std::wstring host);
+		void StartListening(unsigned short port, std::wstring host, std::wstring aeskey=L"");
 		void ForceStop();
 		void GracefulStop(){ DisconnectReceived = true; Running = false; }
 		
 		void SendToAll(NetworkMessages m, NetworkMsg& msg );
-		int ProxyID = -1;
+		Proxy_Header ProxyHeader;
 	};
 
 };

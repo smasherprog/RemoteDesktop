@@ -50,7 +50,7 @@ namespace RemoteDesktop_Viewer
         [DllImport(Settings.DLL_Name)]
         static extern void Destroy_Client(IntPtr client);
         [DllImport(Settings.DLL_Name, CharSet = CharSet.Unicode)]
-        static extern void Connect(IntPtr client, string ip_or_host, string port, int id);
+        static extern void Connect(IntPtr client, string ip_or_host, string port, int id, string aeskey);
         [DllImport(Settings.DLL_Name)]
         static extern void Draw(IntPtr client, IntPtr hdc);
         [DllImport(Settings.DLL_Name)]
@@ -327,10 +327,11 @@ namespace RemoteDesktop_Viewer
             }
             return "";
         }
-        public void Connect(string ip_or_host, int id)
+        public void Connect(string proxy_host, RemoteDesktop_CSLibrary.Client c)
         {
-            _Host_Address = ip_or_host;
-            Connect(_Client, ip_or_host, "443", id);
+            _Host_Address = proxy_host;
+            if(c==null) Connect(_Client, proxy_host, "443", -1, "");
+            else Connect(_Client, proxy_host, "443", c.Src_ID, c.AES_Session_Key);
         }
         static int counter = 0;
         static DateTime timer = DateTime.Now;

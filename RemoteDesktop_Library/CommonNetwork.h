@@ -30,6 +30,10 @@ namespace RemoteDesktop{
 		unsigned int Action;
 		int wheel;
 	};
+	struct Proxy_Header{
+		int Dst_Id = -1;
+		int Src_Id = -1;
+	};
 #pragma pack(pop)
 #define NETWORKHEADERSIZE sizeof(Packet_Encrypt_Header)
 #define TOTALHEADERSIZE sizeof(Packet_Encrypt_Header) + sizeof(Packet_Header)

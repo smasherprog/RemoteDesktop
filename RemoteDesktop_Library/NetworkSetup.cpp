@@ -108,22 +108,23 @@ std::string RemoteDesktop::GetMAC(){
 		free(AdapterInfo);
 		AdapterInfo = (IP_ADAPTER_INFO *)malloc(dwBufLen);
 	}
-
+	char mac[20];
+	std::string macs;
 	if (GetAdaptersInfo(AdapterInfo, &dwBufLen) == NO_ERROR) {
 		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;// Contains pointer to current adapter info
 		do {
 			if (pAdapterInfo->Type == MIB_IF_TYPE_ETHERNET){//get an ethernet interface
-				char mac[20];
+				
 				sprintf_s(mac, "%02X:%02X:%02X:%02X:%02X:%02X",
 					pAdapterInfo->Address[0], pAdapterInfo->Address[1],
 					pAdapterInfo->Address[2], pAdapterInfo->Address[3],
 					pAdapterInfo->Address[4], pAdapterInfo->Address[5]);
-				return std::string(mac);
+				macs= std::string(mac);
+				break;
 			}
 			pAdapterInfo = pAdapterInfo->Next;
 		} while (pAdapterInfo);
 	}
 	free(AdapterInfo);
-
-
+	return macs;
 }

@@ -58,6 +58,10 @@ const char* RemoteDesktop::Encryption::get_Static_PublicKey() const{
 const char* RemoteDesktop::Encryption::get_Ephemeral_PublicKey() const{
 	return (const char*)_Encryption_Impl->ephemeralpublickey.BytePtr();
 }
+void RemoteDesktop::Encryption::set_AES_Key(const char* k){
+	_Encryption_Impl->AESKey.resize(SHA256::DIGESTSIZE);
+	memcpy(_Encryption_Impl->AESKey.BytePtr(), k, SHA256::DIGESTSIZE);
+}
 
 void RemoteDesktop::Encryption::clear(){// clear everything
 	clear_keyexchange();
@@ -81,8 +85,8 @@ void RemoteDesktop::Encryption::Init(bool client){
 	_Encryption_Impl->ephemeralpublickey.resize(_Encryption_Impl->fhmqv->EphemeralPublicKeyLength());
 	AutoSeededRandomPool rnd;
 	_Encryption_Impl->fhmqv->GenerateStaticKeyPair(rnd, _Encryption_Impl->staticprivatekey, _Encryption_Impl->staticpublickey);
-	_Encryption_Impl->fhmqv->GenerateEphemeralKeyPair(rnd, _Encryption_Impl->ephemeralprivatekey, _Encryption_Impl->ephemeralpublickey);	
-	
+	_Encryption_Impl->fhmqv->GenerateEphemeralKeyPair(rnd, _Encryption_Impl->ephemeralprivatekey, _Encryption_Impl->ephemeralpublickey);
+
 	//Integer statickey, ephemeralkey;
 	//statickey.Decode(_Encryption_Impl->staticpublickey, _Encryption_Impl->fhmqv->StaticPublicKeyLength());
 	//ephemeralkey.Decode(_Encryption_Impl->ephemeralpublickey, _Encryption_Impl->fhmqv->EphemeralPublicKeyLength());
@@ -91,22 +95,17 @@ void RemoteDesktop::Encryption::Init(bool client){
 	//std::cout << "GEN(staticpublickey): " << std::hex << statickey << std::endl;
 }
 
-bool RemoteDesktop::Encryption::Agree(const char *staticOtherPublicKey, const char *ephemeralOtherPublicKey){
+bool RemoteDesktop::Encryption::Agree(const char *staticOtherPublicKey, const char *ephemeralOtherPublicKey, bool usepreaes){
 	SecByteBlock sharedsecret(_Encryption_Impl->fhmqv->AgreedValueLength());
-
-	//Integer statickey, ephemeralkey;
-	//statickey.Decode((byte*)staticOtherPublicKey, _Encryption_Impl->fhmqv->StaticPublicKeyLength());
-	//ephemeralkey.Decode((byte*)ephemeralOtherPublicKey, _Encryption_Impl->fhmqv->EphemeralPublicKeyLength());
-
-	//std::cout << "REC(ephemeralpublickey): " << std::hex << ephemeralkey << std::endl;
-	//std::cout << "REC(staticpublickey): " << std::hex << statickey << std::endl;
 
 	bool verified = _Encryption_Impl->fhmqv->Agree(sharedsecret, _Encryption_Impl->staticprivatekey, _Encryption_Impl->ephemeralprivatekey, (byte*)staticOtherPublicKey, (byte*)ephemeralOtherPublicKey);
 	if (verified){
-		DEBUG_MSG("Key Exchange Completed . . ");
-		Integer ssa;
-		ssa.Decode(sharedsecret.BytePtr(), sharedsecret.SizeInBytes());
-		SHA256().CalculateDigest(_Encryption_Impl->AESKey, sharedsecret, sharedsecret.size());
+		if (!usepreaes){
+			DEBUG_MSG("Key Exchange Completed . . ");
+			Integer ssa;
+			ssa.Decode(sharedsecret.BytePtr(), sharedsecret.SizeInBytes());
+			SHA256().CalculateDigest(_Encryption_Impl->AESKey, sharedsecret, sharedsecret.size());
+		} 
 	}
 	else DEBUG_MSG("Key Exchange Not Completed . . ");
 	clear_keyexchange();

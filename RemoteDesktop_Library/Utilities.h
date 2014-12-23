@@ -13,6 +13,7 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <vector>
 
 inline int roundUp(int numToRound, int multiple)//only for multiples of 2
 {
@@ -131,7 +132,24 @@ inline std::ifstream::pos_type filesize(const char* filename)
 	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
 	return in.tellg();
 }
-
+inline std::vector<std::wstring> split(const std::wstring& o, const wchar_t d){
+	std::wstringstream f(o);
+	std::wstring s;
+	std::vector<std::wstring> strings;
+	while (getline(f, s, d)) {
+		strings.push_back(s);
+	}
+	return strings;
+}
+inline std::vector<std::string> split(const std::string& o, const char d){
+	std::stringstream f(o);
+	std::string s;
+	std::vector<std::string> strings;
+	while (getline(f, s, d)) {
+		strings.push_back(s);
+	}
+	return strings;
+}
 template<class T> T GetFileExtention(const T& file){// this will only strip off everything include the . of an extention
 	T::size_type po = file.find_last_of('.');
 	if (po == T::npos) return "";// no extention, return an empty std::string
@@ -205,5 +223,36 @@ public:
 	T operator *() const { return (T)fnPtr; };
 };
 
+inline int char2int(char input)
+{
+	if (input >= '0' && input <= '9')
+		return input - '0';
+	if (input >= 'A' && input <= 'F')
+		return input - 'A' + 10;
+	if (input >= 'a' && input <= 'f')
+		return input - 'a' + 10;
+	return 0;
+}
+// This function assumes src to be a zero terminated sanitized string with
+// an even number of [0-9a-f] characters, and target to be sufficiently large
+inline void hex2bin(const char* src, char* target)
+{
+	while (*src && src[1])
+	{
+		*(target++) = char2int(*src) * 16 + char2int(src[1]);
+		src += 2;
+	}
+}
+inline std::string ws2s(const std::wstring& s)
+{
+	int len;
+	int slength = (int)s.length() + 1;
+	len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, 0, 0, 0, 0);
+	char* buf = new char[len];
+	WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, buf, len, 0, 0);
+	std::string r(buf);
+	delete[] buf;
+	return r;
+}
 
 #endif

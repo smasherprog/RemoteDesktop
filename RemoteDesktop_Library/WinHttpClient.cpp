@@ -272,12 +272,10 @@ bool WinHttpClient::SendHttpRequest(const std::wstring &httpVerb, bool disableAu
 								wchar_t szProxy[MAX_PATH] = L"";
 								wcscpy_s(szProxy, MAX_PATH, proxyConfig.lpszProxy);
 								proxyInfo.lpszProxy = szProxy;
-								wchar_t szProxyBypass[MAX_PATH] = L"";
-
+	
 								if (proxyConfig.lpszProxyBypass != NULL)
 								{
-									wcscpy_s(szProxyBypass, MAX_PATH, proxyConfig.lpszProxyBypass);
-									proxyInfo.lpszProxyBypass = szProxyBypass;
+									proxyInfo.lpszProxyBypass = proxyConfig.lpszProxyBypass;
 								}
 
 								if (!::WinHttpSetOption(hRequest, WINHTTP_OPTION_PROXY, &proxyInfo, sizeof(proxyInfo)))

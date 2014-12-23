@@ -17,22 +17,22 @@ RemoteDesktop::BaseClient::~BaseClient(){
 	ShutDownNetwork();
 	DEBUG_MSG("~BaseClient");
 }
-void RemoteDesktop::BaseClient::Connect(std::wstring host, std::wstring port, int id){
+void RemoteDesktop::BaseClient::Connect(std::wstring host, std::wstring port, int id, std::wstring aeskey){
 	Stop();//ensure threads have been stopped
 	_Host = host;
 	_Port = port;
 	Running = true;
-	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this, id);
+	_BackGroundNetworkWorker = std::thread(&BaseClient::_RunWrapper, this, id, aeskey);
 
 }
 
 
-void RemoteDesktop::BaseClient::_RunWrapper(int id){
+void RemoteDesktop::BaseClient::_RunWrapper(int dst_id, std::wstring aeskey){
 	int counter = 0;
 
 	while (Running && ++counter< MaxConnectAttempts){
 		_OnConnectingAttempt(counter, MaxConnectAttempts);
-		if (!_Connect(id)){
+		if (!_Connect(dst_id, aeskey)){
 			DEBUG_MSG("socket failed with error = %\n", WSAGetLastError());
 		}
 		else {
@@ -45,8 +45,8 @@ void RemoteDesktop::BaseClient::_RunWrapper(int id){
 	if (counter >= MaxConnectAttempts)	Disconnect_CallBack();
 	Running = false;
 }
-bool RemoteDesktop::BaseClient::_Connect(int id){
-	DEBUG_MSG("Connecting to server . . . %", id);
+bool RemoteDesktop::BaseClient::_Connect(int dst_id, std::wstring aeskey){
+	DEBUG_MSG("Connecting to server . . . %", dst_id);
 	auto sock = RemoteDesktop::Connect(_Port, _Host);
 	if (sock == INVALID_SOCKET) return false;
 	Socket = std::make_shared<SocketHandler>(sock, true);
@@ -55,7 +55,7 @@ bool RemoteDesktop::BaseClient::_Connect(int id){
 	Socket->Receive_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnReceiveHandler, this);
 	Socket->Disconnect_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnDisconnectHandler, this);
 	
-	Socket->Exchange_Keys(id);
+	Socket->Exchange_Keys(dst_id, -1, aeskey);
 	return true;
 }
 void RemoteDesktop::BaseClient::_Run(){

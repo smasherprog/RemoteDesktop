@@ -11,10 +11,10 @@ void __stdcall Destroy_Client(void* client){
 		delete c;
 	}
 }
-void __stdcall Connect(void* client, wchar_t* ip_or_host, wchar_t* port, int id){
+void __stdcall Connect(void* client, wchar_t* ip_or_host, wchar_t* port, int id, wchar_t* aeskey){
 	if (client == NULL)return;
 	auto c = (RemoteDesktop::Client*)client;
-	c->Connect(ip_or_host, port, id);
+	c->Connect(ip_or_host, port, id, aeskey);
 }
 void __stdcall Draw(void* client, HDC hdc){
 	if (client == NULL)return;
