@@ -92,12 +92,12 @@ namespace RemoteDesktop_Viewer
 
         void _Hub_Error(Exception obj)
         {
-            if(OnDisconnectEvent!=null)
+            if (OnDisconnectEvent != null)
                 OnDisconnectEvent();
         }
         private void Fill(List<string> data, Client c)
         {
-            data.Clear();  
+            data.Clear();
             data.Add(c.Src_ID.ToString());
             data.Add(c.Firewall_IP.ToString());
             data.Add(c.ComputerName.ToString());
@@ -109,24 +109,38 @@ namespace RemoteDesktop_Viewer
             listView1.UIThread(() =>
             {
                 listView1.Items.Clear();//clear all items
-             
-                foreach (var item in clients.Where(a => a != null))
+
+                var copy = clients.Where(a => a != null).ToList();//create a copy
+
+                foreach (var item in clients.Where(a => a != null && a.Host == Client.Host_Type.Viewer))
                 {
+                    copy.Remove(item);
                     var left = new List<string>() { "*", "*", "*", "*", "<------>" };
-                    var right = new List<string>() { "*", "*", "*", "*"};
-                    if (item.Host == Client.Host_Type.Viewer)
+                    var right = new List<string>() { "*", "*", "*", "*" };
+
+                    Fill(right, item);
+
+                    var found = copy.FirstOrDefault(a => a.Src_ID == item.Dst_ID);
+                    if (found != null)
                     {
-                        Fill(right, item);
-                        left.Add("<------>");
+                        copy.Remove(found);
+                        Fill(left, found);
                     }
-                    else
-                    {
-                        Fill(left, item);
-                    }
+                    left.Add("<------>");
                     left.AddRange(right);
-                    listView1.Items.Add(new ListViewItem(left.ToArray()));
+                    var it = listView1.Items.Add(new ListViewItem(left.ToArray()));
                 }
-                if (listView1.Items.Count>0)
+                foreach (var item in copy)
+                {
+                    var left = new List<string>();
+                    var right = new List<string>() { "*", "*", "*", "*" };
+                    Fill(left, item);
+                    left.Add("<------>");
+                    left.AddRange(right);
+                    var it = listView1.Items.Add(new ListViewItem(left.ToArray()));
+                    if (item.Status == Client.Connection_Status.Reserved) it.BackColor = Color.Gray;
+                }
+                if (listView1.Items.Count > 0)
                     listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
                 else
                     listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
@@ -142,21 +156,28 @@ namespace RemoteDesktop_Viewer
         }
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (listView1.SelectedIndices.Count > 0)
+            if (listView1.SelectedItems.Count > 0)
             {
-                var id = listView1.SelectedIndices[0];
-                var c = _Clients[id];
+                var id = listView1.SelectedItems[0].Text;
+                var c = _Clients[Convert.ToInt32(id)];
+
                 if (c != null)
                 {
-                    Debug.WriteLine("Attempting connect to " + Settings.ProxyServer + " id: " + c.Src_ID);
-                    if (OnConnectAttemptEvent != null)
+                    if (c.Status == Client.Connection_Status.Paired)
                     {
-                        var splits = Settings.ProxyServer.Split(':');
-                        OnConnectAttemptEvent(splits.FirstOrDefault(), c);
+                        MessageBox.Show("You cannot connect to this machine, it is already paired.");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Attempting connect to " + Settings.ProxyServer + " id: " + c.Src_ID);
+                        if (OnConnectAttemptEvent != null)
+                        {
+                            var splits = Settings.ProxyServer.Split(':');
+                            OnConnectAttemptEvent(splits.FirstOrDefault(), c);
+                        }
                     }
                 }
             }
-
         }
     }
 }

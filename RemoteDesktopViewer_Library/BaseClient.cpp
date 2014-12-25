@@ -31,6 +31,7 @@ void RemoteDesktop::BaseClient::_RunWrapper(int dst_id, std::wstring aeskey){
 	int counter = 0;
 
 	while (Running && ++counter< MaxConnectAttempts){
+		DEBUG_MSG("Connect Loop % ", dst_id);
 		_OnConnectingAttempt(counter, MaxConnectAttempts);
 		if (!_Connect(dst_id, aeskey)){
 			DEBUG_MSG("socket failed with error = %\n", WSAGetLastError());
@@ -88,7 +89,7 @@ void RemoteDesktop::BaseClient::_Run(){
 	}
 	DEBUG_MSG("Ending Loop");
 	WSACloseEvent(newevent);
-	Socket.reset();
+	Socket = nullptr;
 }
 
 void RemoteDesktop::BaseClient::_OnDisconnectHandler(SocketHandler* socket){

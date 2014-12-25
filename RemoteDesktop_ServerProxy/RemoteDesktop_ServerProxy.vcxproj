@@ -110,6 +110,7 @@
       <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
@@ -131,6 +132,7 @@
       <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
@@ -158,6 +160,7 @@
       <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
@@ -185,6 +188,7 @@
       <AdditionalDependencies>RemoteDesktopServer_Library.lib;Userenv.lib;sas.lib;Wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>

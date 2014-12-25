@@ -93,6 +93,9 @@ namespace RemoteDesktop_Viewer
         private System.Threading.Thread _FileSendingThread = null;
         private System.Timers.Timer _TrafficTimer;
         private string _Host_Address;
+
+        private RemoteDesktop_CSLibrary.Client _Proxyd_Client = null;
+
         public string Host_Address { get { return _Host_Address; } }
         InputListener _InputListener = null;
         public MainViewer()
@@ -144,18 +147,17 @@ namespace RemoteDesktop_Viewer
         void _TrafficTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             var traffic = get_TrafficStats(_Client);
-            var outcompressionratio = 0.0f;
-            var incompressionratio = 0.0f;
-            //below i change the range of the data shown and convert it to a percent, For example, .003 changes to 3.0, then -97.0, then 97.0 
-            //I want to display the Effectiveness of the compression below... In other words, the compression ratio is 97% effective.
-            if(traffic.UncompressedSendBPS > 0)
-                outcompressionratio = ((((float)traffic.CompressedSendBPS / (float)traffic.UncompressedSendBPS) * 100.0f) - 100.0f) * -1.0f;
-            if(traffic.UncompressedRecvBPS > 0)
-                incompressionratio = ((((float)traffic.CompressedRecvBPS / (float)traffic.UncompressedRecvBPS) * 100.0f) - 100.0f) * -1.0f;
 
             this.UIThread(() =>
             {
-                this.Text = "Connected to: " + _Host_Address + ":443,  Out: " + FormatBytes(traffic.CompressedSendBPS) + "/s In: " + FormatBytes(traffic.CompressedRecvBPS) + "/s Comp Rate Out: " + string.Format("{0:0.00}", outcompressionratio) + "% In: " + string.Format("{0:0.00}", incompressionratio) + "%";
+                if (_Proxyd_Client != null)
+                {
+                    this.Text = "Connected to Proxy: " + _Host_Address + ":443 --> "+_Proxyd_Client.ComputerName + ":" + _Proxyd_Client.UserName +" Out: " + FormatBytes(traffic.CompressedSendBPS) + "/s In: " + FormatBytes(traffic.CompressedRecvBPS) + "/s";
+                }
+                else
+                {
+                    this.Text = "Connected to: " + _Host_Address + ":443,  Out: " + FormatBytes(traffic.CompressedSendBPS) + "/s In: " + FormatBytes(traffic.CompressedRecvBPS) + "/s";
+                }
             });
         }
 
@@ -163,8 +165,7 @@ namespace RemoteDesktop_Viewer
         private void Form1_DragEnter(object sender, DragEventArgs e)
         {
             // If the data is a file or a bitmap, display the copy cursor. 
-            if(e.Data.GetDataPresent(DataFormats.Bitmap) ||
-               e.Data.GetDataPresent(DataFormats.FileDrop))
+            if(e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Effect = DragDropEffects.Copy;
             } else
@@ -330,6 +331,7 @@ namespace RemoteDesktop_Viewer
         public void Connect(string proxy_host, RemoteDesktop_CSLibrary.Client c)
         {
             _Host_Address = proxy_host;
+            _Proxyd_Client = c;
             if(c==null) Connect(_Client, proxy_host, "443", -1, "");
             else Connect(_Client, proxy_host, "443", c.Src_ID, c.AES_Session_Key);
         }

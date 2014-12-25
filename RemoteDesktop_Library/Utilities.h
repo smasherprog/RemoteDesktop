@@ -23,11 +23,12 @@ inline int roundUp(int numToRound, int multiple)//only for multiples of 2
 template<typename... Args>
 void DEBUG_MSG(const char *s, Args... args)
 {
-
+#if _DEBUG
 	std::string result = "";
 	_INTERNAL::xsprintf(result, s, args...);
 	OutputDebugStringA(result.c_str());
 	OutputDebugStringA("\n");
+#endif
 }
 
 namespace _INTERNAL{
@@ -251,13 +252,12 @@ inline void hex2bin(const char* src, char* target)
 }
 inline std::string ws2s(const std::wstring& s)
 {
-	int len;
 	int slength = (int)s.length() + 1;
-	len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, 0, 0, 0, 0);
-	char* buf = new char[len];
-	WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, buf, len, 0, 0);
-	std::string r(buf);
-	delete[] buf;
+	auto len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, 0, 0, 0, 0);
+	std::vector<char> buf;
+	buf.resize(len);
+	WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, buf.data(), len, 0, 0);
+	std::string r(buf.data());
 	return r;
 }
 

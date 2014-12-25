@@ -11,11 +11,10 @@
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktopServer_Library\SystemTray.h"
-#include "..\RemoteDesktop_Library\WinHttpClient.h"
-#include "Lmcons.h"
+
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\Utilities.h"
-#include "ProxyConnectDialog.h"
+
 
 #if _DEBUG
 #include "Console.h"
@@ -72,6 +71,8 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 	_SystemTray->Start();
 }
 RemoteDesktop::RD_Server::~RD_Server(){
+
+
 	if (_RemoveOnExit) {
 		if (_SelfRemoveEventHandle.get_Handle() != nullptr) {
 			SetEvent(_SelfRemoveEventHandle.get_Handle());//signal the self removal process 
@@ -348,26 +349,16 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 	}
 }
 
-void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, std::wstring proxy) {
+void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bool reverseconnecttoproxy) {
+	_RunningReverseProxy = reverseconnecttoproxy;
 	//switch to input desktop 
 	if (!_DesktopMonitor->Is_InputDesktopSelected())
 	{
 		_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 	}
 
-	std::thread msgdialog;
-	if (proxy.size() > 1){
-		std::wstring aes;
-		GetProxyID(proxy, aes);
-		if (_NetworkServer->ProxyHeader.Src_Id == -1) return;
-		_NetworkServer->StartListening(port, host, aes);
-		if (_DesktopMonitor->get_InputDesktop() | RemoteDesktop::DesktopMonitor::Desktops::DEFAULT){//if the desktop is the default one, not the winlogon or screen saver
-			msgdialog = std::thread(ShowReverseConnectID_Dialog, _NetworkServer->ProxyHeader.Src_Id);
-		}
-	}
-	else {
-		_NetworkServer->StartListening(port, host);
-	}
+	_NetworkServer->StartListening(port, host);
+
 
 	std::vector<unsigned char> curimagebuffer;
 	std::vector<unsigned char> lastimagebuffer;
@@ -425,68 +416,7 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, st
 		lastwaittime = FRAME_CAPTURE_INTERVAL - tim;
 		if (lastwaittime < 0) lastwaittime = 0;
 	}
-	_NetworkServer->ForceStop();
-}
-
-int GetFileCreateTime()//used for randomness in session 
-{
-	wchar_t szPath[MAX_PATH];
-	bool ret = false;
-	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)) == 0) wprintf(L"GetModuleFileName failed w/err 0x%08lx\n", GetLastError());
-	RemoteDesktop::RAIIHANDLE hFile(CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL));
-	if (hFile.get_Handle() == INVALID_HANDLE_VALUE) return 0;
-
-	FILETIME ftCreate, ftAccess, ftWrite;
-	SYSTEMTIME stUTC, stLocal;
-	DWORD dwRet;
-
-	// Retrieve the file times for the file.
-	if (!GetFileTime(hFile.get_Handle(), &ftCreate, &ftAccess, &ftWrite))
-		return 0;
 
 
-	FileTimeToSystemTime(&ftCreate, &stUTC);
-	SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
-
-	return (int)stLocal.wMonth + (int)stLocal.wDay + (int)stLocal.wYear + (int)stLocal.wHour + (int)stLocal.wMinute + (int)stLocal.wSecond + (int)stLocal.wMilliseconds;//this is just some randomness to add into the mix
-
-}
-
-bool RemoteDesktop::RD_Server::GetProxyID(std::wstring url, std::wstring& aeskey){
-	_NetworkServer->ProxyHeader.Src_Id = _NetworkServer->ProxyHeader.Dst_Id = -1;
-	char comp[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
-	GetComputerNameA(comp, &len);
-	std::string computername(comp);
-
-	char user[UNLEN + 1];
-	len = UNLEN + 1;
-	GetUserNameA(user, &len);
-	std::string username(user);
-	auto mac = GetMAC();
-	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac + "&session=" + std::to_string(GetFileCreateTime());
-	WinHttpClient cl(url.c_str());
-
-	cl.SetAdditionalDataToSend((BYTE*)adddata.c_str(), adddata.size());
-
-	// Set request headers.
-	wchar_t szSize[50] = L"";
-	swprintf_s(szSize, L"%d", adddata.size());
-	std::wstring headers = L"Content-Length: ";
-	headers += szSize;
-	headers += L"\r\nContent-Type: application/x-www-form-urlencoded\r\n";
-	cl.SetAdditionalRequestHeaders(headers);
-
-	cl.SendHttpRequest(L"POST");
-	auto httpResponseContent = cl.GetResponseContent();
-	if (httpResponseContent.size() > 0){
-		auto splits = split(httpResponseContent, L'\n');
-		if (splits.size() == 2){
-			_NetworkServer->ProxyHeader.Src_Id = std::stoi(splits[0]);
-			aeskey = splits[1];
-			return true;
-		}
-		else return false;
-	}
-	return false;
+	_NetworkServer->ForceStop();//stop program!
 }

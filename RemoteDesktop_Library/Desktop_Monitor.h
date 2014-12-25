@@ -6,7 +6,7 @@ namespace RemoteDesktop{
 	class DesktopMonitor{
 		HDESK m_hDesk = NULL; 
 	public:
-		enum Desktops{DEFAULT, WINLOGON=2, SCREENSAVER=4, INPUT=8};
+		enum Desktops{DEFAULT=1, WINLOGON=2, SCREENSAVER=4, INPUT=8};
 
 		DesktopMonitor();
 		~DesktopMonitor();
@@ -15,7 +15,7 @@ namespace RemoteDesktop{
 		int get_ThreadDesktop() const;
 		bool Is_InputDesktopSelected() const;
 
-		std::string get_ActiveUser();
+		std::string static get_ActiveUser();
 
 	};
 };

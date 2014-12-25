@@ -10,7 +10,7 @@ namespace RemoteDesktop_CSLibrary
     public class Client
     {
         public enum Host_Type {Viewer, Server};
-        public enum Connection_Status { Pending, Connected, Paired };
+        public enum Connection_Status { Reserved, Pending, Connected, Paired };
         public int Src_ID { get; set; }
         public int Dst_ID { get; set; }
         public string Firewall_IP { get; set; }

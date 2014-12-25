@@ -34,12 +34,11 @@ void RemoteDesktop::SystemTray::Stop(){
 	if (std::this_thread::get_id() != _BackGroundThread.get_id()){
 		if (_BackGroundThread.joinable()) _BackGroundThread.join();
 	}
-
 }
 
 UINT s_uTaskbarRestart = 0;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	if (msg == WM_CREATE) s_uTaskbarRestart = RegisterWindowMessage(TEXT("TaskbarCreated"));
+	//if (msg == WM_CREATE) s_uTaskbarRestart = RegisterWindowMessage(TEXT("TaskbarCreated"));
 	RemoteDesktop::SystemTray *c = (RemoteDesktop::SystemTray *)GetWindowLong(hWnd, GWLP_USERDATA);
 	if (c == NULL)
 		return DefWindowProc(hWnd, msg, wParam, lParam);

@@ -5,9 +5,12 @@
 
 std::wstring textodisplay;
 HFONT hFont = NULL;
-
-void UpdateText(HWND hWndDlg){
-	HWND texthWnd = GetDlgItem(hWndDlg, IDC_STATIC2);
+HWND DiagHwnd = NULL;
+bool RemoteDesktop::ReverseConnectID_DialogOpen(){
+	return DiagHwnd != NULL;
+}
+void UpdateText(){
+	HWND texthWnd = GetDlgItem(DiagHwnd, IDC_STATIC2);
 	if (hFont != NULL) DeleteObject(hFont);
 	hFont = NULL;
 	hFont = CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, \
@@ -17,10 +20,8 @@ void UpdateText(HWND hWndDlg){
 	if (texthWnd)
 	{
 		SetWindowText(texthWnd, textodisplay.c_str()); 
-		SendDlgItemMessage(hWndDlg, IDC_STATIC2, WM_SETFONT, (WPARAM)hFont, TRUE);
+		SendDlgItemMessage(DiagHwnd, IDC_STATIC2, WM_SETFONT, (WPARAM)hFont, TRUE);
 	}
-
-
 }
 LRESULT CALLBACK DlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
@@ -28,8 +29,8 @@ LRESULT CALLBACK DlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 	{
 
 	case WM_INITDIALOG:
-		UpdateText(hWndDlg);
-	
+		DiagHwnd = hWndDlg;
+		UpdateText();
 		return TRUE;
 	case WM_COMMAND:
 		switch (wParam)
@@ -43,8 +44,14 @@ LRESULT CALLBACK DlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 	return FALSE;
 }
-
+void RemoteDesktop::CloseReverseConnectID_Dialog(){
+	EndDialog(DiagHwnd, 0);
+	DiagHwnd = NULL;
+	if (hFont != NULL) DeleteObject(hFont);
+	hFont = NULL;
+}
 void RemoteDesktop::ShowReverseConnectID_Dialog(int id){
+
 	textodisplay = std::wstring(L"Please, give this number to your technician: ");
 	textodisplay += std::to_wstring(id);
 

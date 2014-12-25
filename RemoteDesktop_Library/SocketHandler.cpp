@@ -66,6 +66,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int ds
 		char aes[48];
 		std::string tmpaes = ws2s(aeskey);
 		hex2bin(tmpaes.c_str(), aes);
+
 		_Encyption.set_AES_Key(aes);
 	}
 	else State = PEER_STATE_EXCHANGING_KEYS;
@@ -97,7 +98,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 		ShrinkBuffer(_SendCompressionBuffer, STARTBUFFERSIZE);
 	}
 
-	auto sendsize = sizeof(Packet_Encrypt_Header) + sizeof(Packet_Header) + Compression_Handler::CompressionBound(msg.payloadlength()) + IVSIZE;//max possible size needed
+	auto sendsize = sizeof(Packet_Encrypt_Header) + sizeof(Packet_Header) + Compression_Handler::CompressionBound(msg.payloadlength()) + IVSIZE*2;//max possible size needed
 	if (sendsize > MAXMESSAGESIZE) return _Disconnect();
 	if (sendsize >= _SendBuffer.capacity()){
 		_SendBuffer.reserve(sendsize);

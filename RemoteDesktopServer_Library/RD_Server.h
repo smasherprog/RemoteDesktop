@@ -3,7 +3,7 @@
 #include <memory>
 #include <mutex>
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
-
+#include <thread>
 
 namespace RemoteDesktop{
 	class ScreenCapture;
@@ -53,6 +53,8 @@ namespace RemoteDesktop{
 		void _OnClipboardChanged(const Clipboard_Data& c);
 
 		bool _RunningAsService = false;
+		bool _RunningReverseProxy = false;
+
 		RAIIHANDLE _CADEventHandle;
 		RAIIHANDLE _SelfRemoveEventHandle;
 		bool _RemoveOnExit = false;
@@ -65,7 +67,7 @@ namespace RemoteDesktop{
 		void OnDisconnect(std::shared_ptr<SocketHandler>& sh);
 		void OnConnect(std::shared_ptr<SocketHandler>&  sh);
 		void OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>&  sh) ;
-		void Listen(unsigned short port, std::wstring host = L"", std::wstring proxy = L"");
+		void Listen(unsigned short port, std::wstring host = L"", bool reverseconnecttoproxy=false);
 
 	
 	};

@@ -34,13 +34,13 @@
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -85,6 +85,11 @@
             this.columnHeader4.Text = "User";
             this.columnHeader4.Width = 50;
             // 
+            // columnHeader8
+            // 
+            this.columnHeader8.Text = "< ----- >";
+            this.columnHeader8.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
             // columnHeader5
             // 
             this.columnHeader5.Text = "ID";
@@ -98,6 +103,10 @@
             // 
             this.columnHeader7.Text = "Computer";
             this.columnHeader7.Width = 109;
+            // 
+            // columnHeader9
+            // 
+            this.columnHeader9.Text = "User";
             // 
             // contextMenuStrip1
             // 
@@ -113,15 +122,6 @@
             this.toolStripMenuItem1.Size = new System.Drawing.Size(119, 22);
             this.toolStripMenuItem1.Text = "Connect";
             this.toolStripMenuItem1.Click += new System.EventHandler(this.toolStripMenuItem1_Click);
-            // 
-            // columnHeader8
-            // 
-            this.columnHeader8.Text = "< ----- >";
-            this.columnHeader8.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // columnHeader9
-            // 
-            this.columnHeader9.Text = "User";
             // 
             // ProxyClients
             // 

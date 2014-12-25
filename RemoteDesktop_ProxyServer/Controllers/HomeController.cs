@@ -47,6 +47,7 @@ namespace RemoteDesktop_ProxyServer.Controllers
         }
         public ActionResult GetID(string computername, string username, string mac, int session)
         {
+            Debug.WriteLine("Received GetID request " + computername + "  " + username + "  " + mac + "  " + session);
             var c = RemoteDesktop_ProxyServer.Signalr.ProxyWatcher.ReserveID(GetIP4Address(), computername, username, mac, session);
             if (c == null) return Content("");
             var st = c.Src_ID.ToString() + "\n";

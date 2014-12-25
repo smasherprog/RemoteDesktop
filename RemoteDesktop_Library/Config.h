@@ -8,7 +8,8 @@
 // Service start options.
 #define SERVICE_START_TYPE       SERVICE_DEMAND_START
 #define DEFAULTPORT 443
-#define DEFAULTPROXY L"127.0.0.1"//this should be the ip address or hostname of the proxy server to initiate a reverse connection with..
+#define DEFAULTPROXY L"localhost"//this should be the ip address or hostname of the proxy server to initiate a reverse connection with..
+#define DEFAULTPROXYGETSESSIONURL L"http://localhost:1466/Home/GetID"//this should be the ip address or hostname of the proxy server to initiate a reverse connection with..
 
 
 #endif

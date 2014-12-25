@@ -13,6 +13,17 @@ RemoteDesktop::DesktopMonitor::~DesktopMonitor(){
 	if (m_hDesk != NULL)CloseDesktop(m_hDesk);
 }
 
+std::string RemoteDesktop::DesktopMonitor::get_ActiveUser(){
+	char* ptr = NULL;
+	DWORD size = 0;
+	if (WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTSGetActiveConsoleSessionId(), WTS_INFO_CLASS::WTSUserName, &ptr, &size)){
+		auto name = std::string(ptr);
+		WTSFreeMemory(ptr);
+		return name;
+	}
+	return "";
+}
+
 HDESK Switch_to_Desktop(int desired_desktop, HDESK currentdesk){
 	HDESK desktop = nullptr;
 	auto desiredaccess = DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW | DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL | DESKTOP_WRITEOBJECTS | DESKTOP_READOBJECTS | DESKTOP_SWITCHDESKTOP | GENERIC_WRITE;
@@ -22,7 +33,9 @@ HDESK Switch_to_Desktop(int desired_desktop, HDESK currentdesk){
 	else {
 		std::string name = "default";
 		if (desired_desktop & RemoteDesktop::DesktopMonitor::Desktops::WINLOGON) name = "winlogon";
-		else if (desired_desktop & RemoteDesktop::DesktopMonitor::Desktops::SCREENSAVER) name = "screen-saver";
+		else if (desired_desktop & RemoteDesktop::DesktopMonitor::Desktops::SCREENSAVER){
+			name = "screen-saver";
+		}
 		desktop = OpenDesktopA(name.c_str(), 0, FALSE, desiredaccess);
 	}
 
@@ -39,18 +52,8 @@ HDESK Switch_to_Desktop(int desired_desktop, HDESK currentdesk){
 }
 
 
-std::string RemoteDesktop::DesktopMonitor::get_ActiveUser(){
-	char* ptr = NULL;
-	DWORD size = 0;
-	if (WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTSGetActiveConsoleSessionId(), WTS_INFO_CLASS::WTSUserName, &ptr, &size)){
-		auto name = std::string(ptr);
-		WTSFreeMemory(ptr);
-		return name;
-	}
-	return "";
-}
 int RemoteDesktop::DesktopMonitor::get_InputDesktop() const{
-	RemoteDesktop::RAIIHDESKTOP inputdesktop(OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS));
+	RemoteDesktop::RAIIHDESKTOP inputdesktop(OpenInputDesktop(0, FALSE, GENERIC_READ));
 	if (inputdesktop.get_Handle() == NULL) return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
 
 	DWORD dummy;
