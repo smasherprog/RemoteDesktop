@@ -95,6 +95,12 @@
     <Compile Include="Connecting.Designer.cs">
       <DependentUpon>Connecting.cs</DependentUpon>
     </Compile>
+    <Compile Include="FileDownload.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="FileDownload.Designer.cs">
+      <DependentUpon>FileDownload.cs</DependentUpon>
+    </Compile>
     <Compile Include="ImageSettings.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -126,6 +132,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Connecting.resx">
       <DependentUpon>Connecting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileDownload.resx">
+      <DependentUpon>FileDownload.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ImageSettings.resx">
       <DependentUpon>ImageSettings.cs</DependentUpon>

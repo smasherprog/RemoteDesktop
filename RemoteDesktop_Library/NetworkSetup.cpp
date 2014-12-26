@@ -114,7 +114,7 @@ std::string RemoteDesktop::GetMAC(){
 		free(AdapterInfo);
 		AdapterInfo = (IP_ADAPTER_INFO *)malloc(dwBufLen);
 	}
-	char mac[20];
+	char mac[24];
 	std::string macs;
 	if (GetAdaptersInfo(AdapterInfo, &dwBufLen) == NO_ERROR) {
 		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;// Contains pointer to current adapter info

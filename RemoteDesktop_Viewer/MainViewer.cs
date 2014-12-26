@@ -62,8 +62,6 @@ namespace RemoteDesktop_Viewer
         [DllImport(Settings.DLL_Name)]
         static extern void SendRemoveService(IntPtr client);
 
-        [DllImport(Settings.DLL_Name, CharSet = CharSet.Ansi)]
-        static extern void SendFile(IntPtr client, string absolute_path, string relative_path);
         [DllImport(Settings.DLL_Name)]
         static extern Traffic_Stats get_TrafficStats(IntPtr client);
 
@@ -87,10 +85,7 @@ namespace RemoteDesktop_Viewer
         private _OnDisplayChanged OnDisplayChanged_CallBack;
 
         private IntPtr _Client = IntPtr.Zero;
-        private object _PendingFiles_Lock = new object();
-        private List<List<string>> _PendingFiles = new List<List<string>>();
-        private bool Running = false;
-        private System.Threading.Thread _FileSendingThread = null;
+
         private System.Timers.Timer _TrafficTimer;
         private string _Host_Address;
 
@@ -98,6 +93,8 @@ namespace RemoteDesktop_Viewer
 
         public string Host_Address { get { return _Host_Address; } }
         InputListener _InputListener = null;
+        private List<FileDownload> _FileDownloadControls = new List<FileDownload>();
+
         public MainViewer()
         {
             InitializeComponent();
@@ -120,7 +117,7 @@ namespace RemoteDesktop_Viewer
             OnConnectingAttempt_CallBack = OnConnectingAttempt;
 
             _Client = Create_Client(viewPort1.Handle, OnConnect_CallBack, OnDisconnect_CallBack, OnCursorChanged_CallBack, OnDisplayChanged_CallBack, OnConnectingAttempt_CallBack);
-            Running = true;
+
 
             button3.MouseEnter += button_MouseEnter;
             button3.MouseLeave += button_MouseLeave;
@@ -150,13 +147,12 @@ namespace RemoteDesktop_Viewer
 
             this.UIThread(() =>
             {
-                if (_Proxyd_Client != null)
+                if(_Proxyd_Client != null)
                 {
-                    this.Text = "Connected to Proxy: " + _Host_Address + ":443 --> "+_Proxyd_Client.ComputerName + ":" + _Proxyd_Client.UserName +" Out: " + FormatBytes(traffic.CompressedSendBPS) + "/s In: " + FormatBytes(traffic.CompressedRecvBPS) + "/s";
-                }
-                else
+                    this.Text = "Connected to Proxy: " + _Host_Address + ":443 --> " + _Proxyd_Client.ComputerName + ":" + _Proxyd_Client.UserName + " Out: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedSendBPS) + "/s In: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedRecvBPS) + "/s";
+                } else
                 {
-                    this.Text = "Connected to: " + _Host_Address + ":443,  Out: " + FormatBytes(traffic.CompressedSendBPS) + "/s In: " + FormatBytes(traffic.CompressedRecvBPS) + "/s";
+                    this.Text = "Connected to: " + _Host_Address + ":443,  Out: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedSendBPS) + "/s In: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedRecvBPS) + "/s";
                 }
             });
         }
@@ -166,12 +162,10 @@ namespace RemoteDesktop_Viewer
         {
             // If the data is a file or a bitmap, display the copy cursor. 
             if(e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
                 e.Effect = DragDropEffects.Copy;
-            } else
-            {
+            else
                 e.Effect = DragDropEffects.None;
-            }
+
         }
         private void OnCursorChanged(int c_type)
         {
@@ -210,130 +204,36 @@ namespace RemoteDesktop_Viewer
         }
         private void Form1_DragDrop(object sender, DragEventArgs e)
         {
-            lock(_PendingFiles_Lock)
-            {
-                var li = new List<string>();
-                foreach(var item in (string[])e.Data.GetData(DataFormats.FileDrop))
-                    AddFileOrDirectory(item, li);
-                _PendingFiles.Add(li);
-                if(_FileSendingThread == null)
-                {
-                    _FileSendingThread = new System.Threading.Thread(new System.Threading.ThreadStart(SendFilesProc));
-                    _FileSendingThread.Start();
-                }
-
-            }
+            var f = new FileDownload((string[])e.Data.GetData(DataFormats.FileDrop), _Client);
+            f.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            f.Left = this.Size.Width - f.Size.Width - 25;
+            f.Top = 5;
+            f.OnDoneEvent += f_OnDoneEvent;
+            f.Show();
+            Controls.Add(f);
+            f.BringToFront();
+            viewPort1.SendToBack();
+            _FileDownloadControls.Add(f);
         }
 
-        private void AddFileOrDirectory(string searchpath, List<string> filelist)
+        void f_OnDoneEvent(FileDownload f)
         {
-            if(Directory.Exists(searchpath))
+            f.UIThread(() =>
             {
-                try
-                {
-                    var di = new DirectoryInfo(searchpath);
-                    filelist.Add(searchpath);
-                    foreach(var item in di.GetDirectories())
-                    {
-                        AddFileOrDirectory(item.FullName, filelist);
-                    }
-                    foreach(var item in di.GetFiles())
-                    {
-                        AddFileOrDirectory(item.FullName, filelist);
-                    }
-                } catch(Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                }
-            } else
-            {
-                try
-                {
-                    filelist.Add(searchpath);
-                } catch(Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                }
-            }
+                f.Hide();
+                Controls.Remove(f);
+                _FileDownloadControls.Remove(f);
+            });
         }
 
-        private void SendFilesProc()
-        {
-            var rootpath = "";
-            var startedbatch = false;
-            while(Running)
-            {
-                lock(_PendingFiles_Lock)
-                {
-                    _PendingFiles.RemoveAll(a => a.Count == 0);//make sure there are no empty lists in here that would just be silly
-                    if(_PendingFiles.Any(a => a.Count > 0))
-                    {
-                        if(!startedbatch)
-                            rootpath = GetRootPath(_PendingFiles.FirstOrDefault());
-                        if(string.IsNullOrEmpty(rootpath))
-                        {//something is messed up with this file path.. get it out and move on
-                            rootpath = "";
-                            startedbatch = false;
-                            _PendingFiles.RemoveAt(0);
-                            continue;// continue loop
-                        }
-                        startedbatch = true;
-                        var filelist = _PendingFiles.FirstOrDefault();
-                        var dt = DateTime.Now;//send for 30 ms, then goto sleep
-                        int count = 0;
-                        for(var i = 0; i < filelist.Count && (DateTime.Now - dt).TotalMilliseconds < 30; i++)
-                        {
-                            var tempfile = filelist[i].Remove(0, rootpath.Length);
-                            SendFile(_Client, filelist[i], tempfile);
-                            count++;
-                        }
-                        filelist.RemoveRange(0, count);
-                        if(!filelist.Any())
-                            _PendingFiles.Remove(filelist);//remove since there is nothing left to do
-                    } else
-                    {
-                        rootpath = "";
-                        startedbatch = false;
-                    }
-                }
-                System.Threading.Thread.Sleep(30);
-            }
-        }
-        private string GetRootPath(List<string> p)
-        {
-            var firstpath = p.FirstOrDefault();
-            if(string.IsNullOrEmpty(firstpath))
-                return "";
-            if(Directory.Exists(firstpath))
-            {
-                try
-                {
-                    var di = new DirectoryInfo(firstpath);
-                    return di.FullName.Substring(0, di.FullName.Length - di.Name.Length);
-                } catch(Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                }
-            } else
-            {
-                try
-                {
-                    var di = new FileInfo(firstpath);
-                    return di.FullName.Substring(0, di.FullName.Length - di.Name.Length);
-
-                } catch(Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                }
-            }
-            return "";
-        }
         public void Connect(string proxy_host, RemoteDesktop_CSLibrary.Client c)
         {
             _Host_Address = proxy_host;
             _Proxyd_Client = c;
-            if(c==null) Connect(_Client, proxy_host, "443", -1, "");
-            else Connect(_Client, proxy_host, "443", c.Src_ID, c.AES_Session_Key);
+            if(c == null)
+                Connect(_Client, proxy_host, "443", -1, "");
+            else
+                Connect(_Client, proxy_host, "443", c.Src_ID, c.AES_Session_Key);
         }
         static int counter = 0;
         static DateTime timer = DateTime.Now;
@@ -387,10 +287,10 @@ namespace RemoteDesktop_Viewer
         void MainViewer_FormClosed(object sender, FormClosedEventArgs e)
         {
             StopTrafficTimer();
-            Running = false;
-            if(_FileSendingThread != null)
-                _FileSendingThread.Join(5000);
-            _FileSendingThread = null;
+
+            foreach(var item in _FileDownloadControls)
+                item.Running = false;
+            _FileDownloadControls.Clear();
             if(_Client != IntPtr.Zero)
                 Destroy_Client(_Client);
             _Client = IntPtr.Zero;
@@ -411,19 +311,7 @@ namespace RemoteDesktop_Viewer
         {
             SendCAD(_Client);
         }
-        private static string FormatBytes(long bytes)
-        {
-            const long scale = 1024;
-            string[] orders = new string[] { "TB", "GB", "MB", "KB", "Bytes" };
-            var max = (long)Math.Pow(scale, (orders.Length - 1));
-            foreach(string order in orders)
-            {
-                if(bytes > max)
-                    return string.Format("{0:##.##} {1}", Decimal.Divide(bytes, max), order);
-                max /= scale;
-            }
-            return "0 Bytes";
-        }
+
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -432,12 +320,12 @@ namespace RemoteDesktop_Viewer
             {
                 SendRemoveService(_Client);
             }
-                
+
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var f = new ImageSettings(); 
+            var f = new ImageSettings();
             f.OnSettingsChangedEvent += OnImageSettingsChanged;
             f.ShowDialog(this);
         }
