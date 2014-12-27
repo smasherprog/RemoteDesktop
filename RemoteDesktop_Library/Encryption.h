@@ -18,7 +18,7 @@ namespace RemoteDesktop{
 		void Init(bool client);
 		bool Agree(const char *staticOtherPublicKey, const char *ephemeralOtherPublicKey, bool usepreaes);
 		bool Decrypt(char* in_data, char* out_data, int insize, char* iv);
-		int Ecrypt(char* in_data, char* out_data, int insize, char* iv);//size will be rounded up to nearest 16 byte chunk. Encryption is in place!
+		int Ecrypt(char* in_data, char* out_data, int insize, int outsize, char* iv);//size will be rounded up to nearest 16 byte chunk. Encryption is in place!
 
 		int get_StaticPublicKeyLength() const;
 		int get_EphemeralPublicKeyLength() const;

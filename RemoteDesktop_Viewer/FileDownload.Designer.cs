@@ -53,7 +53,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(350, 24);
+            this.label2.Location = new System.Drawing.Point(347, 24);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(30, 13);
             this.label2.TabIndex = 2;
@@ -77,7 +77,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.progressBar1);
             this.Name = "FileDownload";
-            this.Size = new System.Drawing.Size(396, 70);
+            this.Size = new System.Drawing.Size(414, 70);
             this.ResumeLayout(false);
             this.PerformLayout();
 

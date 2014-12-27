@@ -51,6 +51,11 @@ namespace RemoteDesktop{
 		void _Handle_ConnectionInfo(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
 
 		void _OnClipboardChanged(const Clipboard_Data& c);
+		void _CreateSystemMenu();
+		void _TriggerShutDown();
+		void _ShowAboutDialog();
+
+		void _TriggerShutDown_and_RemoveSelf();
 
 		bool _RunningAsService = false;
 		bool _RunningReverseProxy = false;

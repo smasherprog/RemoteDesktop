@@ -34,14 +34,14 @@ namespace RemoteDesktop_Viewer.Code
                 {
                     using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.URIScheme + Settings.ProxyServer))
                     {
-                       
+                        connection.TransportConnectTimeout = new TimeSpan(0, 0, 4);
                         IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
                         connection.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
                         connection.Error += connection_Error;
                         DateTime dt = DateTime.Now;
-                        connection.Start().Wait(5000);
-                        //if an error is thrown, it will set authenticated to false. If the client waits toe 5 seconds, it timed out and authenticated needs to be false
-                        if((DateTime.Now - dt).TotalMilliseconds >= 4500) { _Authenticated = false; } else { _Authenticated = true; }
+                        connection.Start().Wait(2000);
+                        //if an error is thrown, it will set authenticated to false. If the client waits toe 2 seconds, it timed out and authenticated needs to be false
+                        if((DateTime.Now - dt).TotalMilliseconds >= 2500) { _Authenticated = false; } else { _Authenticated = true; }
                         return _Authenticated;
                     }
                 } catch(Exception e)

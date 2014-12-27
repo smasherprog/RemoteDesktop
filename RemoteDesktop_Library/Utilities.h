@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <fstream>
 #include <vector>
+#include <codecvt>
 
 inline int roundUp(int numToRound, int multiple)//only for multiples of 2
 {
@@ -242,23 +243,29 @@ inline int char2int(char input)
 }
 // This function assumes src to be a zero terminated sanitized string with
 // an even number of [0-9a-f] characters, and target to be sufficiently large
-inline void hex2bin(const char* src, char* target)
+inline void hex2bin(const char* src, char* target, char* end)  //[target, end)
 {
 	while (*src && src[1])
 	{
 		*(target++) = char2int(*src) * 16 + char2int(src[1]);
 		src += 2;
 	}
-}
-inline std::string ws2s(const std::wstring& s)
-{
-	int slength = (int)s.length() + 1;
-	auto len = WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, 0, 0, 0, 0);
-	std::vector<char> buf;
-	buf.resize(len);
-	WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, buf.data(), len, 0, 0);
-	std::string r(buf.data());
-	return r;
+	assert(target < end);
 }
 
+inline std::wstring s2ws(const std::string& str)
+{
+	typedef std::codecvt_utf8<wchar_t> convert_typeX;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+	return converterX.from_bytes(str);
+}
+
+inline std::string ws2s(const std::wstring& wstr)
+{
+	typedef std::codecvt_utf8<wchar_t> convert_typeX;
+	std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+	return converterX.to_bytes(wstr);
+}
 #endif

@@ -6,8 +6,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_Library", "Re
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cryptlib", "cryptopp\cryptlib.vcxproj", "{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RSAKeyGen", "RSAKeyGen\RSAKeyGen.vcxproj", "{7F5993E0-F97D-4084-A95C-B799F7D199D6}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_ServerP2P", "RemoteDesktop_ServerP2P\RemoteDesktop_ServerP2P.vcxproj", "{A7E8BD14-EB3F-4CEA-876B-790218414B70}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_ServerProxy", "RemoteDesktop_ServerProxy\RemoteDesktop_ServerProxy.vcxproj", "{0A233DF0-1595-4E67-A13B-791A5247F0AB}"
@@ -41,14 +39,6 @@ Global
 		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Release|Win32.Build.0 = Release|Win32
 		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Release|x64.ActiveCfg = Release|x64
 		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Release|x64.Build.0 = Release|x64
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Debug|Win32.Build.0 = Debug|Win32
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Debug|x64.ActiveCfg = Debug|x64
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Debug|x64.Build.0 = Debug|x64
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Release|Win32.ActiveCfg = Release|Win32
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Release|Win32.Build.0 = Release|Win32
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Release|x64.ActiveCfg = Release|x64
-		{7F5993E0-F97D-4084-A95C-B799F7D199D6}.Release|x64.Build.0 = Release|x64
 		{A7E8BD14-EB3F-4CEA-876B-790218414B70}.Debug|Win32.ActiveCfg = Debug|Win32
 		{A7E8BD14-EB3F-4CEA-876B-790218414B70}.Debug|Win32.Build.0 = Debug|Win32
 		{A7E8BD14-EB3F-4CEA-876B-790218414B70}.Debug|x64.ActiveCfg = Debug|x64

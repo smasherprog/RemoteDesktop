@@ -69,6 +69,7 @@ namespace RemoteDesktop_Viewer
                     {
                         _Hub = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.URIScheme + Settings.ProxyServer);
                         _ProxyHub = _Hub.CreateHubProxy(Settings.SignalRHubName);
+                        _Hub.TransportConnectTimeout = new TimeSpan(0, 0, 4);
                         _ProxyHub.On<List<Client>>("AvailableClients", ReceivedClients);
                         _Hub.Error += _Hub_Error;
                         if (ProxyAuth.UsingWindowsAuth)
@@ -80,7 +81,7 @@ namespace RemoteDesktop_Viewer
                             _Hub.CookieContainer = new CookieContainer();
                             _Hub.CookieContainer.Add(_ProxyAuth.AuthCookie);
                         }
-                        _Hub.Start().Wait();
+                        _Hub.Start();
                     }
                 }
             }

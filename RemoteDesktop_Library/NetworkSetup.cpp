@@ -32,7 +32,7 @@ void RemoteDesktop::PrimeNetwork(unsigned short int port){
 	service.sin_port = htons(port);
 	service.sin_addr.s_addr = INADDR_ANY;
 
-	if (bind(listensocket, (SOCKADDR *)& service, sizeof(SOCKADDR)) == 0) {
+	if (bind(listensocket, (SOCKADDR *)& service, sizeof(service)) == 0) {
 		std::chrono::milliseconds dura(200);
 		std::this_thread::sleep_for(dura);
 		closesocket(listensocket);
@@ -89,12 +89,12 @@ SOCKET RemoteDesktop::Connect(std::wstring port, std::wstring host){
 	if (ConnectSocket == INVALID_SOCKET) return INVALID_SOCKET;
 	StandardSocketSetup(ConnectSocket);
 
-	auto newevent = WSACreateEvent();
-	WSAEventSelect(ConnectSocket, newevent, FD_CONNECT);
-	auto Index = WSAWaitForMultipleEvents(1, &newevent, TRUE, 1000, FALSE);
+	RAIIHANDLE newevent(WSACreateEvent());
+
+	WSAEventSelect(ConnectSocket, newevent.get_Handle(), FD_CONNECT);
+	auto Index = WaitForSingleObject(newevent.get_Handle(), 1000);
 	WSANETWORKEVENTS NetworkEvents;
-	WSAEnumNetworkEvents(ConnectSocket, newevent, &NetworkEvents);
-	WSACloseEvent(newevent);
+	WSAEnumNetworkEvents(ConnectSocket, newevent.get_Handle(), &NetworkEvents);
 
 	if ((Index == WSA_WAIT_FAILED) || (Index == WSA_WAIT_TIMEOUT)) {
 		DEBUG_MSG("Connect Failed!");

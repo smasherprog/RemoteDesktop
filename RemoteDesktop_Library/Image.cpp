@@ -44,6 +44,7 @@ void RemoteDesktop::Image::Compress(){
 	if (tjCompress2(_jpegCompressor.get(), data, width, 0, height, TJPF_BGR, &ptr, &_jpegSize, set, Image_Settings::Quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) {
 		DEBUG_MSG("Err msg %", tjGetErrorStr());
 	}
+	assert(_jpegSize <= compressBuffer.capacity());
 	size_in_bytes = _jpegSize;
 	memcpy(data, ptr, size_in_bytes);
 

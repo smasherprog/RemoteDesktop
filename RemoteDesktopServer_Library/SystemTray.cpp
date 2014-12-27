@@ -4,8 +4,7 @@
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 
 #define ID_TRAY_APP_ICON    1001
-#define ID_TRAY_EXIT        1002
-#define ID_TRAY_EXIT_REMOVE	1003
+#define ID_TRAY_START       1002
 #define ID_TRAY_BALLOON		1004
 #define ID_TRAY_APP_TIMER   1005
 #define WM_SYSICON          (WM_USER + 1)
@@ -26,7 +25,8 @@ void RemoteDesktop::SystemTray::_Cleanup(){
 		memset(&notifyIconData, 0, sizeof(notifyIconData));
 	}
 }
-void RemoteDesktop::SystemTray::Start(){
+void RemoteDesktop::SystemTray::Start(Delegate<void> readycb){
+	IconReadyCallback = readycb;
 	_BackGroundThread = std::thread(&SystemTray::_Run, this);
 }
 void RemoteDesktop::SystemTray::Stop(){
@@ -38,7 +38,7 @@ void RemoteDesktop::SystemTray::Stop(){
 
 UINT s_uTaskbarRestart = 0;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	//if (msg == WM_CREATE) s_uTaskbarRestart = RegisterWindowMessage(TEXT("TaskbarCreated"));
+	if (msg == WM_CREATE) s_uTaskbarRestart = RegisterWindowMessage(TEXT("TaskbarCreated"));
 	RemoteDesktop::SystemTray *c = (RemoteDesktop::SystemTray *)GetWindowLong(hWnd, GWLP_USERDATA);
 	if (c == NULL)
 		return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -47,6 +47,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 
 	if (_TrayIconCreated) return;
+	CallBacks.clear();//always clear any callbacks before creation of the icon
 	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
 	notifyIconData.hWnd = hWnd;
 	notifyIconData.uID = ID_TRAY_APP_ICON;
@@ -60,11 +61,17 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 	if (Shell_NotifyIcon(NIM_ADD, &notifyIconData)){
 		_TrayIconCreated = true;
 	}
-
+	if (IconReadyCallback) IconReadyCallback();//let creator know the items can be added to the menu
 }
 
 
 LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	if (msg == s_uTaskbarRestart){
+		_TrayIconCreated = false;
+		if (FindWindow(L"Shell_TrayWnd", 0)){
+			_CreateIcon(Hwnd);
+		}
+	}
 	switch (msg){
 	case(WM_TIMER) :
 		if (FindWindow(L"Shell_TrayWnd", 0)){
@@ -88,16 +95,15 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 			// TrackPopupMenu blocks the app until TrackPopupMenu returns
 			UINT clicked = TrackPopupMenu(Hmenu, TPM_RETURNCMD | TPM_NONOTIFY, curPoint.x, curPoint.y, 0, hWnd, NULL);
 			SendMessage(hWnd, WM_NULL, 0, 0); // send benign message to window to make sure the menu goes away.
-			if (clicked == ID_TRAY_EXIT || clicked == ID_TRAY_EXIT_REMOVE){
-				PostMessage(Hwnd, WM_QUIT, 0, 0);
+			for (auto i = 0; i < CallBacks.size(); i++){
+				if (clicked == ID_TRAY_START + i){
+					CallBacks[i]();//call the callback
+					break;//  no more searching
+				}
 			}
 		}
-		break;
+					 break;
 
-	}
-	if (msg == s_uTaskbarRestart){
-		_TrayIconCreated = false;
-		_CreateIcon(Hwnd);
 	}
 	return DefWindowProc(hWnd, msg, msg, lParam);
 }
@@ -117,10 +123,6 @@ void RemoteDesktop::SystemTray::_Run(){
 	else 	return DEBUG_MSG("Error %", GetLastError());
 
 	Hmenu = CreatePopupMenu();
-	AppendMenu(Hmenu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit"));
-	AppendMenu(Hmenu, MF_STRING, ID_TRAY_EXIT_REMOVE, TEXT("Exit and Remove"));
-
-	//_CreateIcon(Hwnd);
 
 	ShowWindow(Hwnd, SW_HIDE);
 	SetWindowLongPtr(Hwnd, GWLP_USERDATA, (LONG_PTR)this);
@@ -133,8 +135,12 @@ void RemoteDesktop::SystemTray::_Run(){
 	}
 
 }
-
+void RemoteDesktop::SystemTray::AddMenuItem(const wchar_t* itemname, Delegate<void> cb){
+	AppendMenu(Hmenu, MF_STRING, ID_TRAY_START + CallBacks.size(), itemname);
+	CallBacks.push_back(cb);
+}
 void RemoteDesktop::SystemTray::Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout){
+	if (!_TrayIconCreated) return;
 	NOTIFYICONDATA ni;
 	memset(&ni, 0, sizeof(NOTIFYICONDATA));
 	ni.cbSize = sizeof(NOTIFYICONDATA);

@@ -136,13 +136,14 @@ bool RemoteDesktop::Encryption::Decrypt(char* in_data, char* out_data, int insiz
 	return true;
 }
 
-int RemoteDesktop::Encryption::Ecrypt(char* in_data, char* out_data, int insize, char* iv){
+int RemoteDesktop::Encryption::Ecrypt(char* in_data, char* out_data, int insize, int outsize, char* iv){
 	GCM<AES>::Encryption Encryptor;
 	try{// Crypto++ loves throwing stuff around! If any errors occur, it likely that something is seriously screwed up on our part
 		_Encryption_Impl->rnd.GenerateBlock((byte*)iv, AES::BLOCKSIZE);
 		Encryptor.SetKeyWithIV(_Encryption_Impl->AESKey, SHA256::DIGESTSIZE, (byte*)iv);
 		auto bytes = roundUp(insize, AES::BLOCKSIZE);
 		Encryptor.ProcessData((byte*)out_data, (byte*)in_data, bytes);// number of bytes to encrypt is always 16 less than the length
+		assert(outsize >= bytes);
 		return bytes;
 	}
 	catch (CryptoPP::InvalidArgument& e) {

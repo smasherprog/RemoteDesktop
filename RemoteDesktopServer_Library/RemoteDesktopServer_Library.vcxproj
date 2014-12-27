@@ -192,6 +192,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AboutDialog.h" />
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="MainServer.h" />
     <ClInclude Include="MouseCapture.h" />
@@ -209,6 +210,7 @@
     <ClInclude Include="SystemTray.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AboutDialog.cpp" />
     <ClCompile Include="BaseServer.cpp" />
     <ClCompile Include="MainServer.cpp" />
     <ClCompile Include="MouseCapture.cpp" />

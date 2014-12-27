@@ -9,7 +9,14 @@
 #define SERVICE_START_TYPE       SERVICE_DEMAND_START
 #define DEFAULTPORT 443
 #define DEFAULTPROXY L"localhost"//this should be the ip address or hostname of the proxy server to initiate a reverse connection with..
-#define DEFAULTPROXYGETSESSIONURL L"http://localhost:1466/Home/GetID"//this should be the ip address or hostname of the proxy server to initiate a reverse connection with..
+
+#define DEFAULTPROXYWEB L"localhost:1466"
+#define DEFAULTPROXYWEBAUTHPATH L"/Home/Authenticate"
+#define DEFAULTSIGNALRHUBNAME L"ProxyHub"
+#define DEFAULTURISCHEME L"http://"
+#define DEFAULTGETIDPATH L"/Home/GetID"
+
+#define DEFAULTPROXYGETSESSIONURL (std::wstring(DEFAULTURISCHEME) +  std::wstring(DEFAULTPROXYWEB) + std::wstring(DEFAULTGETIDPATH))//this should be the ip address or hostname of the proxy server to initiate a reverse connection with..
 
 
 #endif

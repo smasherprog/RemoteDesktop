@@ -15,6 +15,7 @@ int RemoteDesktop::Compression_Handler::Compress(const char* source, char* dest,
 	auto dstsize = (int*)dest;
 	auto compressedsize = LZ4_compress(source, dest + sizeof(int), inputSize);
 	*dstsize = inputSize;
+	assert(dest_size + sizeof(int) >= compressedsize);
 	return compressedsize + sizeof(int);//return new size of compressed data
 }
 int RemoteDesktop::Compression_Handler::Decompress(const char* source, char* dest, int compressedSize, int maxDecompressedSize){

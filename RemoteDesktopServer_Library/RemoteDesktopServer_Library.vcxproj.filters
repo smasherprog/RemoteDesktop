@@ -74,6 +74,9 @@
     <ClInclude Include="ProxyConnectDialog.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
+    <ClInclude Include="AboutDialog.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -118,12 +121,15 @@
     <ClCompile Include="ProxyConnectDialog.cpp">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
+    <ClCompile Include="AboutDialog.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico" />
-    <Image Include="..\..\..\..\Desktop\logo.bmp" />
+    <Image Include="logo.bmp" />
   </ItemGroup>
 </Project>

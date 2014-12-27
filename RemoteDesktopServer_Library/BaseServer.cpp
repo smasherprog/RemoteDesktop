@@ -60,6 +60,7 @@ void RemoteDesktop::BaseServer::SendToAll(NetworkMessages m, NetworkMsg& msg){
 }
 
 void RemoteDesktop::BaseServer::_ListenWrapper(unsigned short port, std::wstring host){
+	_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 	DEBUG_MSG("_ListenWrapper thread id %", std::this_thread::get_id());
 	if (host.size() < 2){
 		if (!_Listen(port)){
@@ -191,7 +192,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 	service.sin_port = htons(port);
 	service.sin_addr.s_addr = INADDR_ANY;
 
-	if (bind(listensocket, (SOCKADDR *)& service, sizeof(SOCKADDR)) != 0) {
+	if (bind(listensocket, (SOCKADDR *)& service, sizeof(service)) != 0) {
 		closesocket(listensocket);
 		return false;
 	}
@@ -199,12 +200,11 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 	auto newevent = WSACreateEvent();
 	WSAEventSelect(listensocket, newevent, FD_ACCEPT | FD_CLOSE);
 
-	if (listen(listensocket, 1) != 0) {
+	if (listen(listensocket, 10) != 0) {
 		closesocket(listensocket);
 		return false;
 	}
 	EventArray.push_back(newevent);
-
 	SocketArray.push_back(std::make_shared<SocketHandler>(listensocket, false));
 
 	WSANETWORKEVENTS NetworkEvents;
@@ -224,7 +224,9 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 
 			else if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				if (SocketArray[Index]->Receive() == Network_Return::FAILED) _OnDisconnectHandler(SocketArray[Index].get());
+				if (SocketArray[Index]->Receive() == Network_Return::FAILED) {
+					_OnDisconnectHandler(SocketArray[Index].get());
+				}
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				if (Index == 0) {//stop all processing, set running to false and next loop will fail and cleanup
@@ -234,9 +236,10 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 				_OnDisconnectHandler(SocketArray[Index].get());
 			}
 		}
-		_HandleDisconnects_DesktopSwitches();	
+		
 		if (Index == WSA_WAIT_TIMEOUT)
 		{//this will check every timeout... which is good
+			_HandleDisconnects_DesktopSwitches();
 			std::lock_guard<std::mutex> lo(_SocketArrayLock);
 			for (auto& c : SocketArray) {
 				c->CheckState();

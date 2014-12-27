@@ -84,7 +84,7 @@ namespace RemoteDesktop_Viewer
                     foreach(var item in di.GetFiles())
                     {
                         _TotalBytes_to_Transfer += item.Length;
-                        _PendingFiles.Add(new Tuple<string, long>(searchpath, item.Length));
+                        _PendingFiles.Add(new Tuple<string, long>(item.FullName, item.Length));
                     }
                 } catch(Exception e)
                 {

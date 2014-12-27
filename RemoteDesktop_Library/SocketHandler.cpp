@@ -22,7 +22,7 @@ RemoteDesktop::SocketHandler::SocketHandler(SOCKET socket, bool client){
 	_Encyption.Init(client);
 }
 void ShrinkBuffer(std::vector<char>& buff, int bytesinuse){
-	if (bytesinuse <= STARTBUFFERSIZE) buff.resize(STARTBUFFERSIZE);
+	if (bytesinuse < STARTBUFFERSIZE) buff.resize(STARTBUFFERSIZE);
 	else buff.resize(bytesinuse);
 	buff.shrink_to_fit();//shrink the vector down
 	DEBUG_MSG("Resized the Buffer Capacity now %", buff.capacity());
@@ -63,11 +63,12 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int ds
 
 	if (aeskey.size() > 1){
 		State = PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES;
-		char aes[48];
+		std::vector<char> aes;
+		aes.resize(48);
 		std::string tmpaes = ws2s(aeskey);
-		hex2bin(tmpaes.c_str(), aes);
+		hex2bin(tmpaes.c_str(), aes.data(), aes.data() + aes.size());
 
-		_Encyption.set_AES_Key(aes);
+		_Encyption.set_AES_Key(aes.data());
 	}
 	else State = PEER_STATE_EXCHANGING_KEYS;
 	if (ret == FAILED) return _Disconnect();
@@ -123,10 +124,10 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 		packetheader->PayloadLen = msg.payloadlength();//no compression, just set the payloadsize
 	}
 
-
 	auto enph = (Packet_Encrypt_Header*)_SendBuffer.data();
 
-	enph->PayloadLen = _Encyption.Ecrypt(_SendCompressionBuffer.data(), _SendBuffer.data() + sizeof(Packet_Encrypt_Header), packetheader->PayloadLen + sizeof(Packet_Header), enph->IV) + IVSIZE;
+	enph->PayloadLen = _Encyption.Ecrypt(_SendCompressionBuffer.data(), _SendBuffer.data() + sizeof(Packet_Encrypt_Header), packetheader->PayloadLen + sizeof(Packet_Header), _SendBuffer.capacity() - sizeof(Packet_Encrypt_Header),  enph->IV) + IVSIZE;
+	assert((enph->PayloadLen + sizeof(enph->PayloadLen)) <= _SendBuffer.capacity());
 	//DEBUG_MSG("Final Outbound Size: %", enph->PayloadLen);
 	if (enph->PayloadLen < 0)  return _Disconnect();
 	if (_SendLoop(_SendBuffer.data(), enph->PayloadLen + sizeof(enph->PayloadLen)) == RemoteDesktop::Network_Return::FAILED) return _Disconnect();
@@ -158,7 +159,10 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Receive(){
 	}
 	
 	auto retcode = _ReceiveLoop();
-	if (retcode== Network_Return::PARTIALLY_COMPLETED) return _Decrypt_Received_Data();
+	if (retcode == Network_Return::PARTIALLY_COMPLETED) {
+		assert(_ReceivedBufferCounter <= _ReceivedBuffer.capacity());
+		return _Decrypt_Received_Data();
+	}
 	else return Network_Return::FAILED;
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Disconnect(){
@@ -178,11 +182,12 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 		else {//enough data was received for a key exchange..
 			if (!_Encyption.Agree(_ReceivedBuffer.data() + sizeof(Proxy_Header), _ReceivedBuffer.data() + sizeof(Proxy_Header) + StaticPublicKeyLength, State == PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES)) return _Disconnect();
 			_ReceivedBufferCounter -= totalsizepending;
-			memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + totalsizepending, _ReceivedBufferCounter);//this will shift down the data 
+			if (_ReceivedBufferCounter>0) memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + totalsizepending, _ReceivedBufferCounter);//this will shift down the data 
 			State = PEER_STATE_CONNECTED;
 			if (Connected_CallBack) Connected_CallBack(this);//client is now connected
 		}
 	}
+	
 	if (_ReceivedBufferCounter > 0 && State == PEER_STATE_CONNECTED){
 		auto neededsize = NETWORKHEADERSIZE;
 		Packet_Encrypt_Header* p = nullptr;
@@ -216,12 +221,12 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 					ph->PayloadLen = beforesize;//restore
 				}
 				else if (Receive_CallBack) {
-					//DEBUG_MSG("uncompressed size %", ph->PayloadLen);
+					//DEBUG_MSG("uncompressed size % type %", ph->PayloadLen, ph->Packet_Type);
 					Traffic.UpdateRecv(ph->PayloadLen + TOTALHEADERSIZE, ph->PayloadLen + TOTALHEADERSIZE);//same size for each if no compression occurs
 					Receive_CallBack(ph, beg, this);
 				}
 				
-				_ReceivedBufferCounter -= p->PayloadLen + sizeof(p->PayloadLen);
+				_ReceivedBufferCounter -= (p->PayloadLen + sizeof(p->PayloadLen));
 				if (_ReceivedBufferCounter > 0) memmove(_ReceivedBuffer.data(), _ReceivedBuffer.data() + p->PayloadLen + sizeof(p->PayloadLen), _ReceivedBufferCounter);//this will shift down the data 
 				return _Decrypt_Received_Data();//recursive call!
 			}
