@@ -33,12 +33,19 @@ namespace RemoteDesktop{
 	struct Proxy_Header{
 		int Dst_Id = -1;
 		int Src_Id = -1;
+	};	
+	struct File_Header{
+		char RelativePath[MAX_PATH];
+		int ID = 0;
+		int ChunkSize = 0;//in bytes
 	};
 #pragma pack(pop)
+#define FILECHUNKSIZE (1024*100) // 100 KB
 #define NETWORKHEADERSIZE sizeof(Packet_Encrypt_Header)
 #define TOTALHEADERSIZE sizeof(Packet_Encrypt_Header) + sizeof(Packet_Header)
-#define MAXMESSAGESIZE 1024*1024 *500  //500 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
-#define STARTBUFFERSIZE 1024 *1024 *2
+#define MAXMESSAGESIZE (1024*1024*50)  //50 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
+#define STARTBUFFERSIZE (1024 *1024 *2)
+
 	enum NetworkMessages{
 		INVALID,
 		RESOLUTIONCHANGE,

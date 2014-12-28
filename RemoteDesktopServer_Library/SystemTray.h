@@ -15,6 +15,7 @@ namespace RemoteDesktop{
 		
 		void _Cleanup();
 		void _Run();
+		void _ShowAboutDialog();
 		void _CreateIcon(HWND hWnd);
 		std::vector<Delegate<void>> CallBacks;
 		Delegate<void> IconReadyCallback;

@@ -6,13 +6,12 @@
 #include "BaseServer.h"
 #include "SocketHandler.h"
 #include "Rect.h"
-#include "CommonNetwork.h"
+#include "..\RemoteDesktop_Library\CommonNetwork.h"
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktopServer_Library\SystemTray.h"
 
-#include "AboutDialog.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\Utilities.h"
 #include "Lmcons.h"
@@ -83,11 +82,9 @@ RemoteDesktop::RD_Server::~RD_Server(){
 void RemoteDesktop::RD_Server::_CreateSystemMenu(){
 	_SystemTray->AddMenuItem(L"Exit", DELEGATE(&RemoteDesktop::RD_Server::_TriggerShutDown, this));
 	_SystemTray->AddMenuItem(L"Exit and Remove", DELEGATE(&RemoteDesktop::RD_Server::_TriggerShutDown_and_RemoveSelf, this));
-	_SystemTray->AddMenuItem(L"About", DELEGATE(&RemoteDesktop::RD_Server::_ShowAboutDialog, this));
+
 }
-void RemoteDesktop::RD_Server::_ShowAboutDialog(){
-	//ShowAboutDialog();
-}
+
 void RemoteDesktop::RD_Server::_TriggerShutDown(){
 	_NetworkServer->GracefulStop();//this will cause the main loop to stop and the program to exit
 }
@@ -213,21 +210,21 @@ void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const
 	mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, inp.mi.mouseData, 0);
 }
 void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	unsigned char size = (unsigned char)*data;
-	data++;
-	std::string fname(data, size);
-	data += size;
+	File_Header fh;
+	assert(header->PayloadLen > sizeof(fh));
+	memcpy(&fh, data, sizeof(fh));
+	data += sizeof(fh);
+	std::string fname(fh.RelativePath);
 	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
-	int isize = 0;
-	memcpy(&isize, data, sizeof(isize));
-	data += sizeof(isize);
+
 	DEBUG_MSG("% BEG FILE: %", path.size(), path);
-	std::ofstream f(path, std::ios::binary);
-	f.write(data, isize);
+	int openoptions = std::ios::binary;
+	if (fh.ID == 0) openoptions |= std::ios::trunc;// erase everything in the file 
+	else openoptions |= std::ios::app;// append data 
+	std::ofstream f(path, openoptions);
+	f.write(data, fh.ChunkSize);
 	DEBUG_MSG("% END FILE: %", path.size(), path);
-	if (find_substr(path, std::string(".dll")) != -1){
-		DEBUG_MSG("found it");
-	}
+
 }
 
 void RemoteDesktop::RD_Server::_Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){

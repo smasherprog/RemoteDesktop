@@ -30,6 +30,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -192,7 +193,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AboutDialog.h" />
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="MainServer.h" />
     <ClInclude Include="MouseCapture.h" />
@@ -210,7 +210,6 @@
     <ClInclude Include="SystemTray.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AboutDialog.cpp" />
     <ClCompile Include="BaseServer.cpp" />
     <ClCompile Include="MainServer.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
@@ -240,6 +239,7 @@
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Image.bmp" />
     <Image Include="logo.bmp" />
     <Image Include="icon1.ico" />
   </ItemGroup>

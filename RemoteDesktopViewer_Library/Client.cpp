@@ -159,21 +159,41 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 	std::string filename = absolute_path;
 	std::string relative = relative_path;
 	if (IsFile(filename)){
-		auto fs = filesize(absolute_path);
-		if (fs <= 0) return;//file must not exist
-		NetworkMsg msg;
-		std::vector<char> data;
-		data.resize(fs);
 
-		std::ifstream in(absolute_path, std::ifstream::binary);
-		in.read(data.data(), fs);//read all the data
-		unsigned char size = relative.size();
-		msg.data.push_back(DataPackage((char*)&size, sizeof(size)));
-		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
-		int isize = data.size();
-		msg.data.push_back(DataPackage((char*)&isize, sizeof(isize)));
-		msg.data.push_back(DataPackage(data.data(), data.size()));
-		_NetworkClient->Send(NetworkMessages::FILE, msg);
+		auto total_size = filesize(absolute_path);
+		if (total_size <= 0) return;// ALL DONE!
+		File_Header fh;
+		fh.ID = 0;
+		strcpy_s(fh.RelativePath, relative_path);
+		char buffer[FILECHUNKSIZE];
+
+		size_t total_chunks = total_size / FILECHUNKSIZE;
+		size_t last_chunk_size = total_size % FILECHUNKSIZE;
+		if (last_chunk_size != 0) /* if the above division was uneven */
+		{
+			++total_chunks; /* add an unfilled final chunk */
+		}
+		else /* if division was even, last chunk is full */
+		{
+			last_chunk_size = FILECHUNKSIZE;
+		}
+
+		std::ifstream infile(absolute_path, std::ifstream::binary);
+
+		for (size_t chunk = 0; chunk < total_chunks; ++chunk)
+		{
+			size_t this_chunk_size =
+				chunk == total_chunks - 1 /* if last chunk */
+				? last_chunk_size /* then fill chunk with remaining bytes */
+				: FILECHUNKSIZE; /* else fill entire chunk */
+			infile.read(buffer, this_chunk_size); /* this many bytes is to be read */
+			fh.ChunkSize = this_chunk_size;
+			NetworkMsg msg;
+			msg.push_back(fh);
+			msg.data.push_back(DataPackage(buffer, fh.ChunkSize));
+			_NetworkClient->Send(NetworkMessages::FILE, msg);
+			fh.ID += 1;
+		}
 	}
 	else {//this is a folder
 

@@ -53,7 +53,7 @@ namespace RemoteDesktop{
 		void _OnClipboardChanged(const Clipboard_Data& c);
 		void _CreateSystemMenu();
 		void _TriggerShutDown();
-		void _ShowAboutDialog();
+
 
 		void _TriggerShutDown_and_RemoveSelf();
 

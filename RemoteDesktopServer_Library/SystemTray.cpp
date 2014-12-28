@@ -9,6 +9,35 @@
 #define ID_TRAY_APP_TIMER   1005
 #define WM_SYSICON          (WM_USER + 1)
 
+
+HWND AboutHwnd = nullptr;
+
+INT_PTR CALLBACK AboutDlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (Msg)
+	{
+	case WM_INITDIALOG:
+		AboutHwnd = hWndDlg;
+		return TRUE;
+
+	case WM_COMMAND:
+		switch (wParam)
+		{
+		case IDOK:
+		case IDCANCEL:
+			EndDialog(hWndDlg, 0);
+			AboutHwnd = nullptr;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+void RemoteDesktop::SystemTray::_ShowAboutDialog(){
+	DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG2), Hwnd, AboutDlgProc);
+}
+
+
 RemoteDesktop::SystemTray::SystemTray() {
 	_SystemTrayIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
 }
@@ -61,9 +90,11 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 	if (Shell_NotifyIcon(NIM_ADD, &notifyIconData)){
 		_TrayIconCreated = true;
 	}
-	if (IconReadyCallback) IconReadyCallback();//let creator know the items can be added to the menu
+	if (IconReadyCallback){
+		IconReadyCallback();//let creator know the items can be added to the menu
+		AddMenuItem(L"About", DELEGATE(&RemoteDesktop::SystemTray::_ShowAboutDialog, this));
+	}
 }
-
 
 LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (msg == s_uTaskbarRestart){
