@@ -155,7 +155,7 @@ void RemoteDesktop::Client::SendImageSettings(int quality, bool grayascale){
 	_NetworkClient->Send(NetworkMessages::IMAGESETTINGS, msg);
 }
 
-void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path){
+void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int)){
 	std::string filename = absolute_path;
 	std::string relative = relative_path;
 	if (IsFile(filename)){
@@ -166,7 +166,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		fh.ID = 0;
 		strcpy_s(fh.RelativePath, relative_path);
 		char buffer[FILECHUNKSIZE];
-
+	
 		size_t total_chunks = total_size / FILECHUNKSIZE;
 		size_t last_chunk_size = total_size % FILECHUNKSIZE;
 		if (last_chunk_size != 0) /* if the above division was uneven */
@@ -193,6 +193,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 			msg.data.push_back(DataPackage(buffer, fh.ChunkSize));
 			_NetworkClient->Send(NetworkMessages::FILE, msg);
 			fh.ID += 1;
+			onfilechanged(fh.ChunkSize);
 		}
 	}
 	else {//this is a folder
@@ -201,7 +202,8 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		unsigned char size = relative.size();
 		msg.data.push_back(DataPackage((char*)&size, sizeof(size)));
 		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
-		_NetworkClient->Send(NetworkMessages::FOLDER, msg);
+		_NetworkClient->Send(NetworkMessages::FOLDER, msg); 
+		onfilechanged(0);
 	}
 
 }

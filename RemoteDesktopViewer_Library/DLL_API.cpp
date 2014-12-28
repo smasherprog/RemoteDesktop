@@ -43,10 +43,10 @@ void __stdcall SendRemoveService(void* client){
 	c->SendRemoveService();
 }
 
-void __stdcall SendFile(void* client, const char* absolute_path, const char* relative_path){
+void __stdcall SendFile(void* client, const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int)){
 	if (client == NULL)return;
 	auto c = (RemoteDesktop::Client*)client;
-	c->SendFile(absolute_path, relative_path);
+	c->SendFile(absolute_path, relative_path, onfilechanged);
 }
 void __stdcall SendImageSettings(void* client, int quality, bool grayascale){
 	if (client == NULL)return;

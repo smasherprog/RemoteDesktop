@@ -44,6 +44,13 @@ namespace RemoteDesktop_Viewer
             _Login.Size = new System.Drawing.Size(295, 34);
             _Login.TabIndex = 0;
             _Login.OnLoginSuccessEvent += _Login_OnLoginSuccessEvent;
+
+            this.Shown += ConnectDialog_Shown;
+        }
+
+        void ConnectDialog_Shown(object sender, EventArgs e)
+        {
+            this.Activate();
         }
 
   

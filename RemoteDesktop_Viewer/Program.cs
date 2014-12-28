@@ -15,9 +15,6 @@ namespace RemoteDesktop_Viewer
         {
             using(var ass = new EmbeddedAssembly())
             {
-                var dll = Assembly.GetExecutingAssembly().GetManifestResourceNames().FirstOrDefault(a => a.ToLower().Contains(Settings.DLL_Name.ToLower()));
-                if(dll != null)
-                    ass.Load(dll, dll);
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new ConnectDialog());

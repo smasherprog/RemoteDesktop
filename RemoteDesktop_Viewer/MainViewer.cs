@@ -200,6 +200,7 @@ namespace RemoteDesktop_Viewer
 
                 int titleHeight = screenRectangle.Top - this.Top;
                 this.Size = new Size(maxx, titleHeight + maxh);
+               
             });
         }
         private void Form1_DragDrop(object sender, DragEventArgs e)

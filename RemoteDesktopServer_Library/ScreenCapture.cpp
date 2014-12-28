@@ -16,7 +16,6 @@ void RemoteDesktop::ScreenCapture::ReleaseHandles(){
 
 //use the buffer passed in
 RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(std::vector<unsigned char>& buffer){
-
 	auto screenw(GetSystemMetrics(SM_CXSCREEN)), screenh(GetSystemMetrics(SM_CYSCREEN));
 	if (nDesk == NULL)
 		nDesk = GetDesktopWindow();

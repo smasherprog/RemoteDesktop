@@ -23,6 +23,7 @@ namespace RemoteDesktop_Viewer.Code
             SetStyle(ControlStyles.ContainerControl, false);
             SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
             SetStyle(ControlStyles.Opaque, true);
+           
           
         }
 

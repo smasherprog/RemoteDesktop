@@ -16,8 +16,11 @@ namespace RemoteDesktop_Viewer
 {
     public partial class FileDownload : UserControl
     {
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        delegate void _OnFileTransferChanged(int bytes_sent_so_far);
+
         [DllImport(RemoteDesktop_Viewer.Code.Settings.DLL_Name, CharSet = CharSet.Ansi)]
-        static extern void SendFile(IntPtr client, string absolute_path, string relative_path);
+        static extern void SendFile(IntPtr client, string absolute_path, string relative_path, _OnFileTransferChanged onfilechanged);
 
         private string[] _Files = null;
         private System.Threading.Thread _FileSendingThread = null;
@@ -25,10 +28,9 @@ namespace RemoteDesktop_Viewer
 
         private long _TotalBytes_to_Transfer = 0;
         private long _TotalBytes_Transfered = 0;
-
         private int _TotalCount_to_Transfer = 0;
-        private int _TotalCount_Transfered = 0;
 
+        private string _CurrentFile = "";
         private DateTime _Started = DateTime.Now;
 
         private bool _Running = false;
@@ -49,6 +51,10 @@ namespace RemoteDesktop_Viewer
 
         public delegate void OnDoneHandler(FileDownload f);
         public event OnDoneHandler OnDoneEvent;
+
+
+
+        private _OnFileTransferChanged _OnFileTransferChanged_CallBack;
         public FileDownload()
         {
             InitializeComponent();
@@ -66,6 +72,7 @@ namespace RemoteDesktop_Viewer
             progressBar1.Value = 0;
             label3.Text = _TotalCount_to_Transfer.ToString() + " items to transfer totaling " + RemoteDesktop_CSLibrary.FormatBytes.Format(_TotalBytes_to_Transfer);
             Running = false;
+            _OnFileTransferChanged_CallBack = OnFileTransferChanged;
             _FileSendingThread = new System.Threading.Thread(new System.Threading.ThreadStart(SendFilesProc));
             _FileSendingThread.Start();
         }
@@ -103,6 +110,11 @@ namespace RemoteDesktop_Viewer
                 }
             }
         }
+        private void OnFileTransferChanged(int bytes_sent)
+        {
+            _TotalBytes_Transfered += (long)bytes_sent;
+            UpdateTransferUI();
+        }
         private string GetRootPath()
         {
             var firstpath = _PendingFiles.FirstOrDefault();
@@ -132,40 +144,37 @@ namespace RemoteDesktop_Viewer
             }
             return "";
         }
+        private int UpdateCounter = 0;
+        void UpdateTransferUI()
+        {
+            if(UpdateCounter++ > 10)
+            {//dont update tpp often.. gui calls are kind of expensive
+                label1.UIThread(() =>
+                {
+                    label1.Text = _CurrentFile;
+                    var totalseconds = (long)(DateTime.Now - _Started).TotalSeconds;
+                    if(totalseconds <= 0)
+                        totalseconds = 1;
+                    progressBar1.Value = (int)_TotalBytes_Transfered;
+                    label2.Text = RemoteDesktop_CSLibrary.FormatBytes.Format(_TotalBytes_Transfered / totalseconds) + "/s";
+                });
+                UpdateCounter = 0;
+            }
+
+        }
         private void SendFilesProc()
         {
             _Running = true;
             _Started = DateTime.Now;
             var rootpath = GetRootPath();
-            while(_Running && _PendingFiles.Any())
+            for(var i = 0; i < _PendingFiles.Count && _Running; i++)
             {
-                var dt = DateTime.Now;//send for 30 ms, then goto sleep
-                int count = 0;
+                _CurrentFile = _PendingFiles[i].Item1;
+                SendFile(_Client, _PendingFiles[i].Item1, _PendingFiles[i].Item1.Remove(0, rootpath.Length), _OnFileTransferChanged_CallBack);
+                _TotalCount_to_Transfer++;
 
-                for(var i = 0; i < _PendingFiles.Count && (DateTime.Now - dt).TotalMilliseconds < 30; i++)
-                {
-                    SendFile(_Client, _PendingFiles[i].Item1, _PendingFiles[i].Item1.Remove(0, rootpath.Length));
-                    _TotalBytes_Transfered += _PendingFiles[i].Item2;
-                    _TotalCount_to_Transfer++;
-                    count++;
-                }
-
-                var pendfile = _PendingFiles.FirstOrDefault().Item1;
-                label1.UIThread(() =>
-                {
-
-                    label1.Text = pendfile;
-                    var totalseconds = (long)(DateTime.Now - _Started).TotalSeconds;
-                    if(totalseconds <= 0)
-                        totalseconds = 1;
-                    progressBar1.Value = (int)_TotalBytes_Transfered;
-                    label2.Text = RemoteDesktop_CSLibrary.FormatBytes.Format(_TotalBytes_Transfered / totalseconds);
-                });
-
-                _PendingFiles.RemoveRange(0, count);
-
-                System.Threading.Thread.Sleep(30);
             }
+            _PendingFiles.Clear();
             if(OnDoneEvent != null)
                 OnDoneEvent(this);
         }

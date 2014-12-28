@@ -125,6 +125,5 @@
   <ItemGroup>
     <Image Include="icon1.ico" />
     <Image Include="logo.bmp" />
-    <Image Include="Image.bmp" />
   </ItemGroup>
 </Project>

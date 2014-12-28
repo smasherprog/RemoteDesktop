@@ -239,7 +239,6 @@
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Image.bmp" />
     <Image Include="logo.bmp" />
     <Image Include="icon1.ico" />
   </ItemGroup>

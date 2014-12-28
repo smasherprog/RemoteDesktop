@@ -107,18 +107,22 @@ void RemoteDesktop::BaseServer::_HandleDisconnects_DesktopSwitches(){
 	}
 	//handle client disconnects here
 	if (!_DisconectClientList.empty()){
-		std::lock_guard<std::mutex> lock(_DisconectClientLock);
+		std::lock_guard<std::mutex> lock(_DisconectClientLock);	
+		std::vector<int> todisc;
 		for (auto& a : _DisconectClientList){
 			auto in = -1;
 			for (auto& s : SocketArray){
 				++in;
 				if (s.get() == a) {
-					_OnDisconnect(in);
+					todisc.push_back(in);
 					break;
 				}
 			}
 		}
 		_DisconectClientList.clear();
+		for (auto a : todisc){
+			_OnDisconnect(a);
+		}
 	}
 }
 
