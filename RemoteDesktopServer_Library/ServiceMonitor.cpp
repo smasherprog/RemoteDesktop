@@ -22,7 +22,6 @@ void RemoteDesktop::ServiceMonitor::Stop(){
 	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
 		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
 	}
-
 }
 
 
@@ -37,13 +36,13 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 	}
 
 	//make sure to enable software cad
-	RAIIHANDLE ExitProgHandle(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram"));
-	RAIIHANDLE cardreq(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDCad"));
-	RAIIHANDLE selfremovaltrigger(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRemoveSelf"));
+	auto ExitProgHandle(RAIIHANDLE(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDProgram")));
+	auto cardreq(RAIIHANDLE(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRDCad")));
+	auto selfremovaltrigger(RAIIHANDLE(CreateEvent(NULL, FALSE, FALSE, L"Global\\SessionEventRemoveSelf")));
 
 	HANDLE evs[2];
-	evs[0] = cardreq.get_Handle();
-	evs[1] = selfremovaltrigger.get_Handle();
+	evs[0] = cardreq.get();
+	evs[1] = selfremovaltrigger.get();
 
 	while (Running){
 		DEBUG_MSG("Waiting for CAD Event");
@@ -70,7 +69,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		if ((_LastSession != 0xFFFFFFFF) && (_LastSession >= 0) && (_LastSession != _CurrentSession)){
 			_CurrentSession = _LastSession;
 			DWORD exitcode = 0;
-			SetEvent(ExitProgHandle.get_Handle()); // signal to shut down if running
+			SetEvent(ExitProgHandle.get()); // signal to shut down if running
 			Sleep(3000);
 			if (!_App){//this is the first launch of the application
 				_App = _LaunchProcess(L" -run");
@@ -97,7 +96,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		}
 
 	}
-	if (ExitProgHandle.get_Handle()!=nullptr) SetEvent(ExitProgHandle.get_Handle()); // signal to shut down if running
+	if (ExitProgHandle.get() != nullptr) SetEvent(ExitProgHandle.get()); // signal to shut down if running
 	if (_App) WaitForSingleObject(_App->hProcess, 5000);	
 
 }

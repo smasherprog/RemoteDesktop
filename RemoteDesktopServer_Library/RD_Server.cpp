@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "RD_Server.h"
-#include "ScreenCapture.h"
 #include "MouseCapture.h"
 #include "Desktop_Monitor.h"
 #include "BaseServer.h"
@@ -11,6 +10,7 @@
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktopServer_Library\SystemTray.h"
+#include "..\RemoteDesktop_Library\Desktop_Capture_Container.h"
 
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\Utilities.h"
@@ -21,8 +21,6 @@
 #endif
 
 #define FRAME_CAPTURE_INTERVAL 100 //ms between checking for screen changes
-
-
 #define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 3000 > Nul & Del \"%s\"")
 
 
@@ -44,9 +42,10 @@ void DeleteMe(){
 
 }
 
+
 RemoteDesktop::RD_Server::RD_Server() :
-_CADEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRDCad")),
-_SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRemoveSelf"))
+_CADEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRDCad"))),
+_SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRemoveSelf")))
 {
 
 #if _DEBUG
@@ -65,7 +64,6 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 		DELEGATE(&RemoteDesktop::RD_Server::OnConnect, this),
 		DELEGATE(&RemoteDesktop::RD_Server::OnReceive, this),
 		DELEGATE(&RemoteDesktop::RD_Server::OnDisconnect, this));
-	_ScreenCapture = std::make_unique<ScreenCapture>();
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
 	_SystemTray = std::make_unique<SystemTray>();
 	_SystemTray->Start(DELEGATE(&RemoteDesktop::RD_Server::_CreateSystemMenu, this));
@@ -73,8 +71,8 @@ _SelfRemoveEventHandle(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEve
 RemoteDesktop::RD_Server::~RD_Server(){
 
 	if (_RemoveOnExit) {
-		if (_SelfRemoveEventHandle.get_Handle() != nullptr) {
-			SetEvent(_SelfRemoveEventHandle.get_Handle());//signal the self removal process 
+		if (_SelfRemoveEventHandle.get() != nullptr) {
+			SetEvent(_SelfRemoveEventHandle.get());//signal the self removal process 
 		}
 		else DeleteMe();//try a self removal 
 	}
@@ -199,15 +197,17 @@ void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const
 	}
 	if (h.Action == WM_LBUTTONDBLCLK){
 		inp.mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
-		mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, 0, 0);
-		//SendInput(1, &inp, sizeof(inp));
+		//mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, 0, 0);
+		SendInput(1, &inp, sizeof(inp));
 	}
 	else if (h.Action == WM_RBUTTONDBLCLK){
 		inp.mi.dwFlags = MOUSEEVENTF_RIGHTUP | MOUSEEVENTF_RIGHTDOWN;
-		mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, 0, 0);
+		//mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, 0, 0);
+		SendInput(1, &inp, sizeof(inp));
 	}
-
-	mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, inp.mi.mouseData, 0);
+	//DEBUG_MSG("GOt here");
+	//mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, inp.mi.mouseData, 0);
+	SendInput(1, &inp, sizeof(inp));
 }
 void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	File_Header fh;
@@ -255,7 +255,7 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 		_Handle_MouseUpdate(header, data, sh);
 		break;
 	case NetworkMessages::CAD:
-		SetEvent(_CADEventHandle.get_Handle());
+		SetEvent(_CADEventHandle.get());
 		break;
 	case NetworkMessages::FILE:
 		_Handle_File(header, data, sh);
@@ -287,16 +287,16 @@ void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) 
 
 void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg){
 	if (_NewClients.empty()) return;
-	std::vector<char> tmpbuf;
-	auto sendimg = imgg.Clone(tmpbuf);
+	auto sendimg = imgg.Clone();
+
 	sendimg.Compress();
 	NetworkMsg msg;
 	int sz[2];
-	sz[0] = sendimg.height;
-	sz[1] = sendimg.width;
-	DEBUG_MSG("Servicing new Client %, %, %", sendimg.height, sendimg.width, sendimg.size_in_bytes);
+	sz[0] = sendimg.Height;
+	sz[1] = sendimg.Width;
+	DEBUG_MSG("Servicing new Client %, %, %", sendimg.Height, sendimg.Width, sendimg.size_in_bytes());
 	msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
-	msg.data.push_back(DataPackage((char*)sendimg.data, sendimg.size_in_bytes));
+	msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
 
 	std::lock_guard<std::mutex> lock(_NewClientLock);
 
@@ -307,19 +307,19 @@ void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg){
 	_NewClients.clear();
 }
 bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _lastimg){
-	bool reschange = (imgg.height != _lastimg.height || imgg.width != _lastimg.width) && (imgg.height > 0 && _lastimg.width > 0);
+	bool reschange = (imgg.Height != _lastimg.Height || imgg.Width != _lastimg.Width) && (imgg.Height > 0 && _lastimg.Width > 0);
 	//if there was a resolution change
 	if (reschange){
 		std::vector<char> tmpbuf;
-		auto sendimg = imgg.Clone(tmpbuf);
+		auto sendimg = imgg.Clone();
 		sendimg.Compress();
 		NetworkMsg msg;
 		int sz[2];
-		sz[0] = sendimg.height;
-		sz[1] = sendimg.width;
+		sz[0] = sendimg.Height;
+		sz[1] = sendimg.Width;
 
 		msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
-		msg.data.push_back(DataPackage((char*)sendimg.data, sendimg.size_in_bytes));
+		msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
 		_NetworkServer->SendToAll(NetworkMessages::RESOLUTIONCHANGE, msg);
 		return true;
 	}
@@ -327,14 +327,14 @@ bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _las
 }
 
 
-void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, std::vector<unsigned char>& buffer){
+void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect){
 	if (rect.width > 0 && rect.height > 0){
 
 		NetworkMsg msg;
-		auto imgdif = Image::Copy(img, rect, buffer);
+		auto imgdif = Image::Copy(img, rect);
 		imgdif.Compress();
 		msg.push_back(rect);
-		msg.data.push_back(DataPackage((char*)imgdif.data, imgdif.size_in_bytes));
+		msg.data.push_back(DataPackage((char*)imgdif.get_Data(), imgdif.size_in_bytes()));
 
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
 		_NetworkServer->SendToAll(NetworkMessages::UPDATEREGION, msg);
@@ -364,29 +364,28 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 	}
 }
 
+
 void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bool reverseconnecttoproxy) {
 	_RunningReverseProxy = reverseconnecttoproxy;
+
 	//switch to input desktop 
 	_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 	_NetworkServer->StartListening(port, host);
 
-	std::vector<unsigned char> curimagebuffer;
-	std::vector<unsigned char> lastimagebuffer;
-	std::vector<unsigned char> sendimagebuffer;
+	auto _LastImages(CaptureDesktops());
 
-	Image _LastImage = _ScreenCapture->GetPrimary(lastimagebuffer);//<---Seed the image
-	auto pingpong = true;
-	RAIIHANDLE shutdownhandle(OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram"));
 
-	WaitForSingleObject(shutdownhandle.get_Handle(), 100);//call this to get the first signal from the service
+	auto shutdownhandle(RAIIHANDLE(OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram")));
+
+	WaitForSingleObject(shutdownhandle.get(), 100);//call this to get the first signal from the service
 
 	DWORD dwEvent;
 	auto lastwaittime = FRAME_CAPTURE_INTERVAL;
 
 	while (_NetworkServer->Is_Running()){
-		if (shutdownhandle.get_Handle() == NULL) std::this_thread::sleep_for(std::chrono::milliseconds(lastwaittime));//sleep
+		if (shutdownhandle.get() == NULL) std::this_thread::sleep_for(std::chrono::milliseconds(lastwaittime));//sleep
 		else {
-			dwEvent = WaitForSingleObject(shutdownhandle.get_Handle(), lastwaittime);
+			dwEvent = WaitForSingleObject(shutdownhandle.get(), lastwaittime);
 			if (dwEvent == 0){
 				_NetworkServer->GracefulStop();//stop program!
 				break;
@@ -399,34 +398,28 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bo
 			continue;
 		}
 
-		if (!_DesktopMonitor->Is_InputDesktopSelected())
-		{
-			_ScreenCapture->ReleaseHandles();//cannot have lingering handles to the exisiting desktop
-			_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
-		}
+		if (!_DesktopMonitor->Is_InputDesktopSelected()) _DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 
 		_Handle_MouseUpdates(mousecapturing);
 
-		pingpong = !pingpong;
-		Image img;
-
-		if (!pingpong) img = _ScreenCapture->GetPrimary(curimagebuffer);
-		else img = _ScreenCapture->GetPrimary(lastimagebuffer);
-		_HandleNewClients(img);
-		if (!_HandleResolutionUpdates(img, _LastImage)){
-
-			auto rect = Image::Difference(_LastImage, img);
-
-			_Handle_ScreenUpdates(img, rect, sendimagebuffer);
+		auto currentimages(CaptureDesktops());
+		if (!currentimages.empty() && !_LastImages.empty()){
+			for (auto i = 0; i < 1; i++){
+				_HandleNewClients(currentimages[i]);
+				if (!_HandleResolutionUpdates(currentimages[i], _LastImages[i])){
+					auto rect = Image::Difference(_LastImages[i], currentimages[i]);
+					_Handle_ScreenUpdates(currentimages[i], rect);
+				}
+			}
 		}
 
-		_LastImage = img;
+		_LastImages = std::move(currentimages);
 		t1.Stop();
 		auto tim = (int)t1.Elapsed_milli();
 		lastwaittime = FRAME_CAPTURE_INTERVAL - tim;
 		if (lastwaittime < 0) lastwaittime = 0;
+		DEBUG_MSG("Time for work... %", t1.Elapsed_milli());
 	}
-
 
 	_NetworkServer->ForceStop();//stop program!
 }

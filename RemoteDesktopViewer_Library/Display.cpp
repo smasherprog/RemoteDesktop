@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Display.h"
-#include "Image.h"
+#include "..\RemoteDesktop_Library\Image.h"
 #include "CommonNetwork.h"
 #include <algorithm>
 
@@ -46,6 +46,7 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	std::lock_guard<std::mutex> lock(_DrawLock);
 
 	auto hMemDC = CreateCompatibleDC(hdc);
+	
 	_Draw(hdc, hMemDC, ptr->Bitmap, ptr->width, ptr->height);
 
 	if (GetFocus() != _HWND) {
@@ -56,37 +57,39 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 
 void RemoteDesktop::Display::NewImage(Image& img){
 	BITMAPINFO   bi;
+	memset(&bi, 0, sizeof(bi));
 
 	bi.bmiHeader.biSize = sizeof(bi);
-	bi.bmiHeader.biWidth = img.width;
-	bi.bmiHeader.biHeight = -img.height;
+	bi.bmiHeader.biWidth = img.Width;
+	bi.bmiHeader.biHeight = -img.Height;
 	bi.bmiHeader.biPlanes = 1;
 	bi.bmiHeader.biBitCount = 32;
 	bi.bmiHeader.biCompression = BI_RGB;
-	bi.bmiHeader.biSizeImage = ((img.width * bi.bmiHeader.biBitCount + 31) / 32) * 4 * img.height;
+	bi.bmiHeader.biSizeImage = ((img.Width * bi.bmiHeader.biBitCount + 31) / 32) * 4 * img.Height;
 
-	img.Decompress(_ImgBuffer);
+	img.Decompress();
 
 	std::lock_guard<std::mutex> lock(_DrawLock);
 
 	auto hDC = GetDC(_HWND);
 	void* raw_data = nullptr;
 	_HBITMAP_wrapper = std::make_unique<HBITMAP_wrapper>(CreateDIBSection(hDC, &bi, DIB_RGB_COLORS, &raw_data, NULL, NULL));
-	_HBITMAP_wrapper->height = img.height;
-	_HBITMAP_wrapper->width = img.width;
+	_HBITMAP_wrapper->height = img.Height;
+	_HBITMAP_wrapper->width = img.Width;
 	_HBITMAP_wrapper->raw_data = (unsigned char*)raw_data;
 
-	memcpy(raw_data, img.data, img.size_in_bytes);
+	memcpy(raw_data, img.get_Data(), img.size_in_bytes());
 	ReleaseDC(_HWND, hDC); 
 	InvalidateRect(_HWND, NULL, false);
+
 }
 void RemoteDesktop::Display::UpdateImage(Image& img, Rect& h){
 	//DEBUG_MSG("UpdateImage");
 	auto ptr = _HBITMAP_wrapper.get();
 	if (ptr != nullptr) {
-		img.Decompress(_ImgBuffer);
+		img.Decompress();
 		std::lock_guard<std::mutex> lock(_DrawLock);
-		Image::Copy(img, h.left, h.top, ptr->width * 4, ptr->raw_data, ptr->height, ptr->width);
+		Image::Copy(img, h.left, h.top, ptr->width * 4, (char*)ptr->raw_data, ptr->height, ptr->width);
 	}	
 	//DEBUG_MSG("UpdateImage 2");
 	if (ptr != nullptr) 

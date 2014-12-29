@@ -10,6 +10,7 @@
 RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
 	Delegate<void, std::shared_ptr<SocketHandler>&> d){
+	StartupNetwork();
 	Connected_CallBack = c;
 	Receive_CallBack = r;
 	Disconnect_CallBack = d;
@@ -184,7 +185,6 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 
 }
 bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
-	if (!StartupNetwork()) return false;
 
 	SOCKET listensocket = INVALID_SOCKET;
 
@@ -214,6 +214,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 	WSANETWORKEVENTS NetworkEvents;
 
 	while (Running && !EventArray.empty()) {
+
 		auto Index = WSAWaitForMultipleEvents(EventArray.size(), EventArray.data(), FALSE, 1000, FALSE);
 		if ((Index != WSA_WAIT_FAILED) && (Index != WSA_WAIT_TIMEOUT)) {
 
@@ -240,10 +241,10 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 				_OnDisconnectHandler(SocketArray[Index].get());
 			}
 		}
-		
+		_HandleDisconnects_DesktopSwitches();
 		if (Index == WSA_WAIT_TIMEOUT)
 		{//this will check every timeout... which is good
-			_HandleDisconnects_DesktopSwitches();
+			
 			std::lock_guard<std::mutex> lo(_SocketArrayLock);
 			for (auto& c : SocketArray) {
 				c->CheckState();

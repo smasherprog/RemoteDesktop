@@ -89,12 +89,12 @@ SOCKET RemoteDesktop::Connect(std::wstring port, std::wstring host){
 	if (ConnectSocket == INVALID_SOCKET) return INVALID_SOCKET;
 	StandardSocketSetup(ConnectSocket);
 
-	RAIIHANDLE newevent(WSACreateEvent());
+	auto newevent(RAIIHANDLE(WSACreateEvent()));
 
-	WSAEventSelect(ConnectSocket, newevent.get_Handle(), FD_CONNECT);
-	auto Index = WaitForSingleObject(newevent.get_Handle(), 1000);
+	WSAEventSelect(ConnectSocket, newevent.get(), FD_CONNECT);
+	auto Index = WaitForSingleObject(newevent.get(), 1000);
 	WSANETWORKEVENTS NetworkEvents;
-	WSAEnumNetworkEvents(ConnectSocket, newevent.get_Handle(), &NetworkEvents);
+	WSAEnumNetworkEvents(ConnectSocket, newevent.get(), &NetworkEvents);
 
 	if ((Index == WSA_WAIT_FAILED) || (Index == WSA_WAIT_TIMEOUT)) {
 		DEBUG_MSG("Connect Failed!");
@@ -139,15 +139,17 @@ int GetFileCreateTime()//used for randomness in session
 	wchar_t szPath[MAX_PATH];
 	bool ret = false;
 	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath))) return 0;
-	RemoteDesktop::RAIIHANDLE hFile(CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL));
-	if (hFile.get_Handle() == INVALID_HANDLE_VALUE) return 0;
+
+	auto hFile(RAIIHANDLE(CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)));
+
+	if (hFile.get() == INVALID_HANDLE_VALUE) return 0;
 
 	FILETIME ftCreate, ftAccess, ftWrite;
 	SYSTEMTIME stUTC, stLocal;
 
 
 	// Retrieve the file times for the file.
-	if (!GetFileTime(hFile.get_Handle(), &ftCreate, &ftAccess, &ftWrite))
+	if (!GetFileTime(hFile.get(), &ftCreate, &ftAccess, &ftWrite))
 		return 0;
 
 

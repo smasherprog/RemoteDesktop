@@ -7,14 +7,13 @@
 namespace RemoteDesktop{
 	class ScreenCapture{
 
-		HWND nDesk = NULL;
 		HDC nSrce = NULL;
 		HDC nDest = NULL;
 		HBITMAP nBmp = NULL;
 
 	public:
 		~ScreenCapture();
-		Image GetPrimary(std::vector<unsigned char>& buffer);
+		Image GetPrimary();
 		void ReleaseHandles();
 	};
 };

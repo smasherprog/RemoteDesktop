@@ -38,15 +38,17 @@ void RemoteDesktop::SystemTray::_ShowAboutDialog(){
 }
 
 
-RemoteDesktop::SystemTray::SystemTray() {
-	_SystemTrayIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
+RemoteDesktop::SystemTray::SystemTray() :
+_SystemTrayIcon(RAIIHICON((HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0))),
+Hmenu(RAIIHMENU(CreatePopupMenu())) {
+
 }
 RemoteDesktop::SystemTray::~SystemTray(){
 	Stop();
 	_Cleanup();
 }
 void RemoteDesktop::SystemTray::_Cleanup(){
-	if (_SystemTrayIcon != nullptr) DestroyIcon(_SystemTrayIcon);
+	Hmenu = nullptr;
 	_SystemTrayIcon = nullptr;
 	KillTimer(Hwnd, ID_TRAY_APP_TIMER);
 	if (notifyIconData.hWnd != 0) {
@@ -76,6 +78,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 
 	if (_TrayIconCreated) return;
+
+	Hmenu = RAIIHMENU(CreatePopupMenu());
+	_SystemTrayIcon = RAIIHICON((HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0));
+
 	CallBacks.clear();//always clear any callbacks before creation of the icon
 	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
 	notifyIconData.hWnd = hWnd;
@@ -83,7 +89,7 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 	notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	notifyIconData.uCallbackMessage = WM_SYSICON; //Set up our invented Windows Message
 
-	notifyIconData.hIcon = _SystemTrayIcon;
+	notifyIconData.hIcon = _SystemTrayIcon.get();
 	TCHAR szTIP[64] = TEXT("Remote Desktop Process");
 	wcscpy_s(notifyIconData.szTip, szTIP);
 
@@ -124,7 +130,7 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 			GetCursorPos(&curPoint);
 			SetForegroundWindow(hWnd);
 			// TrackPopupMenu blocks the app until TrackPopupMenu returns
-			UINT clicked = TrackPopupMenu(Hmenu, TPM_RETURNCMD | TPM_NONOTIFY, curPoint.x, curPoint.y, 0, hWnd, NULL);
+			UINT clicked = TrackPopupMenu(Hmenu.get(), TPM_RETURNCMD | TPM_NONOTIFY, curPoint.x, curPoint.y, 0, hWnd, NULL);
 			SendMessage(hWnd, WM_NULL, 0, 0); // send benign message to window to make sure the menu goes away.
 			for (auto i = 0; i < CallBacks.size(); i++){
 				if (clicked == ID_TRAY_START + i){
@@ -139,6 +145,7 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 	return DefWindowProc(hWnd, msg, msg, lParam);
 }
 void RemoteDesktop::SystemTray::_Run(){
+
 	DesktopMonitor dekstopmonitor;
 	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
 	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
@@ -153,8 +160,6 @@ void RemoteDesktop::SystemTray::_Run(){
 	if (RegisterClassEx(&wndclass)) Hwnd = CreateWindowEx(0, myclass, L"systraywatcher", 0, 0, 0, 0, 0, HWND_DESKTOP, 0, GetModuleHandle(NULL), 0);
 	else 	return DEBUG_MSG("Error %", GetLastError());
 
-	Hmenu = CreatePopupMenu();
-
 	ShowWindow(Hwnd, SW_HIDE);
 	SetWindowLongPtr(Hwnd, GWLP_USERDATA, (LONG_PTR)this);
 	SetTimer(Hwnd, ID_TRAY_APP_TIMER, 1000, NULL); //every 1000 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
@@ -167,7 +172,7 @@ void RemoteDesktop::SystemTray::_Run(){
 
 }
 void RemoteDesktop::SystemTray::AddMenuItem(const wchar_t* itemname, Delegate<void> cb){
-	AppendMenu(Hmenu, MF_STRING, ID_TRAY_START + CallBacks.size(), itemname);
+	AppendMenu(Hmenu.get(), MF_STRING, ID_TRAY_START + CallBacks.size(), itemname);
 	CallBacks.push_back(cb);
 }
 void RemoteDesktop::SystemTray::Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout){

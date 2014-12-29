@@ -3,12 +3,15 @@
 #include <thread>
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
+#include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 
 namespace RemoteDesktop{
 	class SystemTray{
 		HWND Hwnd = nullptr;
-		HMENU Hmenu = nullptr;
-		HICON _SystemTrayIcon = nullptr;
+
+		RAIIHMENU_TYPE Hmenu = nullptr;
+		RAIIHICON_TYPE _SystemTrayIcon = nullptr;
+
 		bool _TrayIconCreated = false;
 		std::thread _BackGroundThread; 
 		NOTIFYICONDATA notifyIconData;

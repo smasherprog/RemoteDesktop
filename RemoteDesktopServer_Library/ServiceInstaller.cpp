@@ -33,13 +33,13 @@ bool InstallService(PWSTR pszServiceName,
 	bool ret = false;
 	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)) == 0) wprintf(L"GetModuleFileName failed w/err 0x%08lx\n", GetLastError());
 
-	RemoteDesktop::RAIISC_HANDLE schSCManager(OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE));
-	if (schSCManager.get_Handle() == nullptr) wprintf(L"OpenSCManager failed w/err 0x%08lx\n", GetLastError());
+	auto schSCManager=RAIISC_HANDLE(OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE));
+	if (schSCManager.get() == nullptr) wprintf(L"OpenSCManager failed w/err 0x%08lx\n", GetLastError());
 	else {
 		wcscat_s(szPath, L" -service_mon");
 		// Install the service into SCM by calling CreateService
-		RemoteDesktop::RAIISC_HANDLE schService(CreateService(
-			schSCManager.get_Handle(),                   // SCManager database
+		auto schService =RAIISC_HANDLE(CreateService(
+			schSCManager.get(),                   // SCManager database
 			pszServiceName,                 // Name of service
 			pszDisplayName,                 // Name to display
 			SERVICE_ALL_ACCESS,           // Desired access
@@ -53,10 +53,10 @@ bool InstallService(PWSTR pszServiceName,
 			pszAccount,                     // Service running account
 			pszPassword                     // Password of the account
 			));
-		if (schService.get_Handle() == nullptr) DEBUG_MSG("CreateService failed w / err %", GetLastError());
+		if (schService.get() == nullptr) DEBUG_MSG("CreateService failed w / err %", GetLastError());
 		else {
 			wprintf(L"%s is installed.\n", pszServiceName);
-			return StartService(schService.get_Handle(), 0, NULL);
+			return StartService(schService.get(), 0, NULL);
 		}
 	}
 	return false;
@@ -81,21 +81,21 @@ void UninstallService(PWSTR pszServiceName)
 	SERVICE_STATUS ssSvcStatus = {};
 
 	// Open the local default service control manager database
-	RemoteDesktop::RAIISC_HANDLE schSCManager(OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT));
-	if (schSCManager.get_Handle() == nullptr) wprintf(L"OpenSCManager failed w/err 0x%08lx\n", GetLastError());
+	auto schSCManager =RAIISC_HANDLE(OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT));
+	if (schSCManager.get() == nullptr) wprintf(L"OpenSCManager failed w/err 0x%08lx\n", GetLastError());
 	else {
 
 		// Open the service with delete, stop, and query status permissions
-		RemoteDesktop::RAIISC_HANDLE schService(OpenService(schSCManager.get_Handle(), pszServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE));
-		if (schService.get_Handle() == nullptr) wprintf(L"OpenService failed w/err 0x%08lx\n", GetLastError());
+		auto schService = RAIISC_HANDLE(OpenService(schSCManager.get(), pszServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE));
+		if (schService.get() == nullptr) wprintf(L"OpenService failed w/err 0x%08lx\n", GetLastError());
 		else {
 
 			// Try to stop the service
-			if (ControlService(schService.get_Handle(), SERVICE_CONTROL_STOP, &ssSvcStatus))
+			if (ControlService(schService.get(), SERVICE_CONTROL_STOP, &ssSvcStatus))
 			{
 				wprintf(L"Stopping %s.", pszServiceName);
 				Sleep(1000);
-				while (QueryServiceStatus(schService.get_Handle(), &ssSvcStatus))
+				while (QueryServiceStatus(schService.get(), &ssSvcStatus))
 				{
 					if (ssSvcStatus.dwCurrentState == SERVICE_STOP_PENDING)
 					{
@@ -108,7 +108,7 @@ void UninstallService(PWSTR pszServiceName)
 				else wprintf(L"\n%s failed to stop.\n", pszServiceName);
 			}
 			// Now remove the service by calling DeleteService.
-			if (!DeleteService(schService.get_Handle())) wprintf(L"DeleteService failed w/err 0x%08lx\n", GetLastError());
+			if (!DeleteService(schService.get())) wprintf(L"DeleteService failed w/err 0x%08lx\n", GetLastError());
 			wprintf(L"%s is removed.\n", pszServiceName);
 		}
 	}

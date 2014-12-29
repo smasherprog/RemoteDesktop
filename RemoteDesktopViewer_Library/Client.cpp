@@ -217,30 +217,23 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 	auto beg = data;
 	if (header->Packet_Type == NetworkMessages::RESOLUTIONCHANGE){
 
-		Image img;
-		memcpy(&img.height, beg, sizeof(img.height));
-		beg += sizeof(img.height);
-		memcpy(&img.width, beg, sizeof(img.width));
-		beg += sizeof(img.width);
-		img.stride = 3;
-		img.data = (unsigned char*)beg;
-		img.size_in_bytes = header->PayloadLen - sizeof(img.height) - sizeof(img.width);
-		_OnPrimaryChanged(img.width, img.height);
+		int height(0), width(0), stride(3);
+		memcpy(&height, beg, sizeof(height));
+		beg += sizeof(height);
+		memcpy(&width, beg, sizeof(width));
+		beg += sizeof(width);
+		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(height) - sizeof(width), stride, height, width));
+
+		_OnPrimaryChanged(img.Width, img.Height);
 		_Display->NewImage(img);
 
 	}
 	else if (header->Packet_Type == NetworkMessages::UPDATEREGION){
-		Image img;
+		
 		Rect rect;
-
 		memcpy(&rect, beg, sizeof(rect));
-		img.stride = 3;
 		beg += sizeof(rect);
-		img.height = rect.height;
-		img.width = rect.width;
-		img.data = (unsigned char*)beg;
-		img.size_in_bytes = header->PayloadLen - sizeof(rect);
-
+		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(rect), 3, rect.height, rect.width));
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
 		_Display->UpdateImage(img, rect);
 

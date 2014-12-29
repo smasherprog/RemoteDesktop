@@ -4,6 +4,7 @@
 namespace RemoteDesktop{
 
 	class DesktopMonitor{
+
 		HDESK m_hDesk = nullptr; 
 	public:
 		enum Desktops{DEFAULT=1, WINLOGON=2, SCREENSAVER=4, INPUT=8};

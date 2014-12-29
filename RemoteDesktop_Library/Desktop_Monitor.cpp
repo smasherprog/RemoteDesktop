@@ -53,12 +53,12 @@ HDESK Switch_to_Desktop(int desired_desktop, HDESK currentdesk){
 
 
 int RemoteDesktop::DesktopMonitor::get_InputDesktop() const{
-	RemoteDesktop::RAIIHDESKTOP inputdesktop(OpenInputDesktop(0, FALSE, GENERIC_READ));
-	if (inputdesktop.get_Handle() == NULL) return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
+	auto inputdesktop = RAIIHDESKTOP(OpenInputDesktop(0, FALSE, GENERIC_READ));
+	if (inputdesktop.get() == NULL) return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
 
 	DWORD dummy;
 	char inputname[256];
-	if (!GetUserObjectInformationA(inputdesktop.get_Handle(), UOI_NAME, &inputname, 256, &dummy)) return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
+	if (!GetUserObjectInformationA(inputdesktop.get(), UOI_NAME, &inputname, 256, &dummy)) return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
 	std::string name(inputname);
 	if (find_substr(name, std::string("default")) != -1) return (RemoteDesktop::DesktopMonitor::Desktops::DEFAULT | RemoteDesktop::DesktopMonitor::Desktops::INPUT);
 	else if (find_substr(name, std::string("winlogon")) != -1) return (RemoteDesktop::DesktopMonitor::Desktops::WINLOGON | RemoteDesktop::DesktopMonitor::Desktops::INPUT);

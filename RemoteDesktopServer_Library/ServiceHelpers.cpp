@@ -76,10 +76,10 @@ bool GetWinlogonHandle(LPHANDLE  lphUserToken, DWORD sessionid)
 	HANDLE hTokenThis = NULL;
 	DWORD Id = Find_winlogon(sessionid);
 	#include "..\RemoteDesktop_Library\Config.h"
-	RemoteDesktop::RAIIHANDLE hProcess(OpenProcess(PROCESS_ALL_ACCESS, FALSE, Id));
-	if (hProcess.get_Handle())
+	auto hProcess(RAIIHANDLE(OpenProcess(PROCESS_ALL_ACCESS, FALSE, Id)));
+	if (hProcess.get())
 	{
-		if (OpenProcessToken(hProcess.get_Handle(), TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, &hTokenThis))
+		if (OpenProcessToken(hProcess.get(), TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, &hTokenThis))
 		{
 			bResult = DuplicateTokenEx(hTokenThis, TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, NULL, SecurityImpersonation, TokenPrimary, lphUserToken);
 			CloseHandle(hTokenThis);

@@ -2,36 +2,44 @@
 #define IMAGE_H
 #include "Rect.h"
 #include <vector>
+#include <mutex>
 
 namespace RemoteDesktop{
 	namespace Image_Settings{
 		extern int Quality;
 		extern bool GrazyScale;
 	}
+
 	class Image{
+
+		std::vector<char> data;
 	public:
 
-		Image() {}
-		Image(unsigned char* d, unsigned long s, int h, int w) : data(d), size_in_bytes(s), height(h), width(w) {}
-
+		Image() {}		
+		explicit Image(char* d, int px_stride, int h, int w) :Pixel_Stride(px_stride), Height(h), Width(w) { data.resize(Pixel_Stride*Height*Width); memcpy(data.data(), d, Pixel_Stride); }
+		explicit Image(int px_stride, int h, int w) : Pixel_Stride(px_stride), Height(h), Width(w)  { data.resize(Pixel_Stride*Height*Width); }
+		static Image Create_from_Compressed_Data(char* d, int size_in_bytes, int px_stride, int h, int w);
 		void Compress();
-		void Decompress(std::vector<int>& buffer);
-		Image Clone(std::vector<char>& buffer) const;
-
-		unsigned char* data = nullptr;
-		unsigned long size_in_bytes = 0;
-		int height = 0;
-		int width = 0;
-		int stride = 4;
-
-
+		void Decompress();
+		Image Clone() const;
+		//mainly used for image validation
+		void Save(std::string outfile);
+		
+		char* get_Data() { return data.data(); }
+		size_t size_in_bytes() const { return data.size(); }
+		int Height = 0;
+		int Width = 0;
+		//pixel stride
+		int Pixel_Stride = 4;
+		bool Compressed = false;
 
 		static Rect Difference(Image first, Image second);
-		static Image Copy(Image src_img, Rect r, std::vector<unsigned char>& buffer);
-		static void Copy(Image src_img, int dst_left, int dst_top, int dst_stride, unsigned char* dst, int dst_height, int dst_width);
+		static Image Copy(Image src_img, Rect r);
+		static void Copy(Image src_img, int dst_left, int dst_top, int dst_stride, char* dst, int dst_height, int dst_width);
 		
 
 	};
 
+	void SaveBMP(BITMAPINFOHEADER bi, char* imgdata, std::string dst = "capture.bmp");
 };
 #endif

@@ -5,6 +5,7 @@
 #include <mutex>
 #include "MouseCommon.h"
 #include "Rect.h"
+#include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 
 namespace RemoteDesktop{
 	class HBITMAP_wrapper{
@@ -29,8 +30,7 @@ namespace RemoteDesktop{
 		std::unique_ptr<HBITMAP_wrapper> _HBITMAP_wrapper;
 		HWND _HWND;
 		std::mutex _DrawLock;
-		std::vector<int> _ImgBuffer;
-
+	
 		std::vector<Cursor_Type> _System_Cursors;
 
 		Point _MousePos;

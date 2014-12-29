@@ -5,8 +5,8 @@
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 #include <thread>
 
+
 namespace RemoteDesktop{
-	class ScreenCapture;
 
 	class MouseCapture;
 	class DesktopMonitor;
@@ -31,7 +31,7 @@ namespace RemoteDesktop{
 		std::unique_ptr<MouseCapture> mousecapturing;
 		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
 		std::unique_ptr<BaseServer> _NetworkServer;
-		std::unique_ptr<ScreenCapture> _ScreenCapture;
+		
 		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
 		std::unique_ptr<SystemTray> _SystemTray;
 
@@ -39,7 +39,7 @@ namespace RemoteDesktop{
 
 		void _HandleNewClients(Image& img);
 		bool _HandleResolutionUpdates(Image& img, Image& _lastimg);
-		void _Handle_ScreenUpdates(Image& img, Rect& rect, std::vector<unsigned char>& buffer);
+		void _Handle_ScreenUpdates(Image& img, Rect& rect);
 		void _Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing);
 
 		void _Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh);
@@ -60,8 +60,9 @@ namespace RemoteDesktop{
 		bool _RunningAsService = false;
 		bool _RunningReverseProxy = false;
 
-		RAIIHANDLE _CADEventHandle;
-		RAIIHANDLE _SelfRemoveEventHandle;
+		RAIIHANDLE_TYPE _CADEventHandle;
+		RAIIHANDLE_TYPE _SelfRemoveEventHandle;
+
 		bool _RemoveOnExit = false;
 		bool GetProxyID(std::wstring url, std::wstring& aeskey);
 

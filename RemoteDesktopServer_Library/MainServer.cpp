@@ -25,7 +25,7 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 		else if (_wcsicmp(L"run", argv[1] + 1) == 0)
 		{
 			auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
-
+	
 			if (startasproxy) _Server->Listen(DEFAULTPORT, DEFAULTPROXY, startasproxy);
 			else _Server->Listen(DEFAULTPORT);
 		}
