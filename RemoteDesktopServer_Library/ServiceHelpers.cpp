@@ -75,7 +75,6 @@ bool GetWinlogonHandle(LPHANDLE  lphUserToken, DWORD sessionid)
 
 	HANDLE hTokenThis = NULL;
 	DWORD Id = Find_winlogon(sessionid);
-	#include "..\RemoteDesktop_Library\Config.h"
 	auto hProcess(RAIIHANDLE(OpenProcess(PROCESS_ALL_ACCESS, FALSE, Id)));
 	if (hProcess.get())
 	{

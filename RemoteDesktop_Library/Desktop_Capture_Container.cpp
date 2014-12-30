@@ -13,22 +13,18 @@ BOOL CALLBACK MonitorEnumProc(
 	)
 {
 	auto hdcPool = reinterpret_cast<std::vector<RemoteDesktop::Image>*>(dwData);
-	auto desktopGuard = RAIIHDC(hdcMonitor);
+	auto desktopGuard(RAIIHDC(hdcMonitor));
 	RECT rect = *lprcMonitor;
 	hdcPool->emplace_back(std::move(CaptureDesktop(desktopGuard, lprcMonitor->left, lprcMonitor->top)));	
 	return true;
 }
 
 std::vector<RemoteDesktop::Image> RemoteDesktop::CaptureDesktops(){
-	
-
-	auto hDesktopDC = RAIIHDC(GetDC(NULL));
+	auto hDesktopDC(RAIIHDC(GetDC(NULL)));
 	std::vector<Image> imgs;
 	EnumDisplayMonitors(hDesktopDC.get(), NULL, MonitorEnumProc, reinterpret_cast<LPARAM>(&imgs));
 	return imgs;
 }
-
-
 
 
 RemoteDesktop::Image CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGuard, int left, int top)
@@ -61,7 +57,7 @@ RemoteDesktop::Image CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGu
 	bi.biClrImportant = 0;
 	bi.biSizeImage = ((nScreenWidth * bi.biBitCount + 31) / 32) * 4 * nScreenHeight;
 
-	RemoteDesktop::Image retimg(4, nScreenHeight, nScreenWidth);
+	RemoteDesktop::Image retimg(nScreenHeight, nScreenWidth);
 
 	GetDIBits(desktopGuard.get(), hCaptureBmp.get(), 0, (UINT)nScreenHeight, retimg.get_Data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
 	SelectObject(hCaptureDC.get(), originalBmp);	

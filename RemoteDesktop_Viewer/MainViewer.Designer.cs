@@ -32,10 +32,10 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainViewer));
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.viewPort1 = new RemoteDesktop_Viewer.Code.ViewPort();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
-            this.viewPort1 = new RemoteDesktop_Viewer.Code.ViewPort();
             this.viewPort1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -46,6 +46,16 @@
             this.imageList1.Images.SetKeyName(0, "newconnect.bmp");
             this.imageList1.Images.SetKeyName(1, "disconnect.bmp");
             this.imageList1.Images.SetKeyName(2, "cad.bmp");
+            // 
+            // viewPort1
+            // 
+            this.viewPort1.Controls.Add(this.button2);
+            this.viewPort1.Controls.Add(this.button1);
+            this.viewPort1.Controls.Add(this.button3);
+            this.viewPort1.Location = new System.Drawing.Point(0, 0);
+            this.viewPort1.Name = "viewPort1";
+            this.viewPort1.Size = new System.Drawing.Size(1236, 784);
+            this.viewPort1.TabIndex = 2;
             // 
             // button2
             // 
@@ -86,16 +96,6 @@
             this.toolTip1.SetToolTip(this.button3, "Send Ctrl-Alt-Del");
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // viewPort1
-            // 
-            this.viewPort1.Controls.Add(this.button2);
-            this.viewPort1.Controls.Add(this.button1);
-            this.viewPort1.Controls.Add(this.button3);
-            this.viewPort1.Location = new System.Drawing.Point(0, 0);
-            this.viewPort1.Name = "viewPort1";
-            this.viewPort1.Size = new System.Drawing.Size(1236, 784);
-            this.viewPort1.TabIndex = 2;
             // 
             // MainViewer
             // 

@@ -4,7 +4,7 @@
 #include "..\RemoteDesktop_Library\CommonNetwork.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
-#include "..\RemoteDesktop_Library\Config.h"
+#include "Config.h"
 #include "ProxyConnectDialog.h"
 
 RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
@@ -17,7 +17,7 @@ RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandl
 	DEBUG_MSG("Starting Server");
 	EventArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
 	SocketArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
-	_DesktopMonitor = std::make_unique<DesktopMonitor>();
+	_DesktopMonitor = std::make_unique<DesktopMonitor>(); 
 }
 
 RemoteDesktop::BaseServer::~BaseServer(){
@@ -92,7 +92,7 @@ void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstrin
 			MaxConnectAttempts = 15;//set this to a specific value
 			ProxyHeader.Dst_Id = -1;
 			std::wstring aes;
-			ProxyHeader.Src_Id = GetProxyID(DEFAULTPROXYGETSESSIONURL, aes);
+			ProxyHeader.Src_Id = GetProxyID(DefaultProxyGetSessionURL(), aes);
 	
 			_RunReverse(sock, aes);
 		}

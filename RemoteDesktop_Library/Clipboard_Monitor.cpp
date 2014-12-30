@@ -10,11 +10,16 @@ RemoteDesktop::ClipboardMonitor::~ClipboardMonitor(){
 	_Running = false;
 	if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
 }
+void RemoteDesktop::ClipboardMonitor::set_ShareClipBoard(bool s){
+	_ShareClipboard = s;
+}
 void RemoteDesktop::ClipboardMonitor::Restore(const Clipboard_Data& c){
-	std::lock_guard<std::mutex> l(_ClipboardLock); 
-	_IgnoreClipUpdateNotice = true;
-	Clipboard::Restore(_Hwnd, c);
-	_IgnoreClipUpdateNotice = true;
+	if (_ShareClipboard){
+		std::lock_guard<std::mutex> l(_ClipboardLock);
+		_IgnoreClipUpdateNotice = true;
+		Clipboard::Restore(_Hwnd, c);
+		_IgnoreClipUpdateNotice = true;
+	}
 }
 void RemoteDesktop::ClipboardMonitor::_Run(){
 	DesktopMonitor dekstopmonitor;
@@ -48,15 +53,18 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 				break;//get out of the loop and destroy
 			}
 			else if (msg.message == WM_CLIPBOARDUPDATE){
-				if (!_IgnoreClipUpdateNotice) {
-					Clipboard_Data c;
-					{//ensure lock is released timely
-						std::lock_guard<std::mutex> l(_ClipboardLock);
-						c = Clipboard::Load(_Hwnd);
+				if (_ShareClipboard){
+					if (!_IgnoreClipUpdateNotice) {
+						Clipboard_Data c;
+						{//ensure lock is released timely
+							std::lock_guard<std::mutex> l(_ClipboardLock);
+							c = Clipboard::Load(_Hwnd);
+						}
+						_OnClipboardChanged(c);
 					}
-					_OnClipboardChanged(c);
+					_IgnoreClipUpdateNotice = false;
 				}
-				_IgnoreClipUpdateNotice = false;
+
 			}
 			else
 			{

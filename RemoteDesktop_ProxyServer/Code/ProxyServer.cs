@@ -68,7 +68,7 @@ namespace RemoteDesktop_ProxyServer.Code
                     timer.Start();
                     using (var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                     {
-                        listener.Bind(new IPEndPoint(IPAddress.Any, 443));
+                        listener.Bind(new IPEndPoint(IPAddress.Any, RemoteDesktop_CSLibrary.App_Settings.Proxy_Listen_Port));
                         listener.Listen(64);
 
                         while (_Running)

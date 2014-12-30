@@ -36,5 +36,27 @@ namespace RemoteDesktop_Viewer.Code
         public static string SignalRHubName { get { return Marshal.PtrToStringUni(CPP_Settings.SignalRHubName()); } }
         public static string URIScheme { get { return  Marshal.PtrToStringUni(CPP_Settings.URIScheme()); } }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Traffic_Stats
+        {
+            public long CompressedSendBytes;
+            public long CompressedRecvBytes;//overall lifetime totals 
+            public long UncompressedSendBytes;
+
+            public long UncompressedRecvBytes;//overall lifetime totals 
+
+            public long CompressedSendBPS;
+            public long CompressedRecvBPS;
+            public long UncompressedSendBPS;
+            public long UncompressedRecvBPS;
+        }
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct Settings_Header
+        {
+          
+            public int Image_Quality;
+            public bool GrayScale;
+            public bool ShareClip;
+        }
     }
 }

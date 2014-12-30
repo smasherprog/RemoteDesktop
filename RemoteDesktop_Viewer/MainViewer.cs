@@ -15,20 +15,6 @@ namespace RemoteDesktop_Viewer
 {
     public partial class MainViewer : Form
     {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct Traffic_Stats
-        {
-            public long CompressedSendBytes;
-            public long CompressedRecvBytes;//overall lifetime totals 
-            public long UncompressedSendBytes;
-
-            public long UncompressedRecvBytes;//overall lifetime totals 
-
-            public long CompressedSendBPS;
-            public long CompressedRecvBPS;
-            public long UncompressedSendBPS;
-            public long UncompressedRecvBPS;
-        }
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate void _OnConnect();
@@ -63,10 +49,10 @@ namespace RemoteDesktop_Viewer
         static extern void SendRemoveService(IntPtr client);
 
         [DllImport(Settings.DLL_Name)]
-        static extern Traffic_Stats get_TrafficStats(IntPtr client);
+        static extern RemoteDesktop_Viewer.Code.Settings.Traffic_Stats get_TrafficStats(IntPtr client);
 
         [DllImport(Settings.DLL_Name)]
-        static extern void SendImageSettings(IntPtr client, int quality, bool grayascale);
+        static extern void SendSettings(IntPtr client, int img_quality, bool gray, bool shareclip);
 
         public delegate void OnConnectHandler();
         public delegate void OnDisconnectHandler();
@@ -183,8 +169,8 @@ namespace RemoteDesktop_Viewer
         }
         private void OnDisplayChanged(int x, int y)
         {
-            var maxh = y + 10;
-            var maxx = x + 14;
+            var maxh = y + 15;
+            var maxx = x + 18;
             if(maxx > Screen.PrimaryScreen.Bounds.Width - 40)
                 maxx = Screen.PrimaryScreen.Bounds.Width - 40;
             if(maxh > Screen.PrimaryScreen.Bounds.Height - 50)
@@ -321,18 +307,17 @@ namespace RemoteDesktop_Viewer
             {
                 SendRemoveService(_Client);
             }
-
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var f = new ImageSettings();
-            f.OnSettingsChangedEvent += OnImageSettingsChanged;
+            var f = new SettingsDialog();
+            f.OnSettingsChangedEvent += OnSettingsChanged;
             f.ShowDialog(this);
         }
-        private void OnImageSettingsChanged(int quality, bool grayascale)
+        private void OnSettingsChanged(RemoteDesktop_Viewer.Code.Settings.Settings_Header h)
         {
-            SendImageSettings(_Client, quality, grayascale);
+            SendSettings(_Client, h.Image_Quality, h.GrayScale, h.ShareClip);
         }
     }
 }

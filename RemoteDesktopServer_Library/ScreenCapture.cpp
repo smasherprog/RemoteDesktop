@@ -44,7 +44,7 @@ RemoteDesktop::Image RemoteDesktop::ScreenCapture::GetPrimary(){
 	bi.biClrImportant = 0;
 	bi.biSizeImage = ((screenw * bi.biBitCount + 31) / 32) * 4 * screenh;
 
-	RemoteDesktop::Image retimg(4, screenh, screenw);
+	RemoteDesktop::Image retimg(screenh, screenw);
 	
 	GetDIBits(nSrce, nBmp, 0, (UINT)screenh, retimg.get_Data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
 	SelectObject(nDest, oldbmp);

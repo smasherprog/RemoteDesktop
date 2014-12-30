@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "MainServer.h"
-#include "..\RemoteDesktop_Library\Config.h"
+#include "Config.h"
 #include "ServiceInstaller.h"
 #include "ServerService.h"
 #include "RD_Server.h"
@@ -8,26 +8,26 @@
 
 void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 
-	
+
 	if ((argc > 1) && ((*argv[1] == L'-' || (*argv[1] == L'/'))))
 	{
-		if (_wcsicmp(L"uninstall", argv[1] + 1) == 0) UninstallService(SERVICE_NAME);
+		if (_wcsicmp(L"uninstall", argv[1] + 1) == 0) UninstallService(Service_Name());
 		else if (_wcsicmp(L"delayed_uninstall", argv[1] + 1) == 0)
 		{
 			Sleep(3000);//give enough time for the previous programs to shut down
-			UninstallService(SERVICE_NAME);
+			UninstallService(Service_Name());
 		}
 		else if (_wcsicmp(L"service_mon", argv[1] + 1) == 0)
 		{
-			ServerService service(SERVICE_NAME);
+			ServerService service(Service_Name());
 			ServerService::Run(service);
 		}
 		else if (_wcsicmp(L"run", argv[1] + 1) == 0)
 		{
 			auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
 	
-			if (startasproxy) _Server->Listen(DEFAULTPORT, DEFAULTPROXY, startasproxy);
-			else _Server->Listen(DEFAULTPORT);
+			if (startasproxy) _Server->Listen(DefaultPort(), DefaultProxy(), startasproxy);
+			else _Server->Listen(DefaultPort());
 		}
 	}
 	else
@@ -37,7 +37,7 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 		if (startasproxy){
 			ret = MessageBox(
 				NULL,
-				(LPCWSTR)L"Do you agree to allow a support technician to connection to your computer?",
+				DisclaimerMessage(),
 				(LPCWSTR)L"Disclaimer",
 				MB_ICONQUESTION | MB_YESNO
 				);
@@ -47,18 +47,18 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 		//in which case, try to launch the program normally.
 		if (ret == IDYES){
 			//the below line was added so that in cases where UAC is required to access the network, it will activate the pop up as early as possible
-			RemoteDesktop::PrimeNetwork(DEFAULTPORT);
+			RemoteDesktop::PrimeNetwork(DefaultPort());
 			if (!InstallService(
-				SERVICE_NAME,               // Name of service
-				SERVICE_DISPLAY_NAME,       // Name to display
+				Service_Name(),               // Name of service
+				Service_Display_Name(),       // Name to display
 				SERVICE_AUTO_START,
 				L"",
 				NULL,
 				NULL
 				)){
 				auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
-				if (startasproxy) _Server->Listen(DEFAULTPORT, DEFAULTPROXY, startasproxy);
-				else _Server->Listen(DEFAULTPORT);
+				if (startasproxy) _Server->Listen(DefaultPort(), DefaultProxy(), startasproxy);
+				else _Server->Listen(DefaultPort());
 			}
 		}
 	}

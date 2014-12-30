@@ -95,15 +95,15 @@ void RemoteDesktop::RD_Server::_Handle_DisconnectandRemove(Packet_Header* header
 	_TriggerShutDown_and_RemoveSelf();
 }
 
-void RemoteDesktop::RD_Server::_Handle_ImageSettings(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	int q = 70;
-	char g;
-	memcpy(&q, data, sizeof(q));
-	data += sizeof(q);
-	memcpy(&g, data, sizeof(g));
-	Image_Settings::GrazyScale = g == 1 ? true : false;
-	Image_Settings::Quality = q;
-	DEBUG_MSG("Setting Quality to % and GrayScale to %", q, g);
+void RemoteDesktop::RD_Server::_Handle_Settings(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	Settings_Header h;
+	assert(header->PayloadLen >= sizeof(h));
+	memcpy(&h, data, sizeof(h));
+	Image_Settings::GrazyScale = h.GrayScale;
+	Image_Settings::Quality = h.Image_Quality;
+	_ClipboardMonitor->set_ShareClipBoard(h.ShareClip);
+
+	//DEBUG_MSG("Setting Quality to % and GrayScale to %", q, g);
 }
 void RemoteDesktop::RD_Server::_OnClipboardChanged(const Clipboard_Data& c){
 	NetworkMsg msg;
@@ -158,6 +158,7 @@ void RemoteDesktop::RD_Server::OnConnect(std::shared_ptr<SocketHandler>& sh){
 }
 void _HandleKeyEvent(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	RemoteDesktop::KeyEvent_Header h;
+	assert(header->PayloadLen >= sizeof(h));
 	memcpy(&h, data, sizeof(h));
 	INPUT inp;
 
@@ -269,8 +270,8 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	case NetworkMessages::DISCONNECTANDREMOVE:
 		_Handle_DisconnectandRemove(header, data, sh);
 		break;
-	case NetworkMessages::IMAGESETTINGS:
-		_Handle_ImageSettings(header, data, sh);
+	case NetworkMessages::SETTINGS:
+		_Handle_Settings(header, data, sh);
 		break;
 	case NetworkMessages::CONNECTIONINFO:
 		_Handle_ConnectionInfo(header, data, sh);

@@ -16,9 +16,9 @@ namespace RemoteDesktop{
 	public:
 
 		Image() {}		
-		explicit Image(char* d, int px_stride, int h, int w) :Pixel_Stride(px_stride), Height(h), Width(w) { data.resize(Pixel_Stride*Height*Width); memcpy(data.data(), d, Pixel_Stride); }
-		explicit Image(int px_stride, int h, int w) : Pixel_Stride(px_stride), Height(h), Width(w)  { data.resize(Pixel_Stride*Height*Width); }
-		static Image Create_from_Compressed_Data(char* d, int size_in_bytes, int px_stride, int h, int w);
+		explicit Image(char* d, int h, int w) :Pixel_Stride(4), Height(h), Width(w) { data.resize(Pixel_Stride*Height*Width); memcpy(data.data(), d, Pixel_Stride); }
+		explicit Image(int h, int w) : Pixel_Stride(4), Height(h), Width(w)  { data.resize(Pixel_Stride*Height*Width); }
+		static Image Create_from_Compressed_Data(char* d, int size_in_bytes, int h, int w);
 		void Compress();
 		void Decompress();
 		Image Clone() const;
@@ -30,7 +30,7 @@ namespace RemoteDesktop{
 		int Height = 0;
 		int Width = 0;
 		//pixel stride
-		int Pixel_Stride = 4;
+		const int Pixel_Stride = 4;
 		bool Compressed = false;
 
 		static Rect Difference(Image first, Image second);

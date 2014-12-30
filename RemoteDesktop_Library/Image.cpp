@@ -10,26 +10,16 @@ bool RemoteDesktop::Image_Settings::GrazyScale = false;
 
 void RemoteDesktop::Image::Compress(){
 	if (Compressed) return;//already done
-	int dstoffset = 0;
-	auto src = (const int*)data.data();//src data will always be rgba
-	auto dst = (char*)data.data();
-
-	for (auto y = 0; y < Height; y++){
-		for (auto x = 0; x < Width; x++){
-			*((int*)(dst + dstoffset)) = src[y * Width + x];
-			dstoffset += 3;//advance by three bytes
-		}
-	}	
-
-	Pixel_Stride = 3;
 	
 	//I Kind of cheat below by using static variables. . .  This means the compress and decompress functions are NOT THREAD SAFE, but this isnt a problem yet because I never access these functions from different threads at the same time
+	
+	auto compfree = [](void* handle){tjDestroy(handle); };
 
-	static std::shared_ptr<void> _jpegCompressor;
-	if (_jpegCompressor.get() == nullptr) _jpegCompressor = std::shared_ptr<void>(tjInitCompress(), [](void* handle){tjDestroy(handle); });
+	static std::unique_ptr<void, decltype(compfree)> _jpegCompressor;
+	if (_jpegCompressor.get() == nullptr) _jpegCompressor = std::unique_ptr<void, decltype(compfree)>(tjInitCompress(), compfree);
 	static std::vector<char> compressBuffer;
 
-	auto maxsize = Width * Height * 4;
+	auto maxsize = Width * Height * Pixel_Stride;
 	long unsigned int _jpegSize = maxsize;
 	
 	if (compressBuffer.capacity() < maxsize) compressBuffer.reserve(maxsize);
@@ -38,7 +28,7 @@ void RemoteDesktop::Image::Compress(){
 	
 	auto ptr = (unsigned char*)compressBuffer.data();
 	auto set = Image_Settings::GrazyScale ? TJSAMP_GRAY : TJSAMP_420;
-	if (tjCompress2(_jpegCompressor.get(), (unsigned char*)data.data(), Width, 0, Height, TJPF_BGR, &ptr, &_jpegSize, set, Image_Settings::Quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) {
+	if (tjCompress2(_jpegCompressor.get(), (unsigned char*)data.data(), Width, 0, Height, TJPF_BGRX, &ptr, &_jpegSize, set, Image_Settings::Quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) {
 		DEBUG_MSG("Err msg %", tjGetErrorStr());
 	}
 	assert(_jpegSize <= compressBuffer.capacity());
@@ -53,11 +43,12 @@ void RemoteDesktop::Image::Decompress(){
 	if (!Compressed) return;//already done
 
 	//I Kind of cheat below by using static variables. . .  This means the compress and decompress functions are NOT THREAD SAFE, but this isnt a problem yet
-	static std::shared_ptr<void> _jpegDecompressor;
+	auto compfree = [](void* handle){tjDestroy(handle); };
+	static std::unique_ptr<void, decltype(compfree)> _jpegDecompressor;
 	static std::vector<unsigned char> decompressBuffer;
-	if (_jpegDecompressor.get() == nullptr) _jpegDecompressor = std::shared_ptr<void>(tjInitDecompress(), [](void* handle){tjDestroy(handle); });
+	if (_jpegDecompressor.get() == nullptr) _jpegDecompressor = std::unique_ptr<void, decltype(compfree)>(tjInitDecompress(), compfree);
 	
-	auto maxsize = Width * Height * 4;
+	auto maxsize = Width * Height * Pixel_Stride;
 	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize);
 
 	int jpegSubsamp = 0;
@@ -69,38 +60,19 @@ void RemoteDesktop::Image::Decompress(){
 		DEBUG_MSG("Err msg %", tjGetErrorStr());
 	}
 
-
-	if (tjDecompress2(_jpegDecompressor.get(), (unsigned char*)data.data(), data.size(), decompressBuffer.data(), outwidth, 0, outheight, TJPF_BGR, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1){
+	if (tjDecompress2(_jpegDecompressor.get(), (unsigned char*)data.data(), data.size(), decompressBuffer.data(), outwidth, 0, outheight, TJPF_BGRX, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1){
 		DEBUG_MSG("Err msg %", tjGetErrorStr());
 	}
 
 	t.Stop();
 	//DEBUG_MSG("Time Taken Decompress %", std::to_string(t.Elapsed_milli()));
-	Pixel_Stride = 4;
 	data.resize(outwidth*outheight*Pixel_Stride);//this will be the final size
-	int srcoffset = 0;
-	auto src = (const char*)decompressBuffer.data();//src data will always be rgb
-	auto dst = (int*)data.data();
-	union rgba {
-		int data;
-		unsigned char cdata[4];
-	};
-	
-	for (auto y = 0; y < outheight; y++){
-		for (auto x = 0; x < outwidth; x++){
-			rgba d;
-			d.data = *((int*)(src + srcoffset));
-			d.cdata[3] = 255;
-			dst[y * outwidth + x] = d.data;
-			srcoffset += 3;//advance by three bytes
-		}
-	}
+	memcpy(data.data(), decompressBuffer.data(), data.size());
 	Compressed = false;
 }
-RemoteDesktop::Image RemoteDesktop::Image::Create_from_Compressed_Data(char* d, int size_in_bytes, int px_stride, int h, int w){
+RemoteDesktop::Image RemoteDesktop::Image::Create_from_Compressed_Data(char* d, int size_in_bytes, int h, int w){
 	Image retimg;
 	retimg.data.resize(size_in_bytes);
-	retimg.Pixel_Stride = px_stride;
 	retimg.Height = h;
 	retimg.Width = w;
 	memcpy(retimg.get_Data(), d, size_in_bytes);
@@ -109,7 +81,7 @@ RemoteDesktop::Image RemoteDesktop::Image::Create_from_Compressed_Data(char* d, 
 }
 
 RemoteDesktop::Image RemoteDesktop::Image::Clone() const{
-	auto retimg(Create_from_Compressed_Data((char*)data.data(), data.size(), Pixel_Stride, Height, Width));
+	auto retimg(Create_from_Compressed_Data((char*)data.data(), data.size(), Height, Width));
 	retimg.Compressed = Compressed;
 		return retimg;
 }
@@ -196,7 +168,7 @@ RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image first, Image second){
 RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_region)
 {
 	auto size = src_copy_region.width * src_copy_region.height * src_img.Pixel_Stride;
-	RemoteDesktop::Image retimg(src_img.Pixel_Stride, src_copy_region.height, src_copy_region.width);
+	RemoteDesktop::Image retimg(src_copy_region.height, src_copy_region.width);
 	
 	auto src = src_img.data.data();
 	auto dst = retimg.data.data();

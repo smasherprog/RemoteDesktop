@@ -4,7 +4,6 @@
 
 namespace RemoteDesktop{
 
-
 	class Display;
 	class SocketHandler;
 	class BaseClient;
@@ -19,6 +18,7 @@ namespace RemoteDesktop{
 		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
 
 		HWND _HWND;
+
 		void OnDisconnect();
 		void OnConnect(std::shared_ptr<SocketHandler>& sh); 
 		void _OnClipboardChanged(const Clipboard_Data& c);
@@ -47,7 +47,7 @@ namespace RemoteDesktop{
 		void SendRemoveService();
 		void SendCAD();
 		void SendFile(const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int));
-		void SendImageSettings(int quality, bool grayascale);
+		void SendSettings(Settings_Header h);
 
 		Traffic_Stats get_TrafficStats() const;
 

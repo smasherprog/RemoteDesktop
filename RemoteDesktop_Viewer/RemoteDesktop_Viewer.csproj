@@ -101,11 +101,11 @@
     <Compile Include="FileDownload.Designer.cs">
       <DependentUpon>FileDownload.cs</DependentUpon>
     </Compile>
-    <Compile Include="ImageSettings.cs">
+    <Compile Include="SettingsDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ImageSettings.Designer.cs">
-      <DependentUpon>ImageSettings.cs</DependentUpon>
+    <Compile Include="SettingsDialog.Designer.cs">
+      <DependentUpon>SettingsDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Login.cs">
       <SubType>UserControl</SubType>
@@ -136,8 +136,8 @@
     <EmbeddedResource Include="FileDownload.resx">
       <DependentUpon>FileDownload.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ImageSettings.resx">
-      <DependentUpon>ImageSettings.cs</DependentUpon>
+    <EmbeddedResource Include="SettingsDialog.resx">
+      <DependentUpon>SettingsDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Login.resx">
       <DependentUpon>Login.cs</DependentUpon>

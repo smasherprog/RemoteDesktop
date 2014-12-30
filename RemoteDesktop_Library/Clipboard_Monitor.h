@@ -15,11 +15,13 @@ namespace RemoteDesktop{
 		Clipboard_Data _Clipboard_Data;
 		Delegate<void, const Clipboard_Data&> _OnClipboardChanged;
 		bool _IgnoreClipUpdateNotice = false;
+		bool _ShareClipboard = true;
 
 	public:
 		ClipboardMonitor(Delegate<void, const Clipboard_Data&> c);
 		~ClipboardMonitor();
 		void Restore(const Clipboard_Data& c);
+		void set_ShareClipBoard(bool s);
 	};
 }
 

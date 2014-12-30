@@ -30,10 +30,15 @@ namespace RemoteDesktop{
 		unsigned int Action;
 		int wheel;
 	};
+	struct Settings_Header{
+		int Image_Quality = 75;
+		bool GrayScale = false;
+		bool ShareClip = true;
+	};	
 	struct Proxy_Header{
 		int Dst_Id = -1;
 		int Src_Id = -1;
-	};	
+	};
 	struct File_Header{
 		char RelativePath[MAX_PATH];
 		int ID = 0;
@@ -58,7 +63,7 @@ namespace RemoteDesktop{
 		INIT_ENCRYPTION,
 		CLIPBOARDCHANGED,
 		DISCONNECTANDREMOVE,
-		IMAGESETTINGS,
+		SETTINGS,
 		CONNECTIONINFO
 	};
 	enum Network_Return{

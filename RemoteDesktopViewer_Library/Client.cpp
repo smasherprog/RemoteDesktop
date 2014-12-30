@@ -147,12 +147,10 @@ RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
 	memset(&tmp, 0, sizeof(tmp));
 	return tmp;
 }
-void RemoteDesktop::Client::SendImageSettings(int quality, bool grayascale){
+void RemoteDesktop::Client::SendSettings(Settings_Header h){
 	NetworkMsg msg;
-	char g = grayascale ? 1 : 0;
-	msg.push_back(quality);
-	msg.push_back(g);
-	_NetworkClient->Send(NetworkMessages::IMAGESETTINGS, msg);
+	msg.push_back(h);
+	_NetworkClient->Send(NetworkMessages::SETTINGS, msg);
 }
 
 void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int)){
@@ -217,12 +215,12 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 	auto beg = data;
 	if (header->Packet_Type == NetworkMessages::RESOLUTIONCHANGE){
 
-		int height(0), width(0), stride(3);
+		int height(0), width(0);
 		memcpy(&height, beg, sizeof(height));
 		beg += sizeof(height);
 		memcpy(&width, beg, sizeof(width));
 		beg += sizeof(width);
-		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(height) - sizeof(width), stride, height, width));
+		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(height) - sizeof(width), height, width));
 
 		_OnPrimaryChanged(img.Width, img.Height);
 		_Display->NewImage(img);
@@ -233,7 +231,7 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		Rect rect;
 		memcpy(&rect, beg, sizeof(rect));
 		beg += sizeof(rect);
-		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(rect), 3, rect.height, rect.width));
+		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(rect), rect.height, rect.width));
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
 		_Display->UpdateImage(img, rect);
 

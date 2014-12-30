@@ -123,9 +123,6 @@
     <ClInclude Include="AdminStatus.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Handle_Wrapper.h">
       <Filter>Header Files\Wrappers</Filter>
     </ClInclude>

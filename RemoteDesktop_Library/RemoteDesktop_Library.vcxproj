@@ -186,7 +186,6 @@
     <ClInclude Include="Clipboard_Wrapper.h" />
     <ClInclude Include="CommonNetwork.h" />
     <ClInclude Include="Compression_Handler.h" />
-    <ClInclude Include="Config.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Desktop_Capture_Container.h" />
