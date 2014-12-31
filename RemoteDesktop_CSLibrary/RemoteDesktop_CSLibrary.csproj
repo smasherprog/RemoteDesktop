@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8E748DA1-9A21-42C7-B89A-94CB72BC954F}</ProjectGuid>
+    <ProjectGuid>{7BE9D1DD-5D03-4070-B471-F4BF98C408D3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RemoteDesktop_CSLibrary</RootNamespace>
@@ -77,7 +77,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="App_Settings.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="EmbeddedAssembly.cs" />
     <Compile Include="FormatBytes.cs" />

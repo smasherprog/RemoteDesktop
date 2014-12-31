@@ -3,7 +3,6 @@
 #include <string>
 
 namespace RemoteDesktop{
-
 	namespace _INTERNAL{
 		extern bool NetworkStarted;
 	}
@@ -13,7 +12,6 @@ namespace RemoteDesktop{
 	SOCKET Connect(std::wstring port, std::wstring host);
 	void StandardSocketSetup(SOCKET socket);
 	std::string GetMAC();
-	int GetProxyID(std::wstring url, std::wstring& aeskey);
 
 }
 #endif

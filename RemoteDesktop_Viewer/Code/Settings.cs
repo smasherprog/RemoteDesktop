@@ -7,23 +7,7 @@ using System.Threading.Tasks;
 
 namespace RemoteDesktop_Viewer.Code
 {
-    public static class CPP_Settings
-    {
-#if WIN64
-         public const string DLL_Name = "RemoteDesktopViewer_Library_64.dll";
-#else
-        public const string DLL_Name = "RemoteDesktopViewer_Library_32.dll";
-#endif
 
-        [DllImport(DLL_Name, CallingConvention = CallingConvention.StdCall)]
-        public static extern IntPtr ProxyServer();
-        [DllImport(DLL_Name, CallingConvention = CallingConvention.StdCall)]
-        public static extern IntPtr AuthenticationPath();
-        [DllImport(DLL_Name, CallingConvention = CallingConvention.StdCall)]
-        public static extern IntPtr SignalRHubName();
-        [DllImport(DLL_Name, CallingConvention = CallingConvention.StdCall)]
-        public static extern IntPtr URIScheme();
-    }
     public static class Settings
     {
 #if WIN64
@@ -31,10 +15,13 @@ namespace RemoteDesktop_Viewer.Code
 #else
         public const string DLL_Name = "RemoteDesktopViewer_Library_32.dll";
 #endif
-        public static string ProxyServer { get { return Marshal.PtrToStringUni(CPP_Settings.ProxyServer()); } }
-        public static string AuthenticationPath { get { return Marshal.PtrToStringUni(CPP_Settings.ProxyServer()); } }
-        public static string SignalRHubName { get { return Marshal.PtrToStringUni(CPP_Settings.SignalRHubName()); } }
-        public static string URIScheme { get { return  Marshal.PtrToStringUni(CPP_Settings.URIScheme()); } }
+
+
+        public static string Gateway { get { return "localhost"; } }
+        public static string AuthenticationUrl { get { return "http://localhost:3406/RAT_Support/Authenticate"; } }
+        public static string SignalRHubName { get { return "ProxyHub"; } }
+        public static string SignalRHubUrl { get { return "http://localhost:3406/"; } }
+
 
         [StructLayout(LayoutKind.Sequential)]
         public struct Traffic_Stats
@@ -53,7 +40,7 @@ namespace RemoteDesktop_Viewer.Code
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct Settings_Header
         {
-          
+
             public int Image_Quality;
             public bool GrayScale;
             public bool ShareClip;

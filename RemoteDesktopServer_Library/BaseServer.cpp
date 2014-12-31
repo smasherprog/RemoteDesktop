@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "BaseServer.h"
-#include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\CommonNetwork.h"
+#include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 #include "Config.h"
 #include "ProxyConnectDialog.h"
+#include "Gateway.h"
 
 RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
@@ -92,13 +93,9 @@ void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstrin
 			MaxConnectAttempts = 15;//set this to a specific value
 			ProxyHeader.Dst_Id = -1;
 			std::wstring aes;
-			ProxyHeader.Src_Id = GetProxyID(DefaultProxyGetSessionURL(), aes);
-	
-			_RunReverse(sock, aes);
+			if (GetGatewayID_and_Key(ProxyHeader.Src_Id, aes)) _RunReverse(sock, aes);
 		}
-	
 	}
-
 	Running = false;
 }
 void RemoteDesktop::BaseServer::_HandleDisconnects_DesktopSwitches(){

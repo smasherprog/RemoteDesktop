@@ -2,7 +2,6 @@
 #define DLL_API123_H
 
 #include "..\RemoteDesktop_Library\CommonNetwork.h"
-#include "..\RemoteDesktop_Library\Config.h"
 
 #define DLLEXPORT __declspec( dllexport )  
 
@@ -23,14 +22,7 @@ extern "C" {
 	DLLEXPORT void __stdcall SendFile(void* client, const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int));
 	DLLEXPORT void __stdcall SendSettings(void* client, int img_quality, bool gray, bool shareclip);
 	DLLEXPORT RemoteDesktop::Traffic_Stats __stdcall get_TrafficStats(void* client);
-	
-	//wrappers around global settings for c# to call
-	DLLEXPORT wchar_t* __stdcall ProxyServer(){ return DEFAULTPROXYWEB; }
-	DLLEXPORT wchar_t* __stdcall AuthenticationPath(){ return DEFAULTPROXYWEBAUTHPATH; }
-	DLLEXPORT wchar_t* __stdcall SignalRHubName(){ return DEFAULTSIGNALRHUBNAME; }
-	DLLEXPORT wchar_t* __stdcall URIScheme(){ return DEFAULTURISCHEME; }
-
-	
+		
 }
 
 #endif

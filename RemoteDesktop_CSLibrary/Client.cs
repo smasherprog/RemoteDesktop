@@ -18,7 +18,7 @@ namespace RemoteDesktop_CSLibrary
         public string Mac_Address { get; set; }
         public string ComputerName { get; set; }
         public string UserName { get; set; }
-        public int SessionID { get; set; }
+        public string SessionID { get; set; }
         public Host_Type Host { get; set; }
         public DateTime ConnectTime { get; set; }
         public Connection_Status Status { get; set; }

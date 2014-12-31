@@ -282,8 +282,11 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	}
 }
 void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) {
-	auto con = sh->UserName + L" has Disconnected from your machine . . .";
-	_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
+	if (!sh->UserName.empty()){
+		auto con = sh->UserName + L" has Disconnected from your machine . . .";
+		_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
+	} 
+
 }
 
 void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg){

@@ -32,16 +32,17 @@ namespace RemoteDesktop_Viewer.Code
             {
                 try
                 {
-                    using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.URIScheme + Settings.ProxyServer))
+                    using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.SignalRHubUrl))
                     {
                         connection.TransportConnectTimeout = new TimeSpan(0, 0, 4);
+                        Settings.SignalRHubUrl.Split('/').LastOrDefault();
                         IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
                         connection.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
                         connection.Error += connection_Error;
                         DateTime dt = DateTime.Now;
-                        connection.Start().Wait(2000);
+                        connection.Start().Wait(3000);
                         //if an error is thrown, it will set authenticated to false. If the client waits toe 2 seconds, it timed out and authenticated needs to be false
-                        if((DateTime.Now - dt).TotalMilliseconds >= 2500) { _Authenticated = false; } else { _Authenticated = true; }
+                        if((DateTime.Now - dt).TotalMilliseconds >= 3500) { _Authenticated = false; } else { _Authenticated = true; }
                         return _Authenticated;
                     }
                 } catch(Exception e)
@@ -51,7 +52,7 @@ namespace RemoteDesktop_Viewer.Code
             } else
             {
 
-                var request = WebRequest.Create(Settings.URIScheme + Settings.ProxyServer + Settings.AuthenticationPath) as HttpWebRequest;
+                var request = WebRequest.Create(Settings.AuthenticationUrl) as HttpWebRequest;
 
                 request.Method = "POST";
                 request.ContentType = "application/x-www-form-urlencoded";

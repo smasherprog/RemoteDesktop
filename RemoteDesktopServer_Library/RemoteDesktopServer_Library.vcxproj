@@ -195,6 +195,7 @@
   <ItemGroup>
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Gateway.h" />
     <ClInclude Include="MainServer.h" />
     <ClInclude Include="MouseCapture.h" />
     <ClInclude Include="ProxyConnectDialog.h" />
@@ -213,6 +214,7 @@
   <ItemGroup>
     <ClCompile Include="BaseServer.cpp" />
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="Gateway.cpp" />
     <ClCompile Include="MainServer.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="ProxyConnectDialog.cpp" />
