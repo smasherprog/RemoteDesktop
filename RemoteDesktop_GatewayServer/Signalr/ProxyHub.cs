@@ -18,7 +18,7 @@ namespace RemoteDesktop_GatewayServer.Signalr
         }
         public override Task OnConnected()
         {
-            return Clients.Caller.AvailableClients(RemoteDesktop_GatewayServer.Signalr.ProxyWatcher.Clients);
+            return Clients.Caller.AvailableClients(RemoteDesktop_GatewayServer.Signalr.ProxyWatcher._GatewayServer.ClientManager.Clients);
         }
 
     }

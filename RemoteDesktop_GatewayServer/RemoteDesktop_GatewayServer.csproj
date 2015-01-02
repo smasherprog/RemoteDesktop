@@ -137,8 +137,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Code\ServerClient.cs" />
+    <Compile Include="Code\ClientManager.cs" />
     <Compile Include="Code\PreCheck.cs" />
-    <Compile Include="Code\ProxyServer.cs" />
+    <Compile Include="Code\GatewayServer.cs" />
     <Compile Include="Code\UpdateEXE.cs" />
     <Compile Include="Controllers\RAT_SupportController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

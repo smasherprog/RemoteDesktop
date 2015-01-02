@@ -24,8 +24,6 @@ namespace RemoteDesktop_GatewayServer.Code
                 throw new Exception("Missing web.config AppSettings Key for'RAT_Gateway_External_Connect_Port'");
             if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_GatewayHostName"]))
                 throw new Exception("Missing web.config AppSettings Key for'RAT_GatewayHostName'");
-            if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_Gateway_GetSessionInfoURL"]))
-                throw new Exception("Missing web.config AppSettings Key for'RAT_Gateway_GetSessionInfoURL'");
             if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_Disclaimer"]))
                 throw new Exception("Missing web.config AppSettings Key for'RAT_Disclaimer'");
 

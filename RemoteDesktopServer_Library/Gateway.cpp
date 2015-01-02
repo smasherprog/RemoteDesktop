@@ -10,7 +10,7 @@ int GetFileCreateTime()//used for randomness in session
 {
 	wchar_t szPath[MAX_PATH];
 	bool ret = false;
-	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath))) return 0;
+	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath))<0) return 0;
 
 	auto hFile(RAIIHANDLE(CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)));
 

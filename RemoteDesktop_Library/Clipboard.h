@@ -9,8 +9,22 @@ namespace RemoteDesktop{
 		std::vector<char> m_pDataHTML;
 		std::vector<char> m_pDataDIB;
 	};
+	inline bool operator==(const Clipboard_Data& left, const Clipboard_Data& right){
+		if (left.m_pDataDIB.size() != right.m_pDataDIB.size()) return false;
+		if (memcmp(left.m_pDataDIB.data(), right.m_pDataDIB.data(), left.m_pDataDIB.size()) != 0) return false;
+
+		if (left.m_pDataRTF.size() != right.m_pDataRTF.size()) return false;
+		if (memcmp(left.m_pDataRTF.data(), right.m_pDataRTF.data(), left.m_pDataRTF.size()) != 0) return false;
+
+		if (left.m_pDataHTML.size() != right.m_pDataHTML.size()) return false;
+		if (memcmp(left.m_pDataHTML.data(), right.m_pDataHTML.data(), left.m_pDataHTML.size()) != 0) return false;
+
+		if (left.m_pDataDIB.size() != right.m_pDataDIB.size()) return false;
+		if (memcmp(left.m_pDataDIB.data(), right.m_pDataDIB.data(), left.m_pDataDIB.size()) != 0) return false;
+		return true;// they are the same
+	}
 	namespace Clipboard{
-		Clipboard_Data Load(void* hwnd);
+		bool Load(void* hwnd, Clipboard_Data& data);
 		void Restore(void* hwnd, const Clipboard_Data& c);
 		namespace _INTERNAL{
 			template<class T>void RestoreClip(const std::vector<char>& buffer, T cb, UINT format){

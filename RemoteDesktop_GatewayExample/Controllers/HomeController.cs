@@ -8,22 +8,10 @@ namespace RemoteDesktop_GatewayExample.Controllers
 {
     public class HomeController : Controller
     {
+        // GET: Home
         public ActionResult Index()
         {
-            return View();
-        }
-
-        public ActionResult About()
-        {
-            ViewBag.Message = "Your application description page.";
-
-            return View();
-        }
-
-        public ActionResult Contact()
-        {
-            ViewBag.Message = "Your contact page.";
-
+            var testing = new RemoteDesktop_CSLibrary.Client();
             return View();
         }
     }

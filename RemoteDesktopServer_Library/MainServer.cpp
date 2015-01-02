@@ -33,11 +33,12 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 	else
 	{
 
+		auto msg = std::to_wstring(DefaultPort()) + L"   " + std::wstring(DefaultGateway()) + L"   " + std::wstring(DefaultProxyGetSessionURL());
 		auto ret = IDYES;
 		if (startasproxy){
 			ret = MessageBox(
 				NULL,
-				DisclaimerMessage(),
+				msg.c_str(),
 				(LPCWSTR)L"Disclaimer",
 				MB_ICONQUESTION | MB_YESNO
 				);

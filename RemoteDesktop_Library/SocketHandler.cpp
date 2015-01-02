@@ -34,6 +34,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_SendLoop(char* data
 		if (sentamount < 0){
 			auto sockerr = WSAGetLastError();
 			if (sockerr != WSAEMSGSIZE && sockerr != WSAEWOULDBLOCK){
+				DEBUG_MSG("Disconnecting %", sockerr);
 				return RemoteDesktop::Network_Return::FAILED;//disconnect client!!
 			}
 			//DEBUG_MSG("Yeilding time: %    %", len, sockerr);
@@ -57,6 +58,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int ds
 	Proxy_Header tmp;
 	tmp.Dst_Id = dst_id;
 	tmp.Src_Id = src_id;
+	DEBUG_MSG("Exchange_Keys % %", dst_id, src_id);
 	auto ret = _SendLoop((char*)&tmp, sizeof(tmp));//id is always sent at the beginning of a connection. This is to accommodate proxy sever
 	if (ret == FAILED) return _Disconnect();
 	ret = _SendLoop(_SendBuffer.data(), _SendBuffer.size());

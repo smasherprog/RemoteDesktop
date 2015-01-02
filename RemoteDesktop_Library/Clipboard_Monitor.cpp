@@ -15,6 +15,7 @@ void RemoteDesktop::ClipboardMonitor::set_ShareClipBoard(bool s){
 }
 void RemoteDesktop::ClipboardMonitor::Restore(const Clipboard_Data& c){
 	if (_ShareClipboard){
+		DEBUG_MSG("Clipboard Restore");
 		std::lock_guard<std::mutex> l(_ClipboardLock);
 		_IgnoreClipUpdateNotice = true;
 		Clipboard::Restore(_Hwnd, c);
@@ -54,13 +55,15 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 			}
 			else if (msg.message == WM_CLIPBOARDUPDATE){
 				if (_ShareClipboard){
+					DEBUG_MSG("Clipboard Update");
 					if (!_IgnoreClipUpdateNotice) {
 						Clipboard_Data c;
+						bool update = false;
 						{//ensure lock is released timely
 							std::lock_guard<std::mutex> l(_ClipboardLock);
-							c = Clipboard::Load(_Hwnd);
+							update = Clipboard::Load(_Hwnd, c);
 						}
-						_OnClipboardChanged(c);
+						if (update) _OnClipboardChanged(c);
 					}
 					_IgnoreClipUpdateNotice = false;
 				}

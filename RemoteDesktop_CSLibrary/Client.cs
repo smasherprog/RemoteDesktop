@@ -7,14 +7,23 @@ using System.Threading.Tasks;
 namespace RemoteDesktop_CSLibrary
 {
 
+
     public class Client
     {
-        public enum Host_Type {Viewer, Server};
-        public enum Connection_Status { Reserved, Pending, Connected, Paired };
+        public enum Host_Type { Unknown, Viewer, Server };
+        public enum Connection_Status { Reserved, Disconnected, Pending, Paired };
+        public Client()
+        {
+            Status = Connection_Status.Disconnected;
+            Host = Host_Type.Unknown;
+            ConnectTime = DateTime.Now;
+            Src_ID = Dst_ID = -1;
+        }
         public int Src_ID { get; set; }
         public int Dst_ID { get; set; }
         public string Firewall_IP { get; set; }
-        public string Internal_IP { get; set; }
+        public string Firewall_Port { get; set; }
+       // public string Internal_IP { get; set; }
         public string Mac_Address { get; set; }
         public string ComputerName { get; set; }
         public string UserName { get; set; }
