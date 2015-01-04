@@ -4,6 +4,8 @@
 #include <memory>
 #include "Timer.h"
 
+std::vector<std::vector<char>> RemoteDesktop::INTERNAL::BufferCache;
+std::mutex RemoteDesktop::INTERNAL::BufferCacheLock;
 
 int RemoteDesktop::Image_Settings::Quality = 70;
 bool RemoteDesktop::Image_Settings::GrazyScale = false;
@@ -87,7 +89,7 @@ RemoteDesktop::Image RemoteDesktop::Image::Clone() const{
 }
 
 
-RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image first, Image second){
+RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image& first, Image& second){
 	int top = -1;
 	int bottom = -1;
 	int left = -1;
@@ -165,7 +167,7 @@ RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image first, Image second){
 
 }
 
-RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_region)
+RemoteDesktop::Image RemoteDesktop::Image::Copy(Image& src_img, Rect src_copy_region)
 {
 	auto size = src_copy_region.width * src_copy_region.height * src_img.Pixel_Stride;
 	RemoteDesktop::Image retimg(src_copy_region.height, src_copy_region.width);
@@ -188,7 +190,7 @@ RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_reg
 
 	return retimg;
 }
-void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int dst_stride, char* dst, int dst_height, int dst_width)
+void RemoteDesktop::Image::Copy(Image& src_img, int dst_left, int dst_top, int dst_stride, char* dst, int dst_height, int dst_width)
 {
 	auto src = src_img.data.data();
 	auto jumpsrcrowstride = src_img.Width * src_img.Pixel_Stride;
