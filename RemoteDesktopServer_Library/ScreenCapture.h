@@ -3,21 +3,21 @@
 #include <Windows.h>
 #include <vector>
 #include "Image.h"
-
-namespace RemoteDesktop{
-	class ScreenCapture{
-
-		HDC nSrce = NULL;
-		HDC nDest = NULL;
-		HBITMAP nBmp = NULL;
-
-	public:
-		~ScreenCapture();
-		Image GetPrimary();
-		void ReleaseHandles();
-	};
-};
-
+//
+//namespace RemoteDesktop{
+//	class ScreenCapture{
+//
+//		HDC nSrce = NULL;
+//		HDC nDest = NULL;
+//		HBITMAP nBmp = NULL;
+//
+//	public:
+//		~ScreenCapture();
+//		Image GetPrimary();
+//		void ReleaseHandles();
+//	};
+//};
+//
 
 
 #endif

@@ -14,7 +14,7 @@ namespace RemoteDesktop_GatewayServer.Controllers
 {
     //ALWAYS REQUIRE HTTPS for release builds
 #if !DEBUG
-    [RequireHttps]
+   // [RequireHttps]
 #endif
     public class RAT_SupportController : Controller
     {
@@ -61,12 +61,7 @@ namespace RemoteDesktop_GatewayServer.Controllers
         private void SetSettings(RemoteDesktop_GatewayServer.Code.ResourceLayout res)
         { 
             string absoluteUrlBase = String.Format("{0}://{1}",   Request.Url.Scheme, Request.Url.Host +  (Request.Url.IsDefaultPort   ? ""  : String.Format(":{0}", Request.Url.Port))); 
-#if DEBUG
-            res.IDS_STRINGDEFAULTGATEWAY = Request.Url.Host;
-#else
             res.IDS_STRINGDEFAULTGATEWAY = ConfigurationManager.AppSettings["RAT_GatewayHostName"];
-
-#endif
             res.IDS_STRINGDEFAULTPROXYGETSESSIONURL = absoluteUrlBase + Url.Action("GetID", ControllerContext.RouteData.Values["controller"].ToString());
             res.IDS_STRINGDEFAULTPORT = ConfigurationManager.AppSettings["RAT_Gateway_External_Connect_Port"];
             res.IDS_STRINGSERVICE_NAME = ConfigurationManager.AppSettings["RAT_ServiceName"];

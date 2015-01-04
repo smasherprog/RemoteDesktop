@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Clipboard_Monitor.h"
 #include "Desktop_Monitor.h"
+#include "Handle_Wrapper.h"
 
 RemoteDesktop::ClipboardMonitor::ClipboardMonitor(Delegate<void, const Clipboard_Data&> c) : _OnClipboardChanged(c) {
 	_Running = true;
@@ -24,7 +25,7 @@ void RemoteDesktop::ClipboardMonitor::Restore(const Clipboard_Data& c){
 }
 void RemoteDesktop::ClipboardMonitor::_Run(){
 	DesktopMonitor dekstopmonitor;
-	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
+	if (!dekstopmonitor.Is_InputDesktopSelected()) dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
 
 	auto myclass = L"myclass";
 	WNDCLASSEX wndclass = {};
@@ -35,14 +36,13 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 	if (RegisterClassEx(&wndclass))
 	{
 		_Hwnd = CreateWindowEx(0, myclass, L"clipwatcher", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
-		if (!AddClipboardFormatListener(_Hwnd)){
-			DEBUG_MSG("Error %", GetLastError());
-		}
 	}
 	else {
 		DEBUG_MSG("Error %", GetLastError());
 	}
-	SetTimer(_Hwnd, 1001, 500, NULL); //every 500 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
+	auto clipboardlistener(RAIICLIPBOARDLISTENER(_Hwnd));
+	auto timer(RAIIHWNDTIMER(_Hwnd, 1001, 500)); //every 500 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
+
 	MSG msg;
 	while (_Running){
 		if (PeekMessage(&msg, _Hwnd, 0, 0, PM_REMOVE))
@@ -77,9 +77,4 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 		}
 		else WaitMessage();
 	}
-	if (_Hwnd != NULL) {
-		RemoveClipboardFormatListener(_Hwnd);
-		KillTimer(_Hwnd, 1001);
-	}
-
 }

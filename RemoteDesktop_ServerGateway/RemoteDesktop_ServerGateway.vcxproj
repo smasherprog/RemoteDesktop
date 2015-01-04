@@ -161,6 +161,7 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <Profile>true</Profile>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>
@@ -189,6 +190,7 @@
       <EntryPointSymbol>
       </EntryPointSymbol>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <Profile>true</Profile>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)RemoteDesktopServer_Library\</AdditionalIncludeDirectories>

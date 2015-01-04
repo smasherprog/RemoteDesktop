@@ -77,7 +77,7 @@ void RemoteDesktop::Display::NewImage(Image& img){
 	_HBITMAP_wrapper->height = img.Height;
 	_HBITMAP_wrapper->width = img.Width;
 	_HBITMAP_wrapper->raw_data = (unsigned char*)raw_data;
-
+	assert(img.Height*img.Width * 4 == bi.bmiHeader.biSizeImage);
 	memcpy(raw_data, img.get_Data(), img.size_in_bytes());
 	ReleaseDC(_HWND, hDC); 
 	InvalidateRect(_HWND, NULL, false);

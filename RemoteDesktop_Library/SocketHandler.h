@@ -12,6 +12,7 @@
 #include "Traffic_Monitor.h"
 #include <mutex>
 #include "Delegate.h"
+#include "Handle_Wrapper.h"
 
 namespace RemoteDesktop{
 	enum PeerState{
@@ -21,22 +22,13 @@ namespace RemoteDesktop{
 		PEER_STATE_EXCHANGING_KEYS,
 		PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES
 	};
-	class socket_wrapper{
-	public:
-		SOCKET socket;
 
-		explicit socket_wrapper(SOCKET s) : socket(s) { }
-		~socket_wrapper();
-		
-	};
 	class SocketHandler{
 		std::mutex _SendLock;
 		std::vector<char> _ReceivedBuffer, _SendBuffer;
 		std::vector<char> _ReceivedCompressionBuffer, _SendCompressionBuffer;
-
 		int _ReceivedBufferCounter = 0;
-		int _ReceiveCounter = 0;
-		int _SendCounter = 0;
+
 		Network_Return _SendLoop(char* data, int len);
 		Network_Return _ReceiveLoop();
 
@@ -47,7 +39,7 @@ namespace RemoteDesktop{
 		Network_Return _Decrypt_Received_Data();
 		Network_Return _Complete_Key_Exchange();
 		
-		std::unique_ptr<socket_wrapper> _Socket;
+		RAIISOCKET_TYPE _Socket;
 		Network_Return _Disconnect();
 		
 		

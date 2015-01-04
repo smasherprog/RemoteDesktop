@@ -16,7 +16,7 @@ bool RemoteDesktop::StartupNetwork(){
 	return RemoteDesktop::_INTERNAL::NetworkStarted;
 }
 void RemoteDesktop::ShutDownNetwork(){
-	WSACleanup();
+	if(RemoteDesktop::_INTERNAL::NetworkStarted) WSACleanup();
 	RemoteDesktop::_INTERNAL::NetworkStarted = false;
 }
 void RemoteDesktop::PrimeNetwork(unsigned short int port){

@@ -18,12 +18,19 @@ RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandl
 	DEBUG_MSG("Starting Server");
 	EventArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
 	SocketArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
-	_DesktopMonitor = std::make_unique<DesktopMonitor>(); 
+	_DesktopMonitor = std::make_unique<DesktopMonitor>();
 }
 
 RemoteDesktop::BaseServer::~BaseServer(){
 	BaseServer::ForceStop();
 	ShutDownNetwork();
+}
+void RemoteDesktop::BaseServer::_CleanupSockets_and_Events(){
+	for (auto x : EventArray) {
+		if (x != NULL) WSACloseEvent(x);
+	}
+	EventArray.resize(0);
+	SocketArray.resize(0);
 }
 void RemoteDesktop::BaseServer::ForceStop(){
 	Running = false;
@@ -32,16 +39,8 @@ void RemoteDesktop::BaseServer::ForceStop(){
 		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
 	}
 
-	CloseReverseConnectID_Dialog();
-	if (std::this_thread::get_id() != ConnectID_Dialog.get_id()){
-		if (ConnectID_Dialog.joinable()) ConnectID_Dialog.join();
-	}
+	_CleanupSockets_and_Events();
 
-	for (auto& x : EventArray) {
-		if (x != NULL) WSACloseEvent(x);
-	}
-	EventArray.resize(0);
-	SocketArray.resize(0);
 }
 
 void RemoteDesktop::BaseServer::StartListening(unsigned short port, std::wstring host){
@@ -72,7 +71,7 @@ void RemoteDesktop::BaseServer::_ListenWrapper(unsigned short port, std::wstring
 	else {
 		_ConnectWrapper(port, host);//try reverse connection
 	}
-
+	ForceStop();
 	ShutDownNetwork();
 	Running = false;
 }
@@ -84,28 +83,38 @@ void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstrin
 	auto portcstr = std::to_wstring(port);
 
 	while (Running && counter++ < MaxConnectAttempts && !DisconnectReceived){
-
+		DEBUG_MSG("Attempt Connection .. % .. ", counter);
 		SOCKET sock = RemoteDesktop::Connect(portcstr, host);
-		
+
 		if (sock != INVALID_SOCKET){
-		
+
 			counter = 0;//reset timer
 			MaxConnectAttempts = 15;//set this to a specific value
 			ProxyHeader.Dst_Id = -1;
 			std::wstring aes;
-			if (GetGatewayID_and_Key(ProxyHeader.Src_Id, aes)) _RunReverse(sock, aes);
+			if (GetGatewayID_and_Key(ProxyHeader.Src_Id, aes)) {
+				//if the gateway could be reached, display the id dialog
+				std::thread connectidiag;
+				if (_DesktopMonitor->get_InputDesktop() | RemoteDesktop::DesktopMonitor::Desktops::DEFAULT){//if the desktop is the default one, not the winlogon or screen saver
+					connectidiag = std::thread(ShowReverseConnectID_Dialog, ProxyHeader.Src_Id);
+				}
+
+				_RunReverse(sock, aes);
+
+				CloseReverseConnectID_Dialog();
+				if (connectidiag.joinable()) connectidiag.join();
+				_CleanupSockets_and_Events();
+			}
 		}
 	}
 	Running = false;
 }
 void RemoteDesktop::BaseServer::_HandleDisconnects_DesktopSwitches(){
-	if (!_DesktopMonitor->Is_InputDesktopSelected())
-	{
-		_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
-	}
+	if (!_DesktopMonitor->Is_InputDesktopSelected()) _DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
+	
 	//handle client disconnects here
 	if (!_DisconectClientList.empty()){
-		std::lock_guard<std::mutex> lock(_DisconectClientLock);	
+		std::lock_guard<std::mutex> lock(_DisconectClientLock);
 		std::vector<int> todisc;
 		for (auto& a : _DisconectClientList){
 			auto in = -1;
@@ -133,23 +142,13 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 	socket->Disconnect_CallBack = DELEGATE(&RemoteDesktop::BaseServer::_OnDisconnectHandler, this);
 
 	socket->Exchange_Keys(ProxyHeader.Dst_Id, ProxyHeader.Src_Id, aes);
-	
+
 	WSAEventSelect(socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
 	EventArray.push_back(newevent);
 	SocketArray.push_back(socket);
 
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
-
-	if (ReverseConnection){
-		//ensure proper cleanup
-		CloseReverseConnectID_Dialog();
-		if (ConnectID_Dialog.joinable()) ConnectID_Dialog.join();
-
-		if (_DesktopMonitor->get_InputDesktop() | RemoteDesktop::DesktopMonitor::Desktops::DEFAULT){//if the desktop is the default one, not the winlogon or screen saver
-			ConnectID_Dialog = std::thread(ShowReverseConnectID_Dialog, ProxyHeader.Src_Id);
-		}
-	}
 
 	while (Running && !EventArray.empty() && !DisconnectReceived) {
 		auto Index = WaitForSingleObject(newevent, 1000);
@@ -161,11 +160,10 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 				socket->Receive();
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
-		
 				break;// get out of loop and try reconnecting
 			}
 		}
-	
+
 		_HandleDisconnects_DesktopSwitches();
 		if (Index == WSA_WAIT_TIMEOUT)
 		{//this will check every timeout... which is good
@@ -174,12 +172,8 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 				c->CheckState();
 			}
 		}
-	
+
 	}
-
-	ForceStop();
-	Running = true;// ForceStop setts running to false;
-
 }
 bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 
@@ -241,7 +235,6 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 		_HandleDisconnects_DesktopSwitches();
 		if (Index == WSA_WAIT_TIMEOUT)
 		{//this will check every timeout... which is good
-			
 			std::lock_guard<std::mutex> lo(_SocketArrayLock);
 			for (auto& c : SocketArray) {
 				c->CheckState();
@@ -249,7 +242,6 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 		}
 	}
 
-	ForceStop();
 	DEBUG_MSG("_Listen Exiting");
 	return true;
 }
@@ -258,13 +250,14 @@ void RemoteDesktop::BaseServer::_OnDisconnect(int index){
 	if (index < 0 || index >= SocketArray.size()) return;
 	DEBUG_MSG("_OnDisconnect Called");
 	Disconnect_CallBack(SocketArray[index]);
-	auto ev = EventArray[index];
+	HANDLE ev = nullptr;
 	{
 		std::lock_guard<std::mutex> lo(_SocketArrayLock);
+		ev = EventArray[index];
 		EventArray.erase(EventArray.begin() + index);
 		SocketArray.erase(SocketArray.begin() + index);
 	}
-	if (ev != NULL) WSACloseEvent(ev);
+	if (ev != nullptr) WSACloseEvent(ev);
 	DEBUG_MSG("_OnDisconnect Finished");
 }
 
@@ -299,19 +292,14 @@ void RemoteDesktop::BaseServer::_OnConnect(SOCKET listensocket){
 }
 void RemoteDesktop::BaseServer::_OnReceiveHandler(Packet_Header* p, const char* d, SocketHandler* s){
 	for (auto& a : SocketArray){
-		if (a.get() == s) {
-			Receive_CallBack(p, d, a);
-			break;
-		}
+		if (a.get() == s) return Receive_CallBack(p, d, a);
 	}
 }
 
 void RemoteDesktop::BaseServer::_OnConnectHandler(SocketHandler* socket){
 	for (auto& a : SocketArray){
-		if (a.get() == socket) {
-			Connected_CallBack(a);
-			break;
-		}
+		if (a.get() == socket) return Connected_CallBack(a);
+
 	}
 }
 

@@ -22,15 +22,12 @@ RemoteDesktop::Client::Client(HWND hwnd,
 }
 
 RemoteDesktop::Client::~Client(){
-	DEBUG_MSG("~Client() Beg");
-	_NetworkClient->Stop();
-	DEBUG_MSG("~Client() End");
+	DEBUG_MSG("~Client()");
 }
 void RemoteDesktop::Client::OnDisconnect(){
 	_OnDisconnect();
 }
 void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port, int id, std::wstring aeskey){
-	if (_NetworkClient) _NetworkClient.reset();
 	_NetworkClient = std::make_unique<BaseClient>(DELEGATE(&RemoteDesktop::Client::OnConnect, this),
 		DELEGATE(&RemoteDesktop::Client::OnReceive, this),
 		DELEGATE(&RemoteDesktop::Client::OnDisconnect, this), _OnConnectingAttempt);
@@ -114,7 +111,6 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wheel){
 	NetworkMsg msg;
 	MouseEvent_Header h;
-	static MouseEvent_Header _LastMouseEvent;
 	h.HandleID = 0;
 	h.Action = action;
 	h.pos.left = x;

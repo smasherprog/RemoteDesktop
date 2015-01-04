@@ -58,9 +58,7 @@ namespace RemoteDesktop_GatewayServer.Code
                         var port = System.Configuration.ConfigurationManager.AppSettings["RAT_Gateway_Listen_Port"];
                         if(string.IsNullOrWhiteSpace(port))
                             port = "5939";
-#if DEBUG
-                        port = System.Configuration.ConfigurationManager.AppSettings["RAT_Gateway_External_Connect_Port"];
-#endif
+
                         var intport = Convert.ToInt32(port);
                         //  LOG += "Port "+ port+"\n";
                         listener.Bind(new IPEndPoint(IPAddress.Any, intport));
@@ -92,56 +90,104 @@ namespace RemoteDesktop_GatewayServer.Code
             }
 
         }
-
+        void ProcessPossibleConnectDisconnects()
+        {
+            foreach(var item in Connected.Where(a => a != null))
+            {
+                if(item.SocketObject.ShouldDisconnect)
+                {
+                    Debug.WriteLine("Disconnecting a connected client because ShouldDisconnect == true");
+                    Disconnect(item);
+                } else if(!IsSocketConnected(item.SocketObject.SocketObject))
+                {
+                    Debug.WriteLine("Disconnecting a connected client because  !IsSocketConnected(item.SocketObject.SocketObject) == true");
+                    Disconnect(item);
+                } else if((DateTime.Now - item.SocketObject.LastTimeHeard).TotalSeconds > Constants.VIEWER_DISCONNECT_TIMEOUT)
+                {
+                    Debug.WriteLine("Disconnecting a connected client because timeout has been hit");
+                    Disconnect(item);
+                }
+            }
+        }
+        //Assumes a lock on the pendingconnections container....
+        void ProcessPossiblePendingConnectionDisconnects()
+        {
+            var tmp = new List<ServerSocket>();
+            foreach(var item in PendingConnections)
+            {
+                if(!IsSocketConnected(item.SocketObject))
+                {
+                    Debug.WriteLine("Disconnecting a Pending client because  !IsSocketConnected(item.SocketObject.SocketObject) == true");
+                    tmp.Add(item);
+                } else if((DateTime.Now - item.LastTimeHeard).TotalSeconds > Constants.VIEWER_DISCONNECT_TIMEOUT)
+                {
+                    Debug.WriteLine("Disconnecting a Pending client because timeout has been hit");
+                    tmp.Add(item);
+                }
+            }
+            //remove from pending buffer and dispose.. 
+            foreach(var item in tmp)
+            {
+                PendingConnections.RemoveAll(a => a == item);
+                item.SocketObject.Dispose();
+            }
+        }
         void _Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             try
             {
                 //check on disconnects
-                foreach(var item in Connected.Where(a => a != null))
-                {
-                    if(item.SocketObject.ShouldDisconnect || !IsSocketConnected(item.SocketObject.SocketObject) || (DateTime.Now - item.SocketObject.LastTimeHeard).TotalSeconds > Get_DisconnectTime(item))
-                    {
-                        Disconnect(item);
-                    }
-                }
-                //check on other disconnects
+                ProcessPossibleConnectDisconnects();
                 var tmp = new List<ServerSocket>();
                 var connecting_clients = new List<List<Client_Wrapper>>();
                 lock(PendingConnectionsLock)
                 {
-                    foreach(var item in PendingConnections)
-                    {
-                        if(!IsSocketConnected(item.SocketObject) || (DateTime.Now - item.LastTimeHeard).TotalSeconds > Constants.VIEWER_DISCONNECT_TIMEOUT)
-                        {
-                            tmp.Add(item);
-                        }
-                    }
-                    //remove from pending buffer and dispose.. 
-                    foreach(var item in tmp)
-                    {
-                        PendingConnections.RemoveAll(a => a == item);
-                        item.SocketObject.Dispose();
-                    }
+                    ProcessPossiblePendingConnectionDisconnects();
                     //check on any pairing of connections
-
                     foreach(var item in PendingConnections)
                     {
                         //these are non blocking sockets so this will return immediately
-                        item.BufferCount += item.SocketObject.Receive(item.buffer, item.BufferCount, Constants.GATEWAY_ID_HEADER_SIZE - item.BufferCount, SocketFlags.None);
+                        try
+                        {
+                            item.BufferCount += item.SocketObject.Receive(item.buffer, item.BufferCount, Constants.GATEWAY_HEADER_SIZE - item.BufferCount, SocketFlags.None);
+                        } catch(System.Net.Sockets.SocketException ex)
+                        {
+                            if(ex.ErrorCode != Constants.WSAEWOULDBLOCK)
+                            {//make sure to ig
+                                Debug.WriteLine("Disconnecting Pending Client error in receive");
+                                Debug.WriteLine(ex.Message);
+                                tmp.Add(item);
+                                continue;
+                            }
+                        }
                         var possibleclients = PairUp(item);
                         if(possibleclients != null)
                         {//this means a possible pairing was made, or a single connection was made
                             connecting_clients.Add(possibleclients);
                         }
-
                     }
+                    //remove any disconnected clients
+                    foreach(var item in tmp)
+                    {
+                        PendingConnections.RemoveAll(a => a == item);
+                        item.SocketObject.Close();
+                        item.SocketObject.Dispose();
+                    }
+                    tmp.Clear();
+                    //add any connected clients
                     foreach(var item in connecting_clients)
                     {//remove from pending connects and move into the connected
                         foreach(var subitem in item)
                         {
                             PendingConnections.RemoveAll(a => a == subitem.SocketObject);
-                            Debug.Assert(Connected[subitem.ClientObject.Src_ID] == null);
+                            if(Connected[subitem.ClientObject.Src_ID] != null)
+                            {
+                                if(Connected[subitem.ClientObject.Src_ID] != subitem)
+                                {
+                                    Debug.WriteLine("Bad Connect");
+                                }
+                            }
+                            subitem.SocketObject.ShouldDisconnect = false;//just in case
                             Connected[subitem.ClientObject.Src_ID] = subitem;
                         }
                     }
@@ -152,22 +198,23 @@ namespace RemoteDesktop_GatewayServer.Code
 
                     if(item.Count == 2)
                     {//a pair was made... wire up the sockets and get started,otherwise, it will be in the Connected list and sit there until a timeout or a pairing
+
                         var left = item.FirstOrDefault();
                         var right = item.LastOrDefault();
                         Debug.Assert(left != null && right != null);
-                        left.SocketObject.OtherSocketObject = right.SocketObject.SocketObject;
-                        right.SocketObject.OtherSocketObject = left.SocketObject.SocketObject;
+
+                        left.SocketObject.OtherSocketObject = right.SocketObject;
+                        //neeed to block when its to anasync call.. wierd, isnt it?
+                        left.SocketObject.SocketObject.Blocking = true;
+                        right.SocketObject.SocketObject.Blocking = true;
+                        right.SocketObject.OtherSocketObject = left.SocketObject;
 
                         try
                         {
-                            var remoteIpEndPoint = left.SocketObject.SocketObject.RemoteEndPoint as IPEndPoint;
-                            left.ClientObject.Firewall_IP = remoteIpEndPoint.Address.ToString();
-                            left.ClientObject.Firewall_Port = remoteIpEndPoint.Port.ToString();
+                            Debug.WriteLine("Beginning Pair Send and async");
+                            Debug.WriteLine(left.SocketObject.BufferCount + " bytes of data to send on left");
+                            Debug.WriteLine(right.SocketObject.BufferCount + " bytes of data to send on right");
                             Send(left);
-
-                            remoteIpEndPoint = right.SocketObject.SocketObject.RemoteEndPoint as IPEndPoint;
-                            right.ClientObject.Firewall_IP = remoteIpEndPoint.Address.ToString();
-                            right.ClientObject.Firewall_Port = remoteIpEndPoint.Port.ToString();
                             Send(right);
 
                             BeginReceive(left);
@@ -180,6 +227,9 @@ namespace RemoteDesktop_GatewayServer.Code
                             Debug.WriteLine(ex.Message);
                         }
 
+                    } else
+                    {
+                        Debug.WriteLine("Client " + item.FirstOrDefault().ClientObject.Src_ID + " added to connected list, but was not paired");
                     }
 
                 }
@@ -189,7 +239,6 @@ namespace RemoteDesktop_GatewayServer.Code
             }
 
         }
-
         static int Get_DisconnectTime(Client_Wrapper o)
         {
             if(o == null)
@@ -203,8 +252,8 @@ namespace RemoteDesktop_GatewayServer.Code
         }
         List<Client_Wrapper> PairUp(ServerSocket state)
         {
-            if(state.BufferCount >= Constants.GATEWAY_ID_HEADER_SIZE)
-            {//if there are 8 bytes, then check it out to see if a pairing should be made
+            if(state.BufferCount >= Constants.GATEWAY_HEADER_SIZE)
+            {//if there is enough data, try to pair up
                 //the ids are validated in the manager class
                 return ClientManager.Add(state, BitConverter.ToInt32(state.buffer, 0), BitConverter.ToInt32(state.buffer, 4));
             }
@@ -223,9 +272,14 @@ namespace RemoteDesktop_GatewayServer.Code
                     return false;
                 else
                     return true;
-            } catch(Exception e)
+            } catch(System.Net.Sockets.SocketException e)
             {
-                return false;
+                if(e.ErrorCode != Constants.WSAEWOULDBLOCK)
+                {
+                    Debug.WriteLine(e.Message);
+                    return false;
+                }
+                return true;
             }
         }
 
@@ -252,7 +306,7 @@ namespace RemoteDesktop_GatewayServer.Code
                 return;
             }
             handler.NoDelay = true;
-
+            handler.Blocking = false;
             var state = new ServerSocket();
             state.SocketObject = handler;
 
@@ -287,15 +341,17 @@ namespace RemoteDesktop_GatewayServer.Code
         {
             state.SocketObject.SocketObject.BeginReceive(state.SocketObject.buffer, state.SocketObject.BufferCount, state.SocketObject.buffer.Length - state.SocketObject.BufferCount, 0, new AsyncCallback(ReadCallback), state);
         }
+
         static void Send(Client_Wrapper c)//this is synchronous .. SUE ME!
         {
             if(c.SocketObject.BufferCount > 0 && c.SocketObject.OtherSocketObject != null)
             {
                 var otherside = c.SocketObject.OtherSocketObject;
+                otherside.LastTimeHeard = DateTime.Now;
                 int offset = 0;
                 while(offset < c.SocketObject.BufferCount)
                 {
-                    offset += otherside.Send(c.SocketObject.buffer, offset, c.SocketObject.BufferCount - offset, SocketFlags.None);
+                    offset += otherside.SocketObject.Send(c.SocketObject.buffer, offset, c.SocketObject.BufferCount - offset, SocketFlags.None);
                 }
                 c.SocketObject.BufferCount = 0;
             }
@@ -311,17 +367,19 @@ namespace RemoteDesktop_GatewayServer.Code
                         return;//already done
                     state.SocketObject.Disconnected = true;
 
-                    Debug.WriteLine("Disconnecting " + state.ClientObject.Host.ToString() + "  " + state.ClientObject.Firewall_IP + ":" + state.ClientObject.Firewall_Port.ToString());
+                    Debug.WriteLine("Disconnecting " + state.ClientObject.Firewall_IP + ":" + state.ClientObject.Firewall_Port.ToString());
                     Debug.Assert(Connected[state.ClientObject.Src_ID] != null);
                     Connected[state.ClientObject.Src_ID].SocketObject.SocketObject.Dispose();
                     Connected[state.ClientObject.Src_ID] = null;
 
                     var otherid = state.ClientObject.Dst_ID;
-                    Debug.Assert(Connected[otherid] != null);
-                    Debug.WriteLine("Disconnecting " + Connected[otherid].ClientObject.Host.ToString() + "  " + Connected[otherid].ClientObject.Firewall_IP + ":" + Connected[otherid].ClientObject.Firewall_Port.ToString());
-                    Connected[otherid].SocketObject.SocketObject.Dispose();
-                    Connected[otherid].SocketObject.Disconnected = true;
-                    Connected[otherid] = null;
+                    if(otherid >= 0)
+                    {
+                        Debug.WriteLine("Disconnecting " + Connected[otherid].ClientObject.Firewall_IP + ":" + Connected[otherid].ClientObject.Firewall_Port.ToString());
+                        Connected[otherid].SocketObject.SocketObject.Dispose();
+                        Connected[otherid].SocketObject.Disconnected = true;
+                        Connected[otherid] = null;
+                    }
                 }
                 //now that the cleanup is done in this area, tell the manager, which will free up the hew IDS 
                 ClientManager.Remove(state.ClientObject);

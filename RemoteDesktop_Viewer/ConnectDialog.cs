@@ -53,7 +53,7 @@ namespace RemoteDesktop_Viewer
             this.Activate();
         }
 
-  
+
 
         void _ProxyClients_OnConnectAttemptEvent(string ip_or_host, RemoteDesktop_CSLibrary.Client c)
         {
@@ -64,25 +64,25 @@ namespace RemoteDesktop_Viewer
 
         void ConnectDialog_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if(_ProxyClients != null)
+            if (_ProxyClients != null)
                 _ProxyClients.Dispose();
-            if(_Login != null)
+            if (_Login != null)
                 _Login.Dispose();
         }
 
         void textBox1_KeyUp(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter)
                 button1.PerformClick();
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if(string.IsNullOrWhiteSpace(textBox1.Text))
+            if (string.IsNullOrWhiteSpace(textBox1.Text))
                 return;
-            if(textBox1.Text.Length < 4)
+            if (textBox1.Text.Length < 4)
                 return;
-       
+
             Connect(textBox1.Text, null);
         }
         private void Connect(string iporhost, RemoteDesktop_CSLibrary.Client c)
@@ -128,20 +128,24 @@ namespace RemoteDesktop_Viewer
         {
             _Connecting.UIThread(() => { _Connecting.Hide(); });
             this.UIThread(() => { this.Show(); });
-            _LastMainViewer.UIThread(() =>
+            var last = _LastMainViewer;
+            if (last != null)
             {
-                _LastMainViewer.Close();
-                _LastMainViewer = null;
-            });
+                last.UIThread(() =>
+                {
+                    last.Close();
+                    _LastMainViewer = null;
+                });
+            }
 
         }
         void _ProxyClients_OnDisconnectEvent()
         {
             tabPage2.UIThread(() =>
             {
-            tabPage2.Controls.Clear();
-            tabPage2.Controls.Add(_Login);
-            this.Size = new Size(600, 220);
+                tabPage2.Controls.Clear();
+                tabPage2.Controls.Add(_Login);
+                this.Size = new Size(600, 220);
             });
 
         }
@@ -155,13 +159,14 @@ namespace RemoteDesktop_Viewer
         void tabControl1_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             var selected = (sender as TabControl).SelectedIndex;
-            if(selected == 0)
+            if (selected == 0)
             {
                 this.Size = new Size(325, 100);
-            } else
+            }
+            else
             {
                 this.Size = new Size(600, 220);
-                if(_ProxyClients.ProxyAuth == null)
+                if (_ProxyClients.ProxyAuth == null)
                 {
                     tabPage2.Controls.Clear();
                     tabPage2.Controls.Add(_Login);

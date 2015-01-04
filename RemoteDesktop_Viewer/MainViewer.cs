@@ -218,9 +218,9 @@ namespace RemoteDesktop_Viewer
             _Host_Address = proxy_host;
             _Proxyd_Client = c;
             if(c == null)
-                Connect(_Client, proxy_host, "443", -1, "");
+                Connect(_Client, proxy_host, Settings.Port, -1, "");
             else
-                Connect(_Client, proxy_host, "443", c.Src_ID, c.AES_Session_Key);
+                Connect(_Client, proxy_host, Settings.Port, c.Src_ID, c.AES_Session_Key);
         }
         static int counter = 0;
         static DateTime timer = DateTime.Now;

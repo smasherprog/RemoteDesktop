@@ -160,7 +160,19 @@ namespace RemoteDesktop_Viewer
             if (listView1.SelectedItems.Count > 0)
             {
                 var id = listView1.SelectedItems[0].Text;
-                var c = _Clients[Convert.ToInt32(id)];
+                if (id.StartsWith("*"))
+                {
+                    MessageBox.Show("You cannot connect to this machine, that is a viewer, not a server!");
+                    return;
+                }
+                var intid = -1;
+                if (!Int32.TryParse(id, out intid))
+                {
+                    MessageBox.Show("Cannot parse ID!");
+                    return;
+                }
+
+                var c = _Clients.FirstOrDefault(a => a != null && a.Src_ID == intid);
 
                 if (c != null)
                 {

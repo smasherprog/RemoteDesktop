@@ -63,10 +63,10 @@ namespace RemoteDesktop_GatewayServer.Code
                     {
                         var dt = (DateTime.Now - obj.ClientObject.ConnectTime).TotalSeconds;
 
-                        if(dt > Constants.SERVER_DISCONNECT_TIMEOUT && obj.ClientObject.Host == Client.Host_Type.Server && obj.ClientObject.Status == Client.Connection_Status.Reserved)//disconnect servers if they have not connected within a timeout
+                        if(dt > Constants.SERVER_DISCONNECT_TIMEOUT && obj.ClientObject.Host == Client.Host_Type.Server && obj.ClientObject.Status != Client.Connection_Status.Paired)//disconnect servers if they have not connected within a timeout
                         {
                             li.Add(obj.ClientObject);
-                            obj.SocketObject.ShouldDisconnect = true;// this will cause the viewer to disconnect
+                            obj.SocketObject.ShouldDisconnect = true;// this will cause the server to disconnect, if it is connected
                             _Clients[i] = null;
                             Ids.Enqueue(i);
                         } else if(dt > Constants.VIEWER_DISCONNECT_TIMEOUT && obj.ClientObject.Host == Client.Host_Type.Viewer && obj.ClientObject.Status != Client.Connection_Status.Paired)
@@ -88,11 +88,18 @@ namespace RemoteDesktop_GatewayServer.Code
             var newclient = new Client_Wrapper();
             newclient.SocketObject = c;
             newclient.ClientObject.ConnectTime = DateTime.Now;
+
+
             if(dst_id == -1)
                 newclient.ClientObject.Host = Client.Host_Type.Server;
             else if(src_id == -1)
             {
                 newclient.ClientObject.Host = Client.Host_Type.Viewer;
+                //servers have their info set when they get an ID, viewers dont until they are added
+                var remoteIpEndPoint = newclient.SocketObject.SocketObject.RemoteEndPoint as System.Net.IPEndPoint;
+                newclient.ClientObject.Firewall_IP = remoteIpEndPoint.Address.ToString();
+                newclient.ClientObject.Firewall_Port = remoteIpEndPoint.Port.ToString();
+
             } else
             {
                 c.ShouldDisconnect = true;
@@ -160,6 +167,7 @@ namespace RemoteDesktop_GatewayServer.Code
                             wrapper.SocketObject.ShouldDisconnect = true;//set to disconnect
                             return null;
                         }
+
                         wrapper.ClientObject.Src_ID = GetID();
                         if(wrapper.ClientObject.Src_ID < 0)
                         {//if there are no ids left.. get out
@@ -274,9 +282,10 @@ namespace RemoteDesktop_GatewayServer.Code
 
                 }
                 c.Status = Client.Connection_Status.Disconnected;
-                c.Src_ID = c.Dst_ID = -1;
+             
                 Ids.Enqueue(c.Src_ID);//add the id in
                 _Clients[c.Src_ID] = null;//clear the slot
+                c.Src_ID = c.Dst_ID = -1;
             }
             if(OnClientDisconnectEvent != null)
                 OnClientDisconnectEvent(new List<Client> { c });
@@ -294,7 +303,7 @@ namespace RemoteDesktop_GatewayServer.Code
                     if(viewer != null)
                     {
                         viewer.ClientObject.Status = Client.Connection_Status.Disconnected;
-                        viewer.ClientObject.Src_ID = viewer.ClientObject.Dst_ID = -1;//reset its id
+                        viewer.SocketObject.ShouldDisconnect = true;//set this to disconnect the viewer
                         _Clients[c.Dst_ID] = null;//clear the viewer slot
                         Ids.Enqueue(c.Dst_ID);//add the id in the id
                     }

@@ -3,7 +3,7 @@
 #include "Handle_Wrapper.h"
 #include "Image.h"
 
-RemoteDesktop::Image CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGuard, int left, int top);
+std::shared_ptr<RemoteDesktop::Image> CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGuard, int left, int top);
 
 BOOL CALLBACK MonitorEnumProc(
 	HMONITOR hMonitor,  // handle to display monitor
@@ -12,22 +12,22 @@ BOOL CALLBACK MonitorEnumProc(
 	LPARAM dwData         // data
 	)
 {
-	auto hdcPool = reinterpret_cast<std::vector<RemoteDesktop::Image>*>(dwData);
+	auto hdcPool = reinterpret_cast<std::vector<std::shared_ptr<RemoteDesktop::Image>>*>(dwData);
 	auto desktopGuard(RAIIHDC(hdcMonitor));
 	RECT rect = *lprcMonitor;
-	hdcPool->emplace_back(std::move(CaptureDesktop(desktopGuard, lprcMonitor->left, lprcMonitor->top)));	
+	hdcPool->push_back(CaptureDesktop(desktopGuard, lprcMonitor->left, lprcMonitor->top));	
 	return true;
 }
 
-std::vector<RemoteDesktop::Image> RemoteDesktop::CaptureDesktops(){
+std::vector<std::shared_ptr<RemoteDesktop::Image>> RemoteDesktop::CaptureDesktops(){
 	auto hDesktopDC(RAIIHDC(GetDC(NULL)));
-	std::vector<Image> imgs;
+	std::vector<std::shared_ptr<Image>> imgs;
 	EnumDisplayMonitors(hDesktopDC.get(), NULL, MonitorEnumProc, reinterpret_cast<LPARAM>(&imgs));
 	return imgs;
 }
 
 
-RemoteDesktop::Image CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGuard, int left, int top)
+std::shared_ptr<RemoteDesktop::Image> CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGuard, int left, int top)
 {
 
 	auto nScreenWidth = GetDeviceCaps(desktopGuard.get(), HORZRES);
@@ -39,7 +39,11 @@ RemoteDesktop::Image CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGu
 	// Selecting an object into the specified DC 
 	auto originalBmp = SelectObject(hCaptureDC.get(), hCaptureBmp.get());
 	
-	BitBlt(hCaptureDC.get(), 0, 0, nScreenWidth, nScreenHeight, desktopGuard.get(), left, top, SRCCOPY | CAPTUREBLT);
+	if (!BitBlt(hCaptureDC.get(), 0, 0, nScreenWidth, nScreenHeight, desktopGuard.get(), left, top, SRCCOPY | CAPTUREBLT)){
+		auto p(std::make_shared<RemoteDesktop::Image>(nScreenHeight, nScreenWidth));
+		memset(p->get_Data(), 1, p->size_in_bytes());
+		return p;
+	}
 
 	BITMAPINFOHEADER   bi;
 	memset(&bi, 0, sizeof(bi));
@@ -57,10 +61,10 @@ RemoteDesktop::Image CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGu
 	bi.biClrImportant = 0;
 	bi.biSizeImage = ((nScreenWidth * bi.biBitCount + 31) / 32) * 4 * nScreenHeight;
 
-	RemoteDesktop::Image retimg(nScreenHeight, nScreenWidth);
+	auto ptr(std::make_shared<RemoteDesktop::Image>(nScreenHeight, nScreenWidth));
 
-	GetDIBits(desktopGuard.get(), hCaptureBmp.get(), 0, (UINT)nScreenHeight, retimg.get_Data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
+	GetDIBits(desktopGuard.get(), hCaptureBmp.get(), 0, (UINT)nScreenHeight, ptr->get_Data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS);
 	SelectObject(hCaptureDC.get(), originalBmp);	
 
-	return retimg;
+	return ptr;
 }

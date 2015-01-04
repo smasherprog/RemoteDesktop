@@ -303,9 +303,7 @@ void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg){
 	msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
 
 	std::lock_guard<std::mutex> lock(_NewClientLock);
-
 	for (auto& a : _NewClients){
-
 		a->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
 	_NewClients.clear();
@@ -378,7 +376,6 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bo
 
 	auto _LastImages(CaptureDesktops());
 
-
 	auto shutdownhandle(RAIIHANDLE(OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram")));
 
 	WaitForSingleObject(shutdownhandle.get(), 100);//call this to get the first signal from the service
@@ -409,21 +406,21 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bo
 		auto currentimages(CaptureDesktops());
 		if (!currentimages.empty() && !_LastImages.empty()){
 			for (auto i = 0; i < 1; i++){
-				_HandleNewClients(currentimages[i]);
-				if (!_HandleResolutionUpdates(currentimages[i], _LastImages[i])){
-					auto rect = Image::Difference(_LastImages[i], currentimages[i]);
-					_Handle_ScreenUpdates(currentimages[i], rect);
+				_HandleNewClients(*currentimages[i]);
+				if (!_HandleResolutionUpdates(*currentimages[i], *_LastImages[i])){
+					auto rect = Image::Difference(*_LastImages[i], *currentimages[i]);
+					_Handle_ScreenUpdates(*currentimages[i], rect);
 				}
 			}
 		}
 
-		_LastImages = std::move(currentimages);
+		_LastImages = currentimages;
 		t1.Stop();
 		auto tim = (int)t1.Elapsed_milli();
 		lastwaittime = FRAME_CAPTURE_INTERVAL - tim;
 		if (lastwaittime < 0) lastwaittime = 0;
-		DEBUG_MSG("Time for work... %", t1.Elapsed_milli());
+		//DEBUG_MSG("Time for work... %", t1.Elapsed_milli());
 	}
-
+	DEBUG_MSG("Stopping Main Server Loop");
 	_NetworkServer->ForceStop();//stop program!
 }

@@ -22,7 +22,7 @@ void RemoteDesktop::Image::Compress(){
 	auto maxsize = Width * Height * Pixel_Stride;
 	long unsigned int _jpegSize = maxsize;
 	
-	if (compressBuffer.capacity() < maxsize) compressBuffer.reserve(maxsize);
+	if (compressBuffer.capacity() < maxsize) compressBuffer.reserve(maxsize + 16);
 
 	auto t = Timer(true);
 	
@@ -49,7 +49,7 @@ void RemoteDesktop::Image::Decompress(){
 	if (_jpegDecompressor.get() == nullptr) _jpegDecompressor = std::unique_ptr<void, decltype(compfree)>(tjInitDecompress(), compfree);
 	
 	auto maxsize = Width * Height * Pixel_Stride;
-	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize);
+	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize+16);
 
 	int jpegSubsamp = 0;
 	auto outwidth = 0;
@@ -66,8 +66,8 @@ void RemoteDesktop::Image::Decompress(){
 
 	t.Stop();
 	//DEBUG_MSG("Time Taken Decompress %", std::to_string(t.Elapsed_milli()));
-	data.resize(outwidth*outheight*Pixel_Stride);//this will be the final size
-	memcpy(data.data(), decompressBuffer.data(), data.size());
+	data.resize(maxsize);//this will be the final size
+	memcpy(data.data(), decompressBuffer.data(), maxsize);
 	Compressed = false;
 }
 RemoteDesktop::Image RemoteDesktop::Image::Create_from_Compressed_Data(char* d, int size_in_bytes, int h, int w){
@@ -169,7 +169,9 @@ RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_reg
 {
 	auto size = src_copy_region.width * src_copy_region.height * src_img.Pixel_Stride;
 	RemoteDesktop::Image retimg(src_copy_region.height, src_copy_region.width);
-	
+
+	auto dstend = retimg.data.data() + retimg.size_in_bytes() + 1;//this is the traditional end
+
 	auto src = src_img.data.data();
 	auto dst = retimg.data.data();
 
@@ -180,8 +182,10 @@ RemoteDesktop::Image RemoteDesktop::Image::Copy(Image src_img, Rect src_copy_reg
 		auto srcrow = (int*)(src + (srcrowstride * (y + src_copy_region.top)));
 		srcrow += src_copy_region.left;
 		auto dstrow = dst + (dstrowstride * y);
+		assert(dstrow + dstrowstride < dstend);
 		memcpy(dstrow, srcrow, dstrowstride);
 	}
+
 	return retimg;
 }
 void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int dst_stride, char* dst, int dst_height, int dst_width)
@@ -195,6 +199,8 @@ void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int ds
 	auto wmod = dst_width - (src_img.Width + dst_left);
 	if (wmod < 0) src_img.Width += wmod;
 
+	auto dstend = dst + (dst_height* dst_width*4)+ 1;//this is the traditional end
+
 	auto copysrcstide = src_img.Width * src_img.Pixel_Stride;
 
 	for (int y = 0; y < src_img.Height; y++)
@@ -202,6 +208,7 @@ void RemoteDesktop::Image::Copy(Image src_img, int dst_left, int dst_top, int ds
 		auto dstrow = (int*)(dst + (dst_stride * (y + dst_top)));
 		dstrow += dst_left;
 		auto srcrow = src + (jumpsrcrowstride * y);
+		assert(((char*)dstrow) + copysrcstide < dstend);
 		memcpy(dstrow, srcrow, copysrcstide);
 	}
 }

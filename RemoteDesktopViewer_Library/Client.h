@@ -32,6 +32,7 @@ namespace RemoteDesktop{
 		void(__stdcall * _OnConnectingAttempt)(int attempt, int maxattempt);
 
 		void SendFileOrFolder(std::string root1, std::string fullpath);
+		MouseEvent_Header _LastMouseEvent;
 
 	public:
 		Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int), void(__stdcall * onconnectingattempt)(int, int));

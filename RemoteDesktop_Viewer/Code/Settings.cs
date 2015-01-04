@@ -16,11 +16,11 @@ namespace RemoteDesktop_Viewer.Code
         public const string DLL_Name = "RemoteDesktopViewer_Library_32.dll";
 #endif
 
-
+        public static string Port { get { return "443"; } }
         public static string Gateway { get { return "localhost"; } }
         public static string AuthenticationUrl { get { return "http://localhost:3406/RAT_Support/Authenticate"; } }
         public static string SignalRHubName { get { return "ProxyHub"; } }
-        public static string SignalRHubUrl { get { return "http://localhost:3406/"; } }
+        public static string SignalRHubUrl { get { return "http://localhost:3406"; } }
 
 
         [StructLayout(LayoutKind.Sequential)]

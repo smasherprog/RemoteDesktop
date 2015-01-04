@@ -2,25 +2,21 @@
 #include "resource.h"
 #include "ProxyConnectDialog.h"
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
+#include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 
 std::wstring textodisplay;
-HFONT hFont = NULL;
-HWND DiagHwnd = NULL;
+HFONT font = nullptr;
+RemoteDesktop::RAIIDIALOGBOX_TYPE DiagHwnd = RAIIDIALOGBOX(nullptr);
 bool RemoteDesktop::ReverseConnectID_DialogOpen(){
-	return DiagHwnd != NULL;
+	return DiagHwnd != nullptr;
 }
 void UpdateText(){
-	HWND texthWnd = GetDlgItem(DiagHwnd, IDC_STATIC2);
-	if (hFont != NULL) DeleteObject(hFont);
-	hFont = NULL;
-	hFont = CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, \
-		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, \
-		DEFAULT_PITCH | FF_SWISS, L"Arial");
+	HWND texthWnd = GetDlgItem(DiagHwnd.get(), IDC_STATIC2);
 
-	if (texthWnd)
+	if (texthWnd && font != nullptr)
 	{
 		SetWindowText(texthWnd, textodisplay.c_str()); 
-		SendDlgItemMessage(DiagHwnd, IDC_STATIC2, WM_SETFONT, (WPARAM)hFont, TRUE);
+		SendDlgItemMessage(DiagHwnd.get(), IDC_STATIC2, WM_SETFONT, (WPARAM)font, TRUE);
 	}
 }
 LRESULT CALLBACK DlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -29,14 +25,14 @@ LRESULT CALLBACK DlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 	{
 
 	case WM_INITDIALOG:
-		DiagHwnd = hWndDlg;
+		DiagHwnd = RAIIDIALOGBOX(hWndDlg);
 		UpdateText();
 		return TRUE;
 	case WM_COMMAND:
 		switch (wParam)
 		{
 		case IDOK:
-			EndDialog(hWndDlg, 0);
+			DiagHwnd = nullptr;//let the destructor call enddiag
 			return TRUE;
 		}
 		break;
@@ -45,10 +41,8 @@ LRESULT CALLBACK DlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 void RemoteDesktop::CloseReverseConnectID_Dialog(){
-	EndDialog(DiagHwnd, 0);
-	DiagHwnd = NULL;
-	if (hFont != NULL) DeleteObject(hFont);
-	hFont = NULL;
+	DiagHwnd = nullptr;
+	font = nullptr;
 }
 void RemoteDesktop::ShowReverseConnectID_Dialog(int id){
 
@@ -57,8 +51,10 @@ void RemoteDesktop::ShowReverseConnectID_Dialog(int id){
 
 	DesktopMonitor dekstopmonitor;
 	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
-
-	DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), NULL, reinterpret_cast<DLGPROC>(DlgProc));
-	if (hFont != NULL) DeleteObject(hFont);
-	hFont = NULL;
+	RemoteDesktop::RAIIHFONT_TYPE hFont = RAIIHFONT(CreateFont(16, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, \
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, \
+		DEFAULT_PITCH | FF_SWISS, L"Arial"));
+	font = hFont.get();
+	auto p = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), NULL, reinterpret_cast<DLGPROC>(DlgProc));
+	CloseReverseConnectID_Dialog();
 }

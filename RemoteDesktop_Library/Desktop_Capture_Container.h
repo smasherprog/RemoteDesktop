@@ -2,10 +2,10 @@
 #define DESKTOP_CAPTURE_CONTAINER123_H
 #include <vector>
 #include "Image.h"
-
+#include <memory>
 
 namespace RemoteDesktop{
-	std::vector<Image> CaptureDesktops();
+	std::vector<std::shared_ptr<Image>> CaptureDesktops();
 }
 
 #endif

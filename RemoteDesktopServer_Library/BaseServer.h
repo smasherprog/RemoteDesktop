@@ -22,6 +22,8 @@ namespace RemoteDesktop{
 		void _ConnectWrapper(unsigned short port, std::wstring host);
 		void _RunReverse(SOCKET sock, std::wstring aes);
 
+		void _CleanupSockets_and_Events();
+
 		void _HandleDisconnects_DesktopSwitches();
 
 		void _ListenWrapper(unsigned short port, std::wstring host);
@@ -32,9 +34,9 @@ namespace RemoteDesktop{
 
 		std::mutex _SocketArrayLock;
 		std::thread _BackGroundNetworkWorker;
-		std::thread ConnectID_Dialog;//<----NOT THE BEST PLACE FOR THIS, but for now its here!!
 		std::vector<WSAEVENT> EventArray;
 
+		
 	protected:
 		int MaxConnectAttempts = 3;
 		

@@ -18,6 +18,10 @@ namespace RemoteDesktop_CSLibrary
             Host = Host_Type.Unknown;
             ConnectTime = DateTime.Now;
             Src_ID = Dst_ID = -1;
+            Firewall_IP = "1.1.1.1";
+            Firewall_Port = "000";
+            ComputerName = "Dummy";
+            Mac_Address = "00-00-00-00-00-00";
         }
         public int Src_ID { get; set; }
         public int Dst_ID { get; set; }

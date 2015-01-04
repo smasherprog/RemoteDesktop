@@ -41,7 +41,6 @@ void RemoteDesktop::SystemTray::_ShowAboutDialog(){
 RemoteDesktop::SystemTray::SystemTray() :
 _SystemTrayIcon(RAIIHICON((HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0))),
 Hmenu(RAIIHMENU(CreatePopupMenu())) {
-
 }
 RemoteDesktop::SystemTray::~SystemTray(){
 	Stop();
@@ -50,7 +49,6 @@ RemoteDesktop::SystemTray::~SystemTray(){
 void RemoteDesktop::SystemTray::_Cleanup(){
 	Hmenu = nullptr;
 	_SystemTrayIcon = nullptr;
-	KillTimer(Hwnd, ID_TRAY_APP_TIMER);
 	if (notifyIconData.hWnd != 0) {
 		Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 		memset(&notifyIconData, 0, sizeof(notifyIconData));
@@ -61,6 +59,7 @@ void RemoteDesktop::SystemTray::Start(Delegate<void> readycb){
 	_BackGroundThread = std::thread(&SystemTray::_Run, this);
 }
 void RemoteDesktop::SystemTray::Stop(){
+	_Running = false;
 	PostMessage(Hwnd, WM_QUIT, 0, 0);
 	if (std::this_thread::get_id() != _BackGroundThread.get_id()){
 		if (_BackGroundThread.joinable()) _BackGroundThread.join();
@@ -121,6 +120,7 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 	case(WM_QUERYENDSESSION) :
 	case(WM_ENDSESSION) :
 						_Cleanup();
+		_Running = false;
 		break;
 	case(WM_SYSICON) :
 		if (lParam == WM_RBUTTONUP)
@@ -145,9 +145,9 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 	return DefWindowProc(hWnd, msg, msg, lParam);
 }
 void RemoteDesktop::SystemTray::_Run(){
-
+	_Running = true;
 	DesktopMonitor dekstopmonitor;
-	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
+	if (!dekstopmonitor.Is_InputDesktopSelected()) dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
 	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 
 	auto myclass = L"systrayclass";
@@ -158,13 +158,14 @@ void RemoteDesktop::SystemTray::_Run(){
 	wndclass.lpszClassName = myclass;
 
 	if (RegisterClassEx(&wndclass)) Hwnd = CreateWindowEx(0, myclass, L"systraywatcher", 0, 0, 0, 0, 0, HWND_DESKTOP, 0, GetModuleHandle(NULL), 0);
-	else 	return DEBUG_MSG("Error %", GetLastError());
+	else return DEBUG_MSG("Error %", GetLastError());
 
 	ShowWindow(Hwnd, SW_HIDE);
 	SetWindowLongPtr(Hwnd, GWLP_USERDATA, (LONG_PTR)this);
-	SetTimer(Hwnd, ID_TRAY_APP_TIMER, 1000, NULL); //every 1000 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
+
+	auto timer(RAIIHWNDTIMER(Hwnd, ID_TRAY_APP_TIMER, 500)); //every 1000 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
 	MSG msg;
-	while (GetMessage(&msg, Hwnd, 0, 0) != 0)
+	while (_Running && (GetMessage(&msg, Hwnd, 0, 0) != 0))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);

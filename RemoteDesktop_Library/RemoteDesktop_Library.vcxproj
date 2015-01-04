@@ -193,16 +193,17 @@
     <ClInclude Include="Handle_Wrapper.h" />
     <ClInclude Include="Encryption.h" />
     <ClInclude Include="Image.h" />
+    <ClInclude Include="INetwork.h" />
     <ClInclude Include="lz4.h" />
     <ClInclude Include="lz4frame.h" />
     <ClInclude Include="lz4hc.h" />
     <ClInclude Include="MouseCommon.h" />
+    <ClInclude Include="Network_Client.h" />
     <ClInclude Include="Ping.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="NetworkSetup.h" />
     <ClInclude Include="RegExp.h" />
     <ClInclude Include="SocketHandler.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="StringProcess.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Traffic_Monitor.h" />
@@ -220,12 +221,14 @@
     <ClCompile Include="Desktop_Capture_Container.cpp" />
     <ClCompile Include="Desktop_Monitor.cpp" />
     <ClCompile Include="Encryption.cpp" />
+    <ClCompile Include="Handle_Wrapper.cpp" />
     <ClCompile Include="Image.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NoListing</AssemblerOutput>
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NoListing</AssemblerOutput>
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NoListing</AssemblerOutput>
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NoListing</AssemblerOutput>
     </ClCompile>
+    <ClCompile Include="INetwork.cpp" />
     <ClCompile Include="lz4.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -245,6 +248,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NetworkSetup.cpp" />
+    <ClCompile Include="Network_Client.cpp" />
     <ClCompile Include="Ping.cpp" />
     <ClCompile Include="SocketHandler.cpp" />
     <ClCompile Include="stdafx.cpp">
