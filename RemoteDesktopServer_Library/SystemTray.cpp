@@ -167,6 +167,7 @@ void RemoteDesktop::SystemTray::_Run(){
 	MSG msg;
 	while (_Running && (GetMessage(&msg, Hwnd, 0, 0) != 0))
 	{
+
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -177,6 +178,7 @@ void RemoteDesktop::SystemTray::AddMenuItem(const wchar_t* itemname, Delegate<vo
 	CallBacks.push_back(cb);
 }
 void RemoteDesktop::SystemTray::Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout){
+	
 	if (!_TrayIconCreated) return;
 	NOTIFYICONDATA ni;
 	memset(&ni, 0, sizeof(NOTIFYICONDATA));

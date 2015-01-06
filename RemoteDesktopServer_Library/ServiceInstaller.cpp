@@ -31,8 +31,10 @@ bool InstallService(PWSTR pszServiceName,
 {
 	wchar_t szPath[MAX_PATH];
 	bool ret = false;
-	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)) == 0) wprintf(L"GetModuleFileName failed w/err 0x%08lx\n", GetLastError());
-
+	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)) == 0) {
+		wprintf(L"GetModuleFileName failed w/err 0x%08lx\n", GetLastError());
+		return false;
+	}
 	auto schSCManager=RAIISC_HANDLE(OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE));
 	if (schSCManager.get() == nullptr) wprintf(L"OpenSCManager failed w/err 0x%08lx\n", GetLastError());
 	else {

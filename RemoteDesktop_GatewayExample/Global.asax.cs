@@ -16,7 +16,7 @@ namespace RemoteDesktop_GatewayExample
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
-          
+            RemoteDesktop_GatewayExample.Models.RAT_Auth.Setup();
         }
     }
 }

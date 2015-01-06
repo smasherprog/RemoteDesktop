@@ -244,8 +244,11 @@ void RemoteDesktop::RD_Server::_Handle_ConnectionInfo(Packet_Header* header, con
 	memcpy(&h, data, header->PayloadLen);
 	h.UserName[UNAMELEN] = 0;
 	sh->UserName = std::wstring(h.UserName);
-	auto con = sh->UserName + L" has connected to your machine . . .";
-	_SystemTray->Popup(L"Connection Established", con.c_str(), 2000);
+	if (sh->UserName.size() > 2){
+		auto con = sh->UserName + L" has connected to your machine . . .";
+		_SystemTray->Popup(L"Connection Established", con.c_str(), 2000);
+	}
+
 }
 void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	switch (header->Packet_Type){
@@ -282,7 +285,7 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	}
 }
 void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) {
-	if (!sh->UserName.empty()){
+	if (sh->UserName.size()>2){
 		auto con = sh->UserName + L" has Disconnected from your machine . . .";
 		_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
 	} 

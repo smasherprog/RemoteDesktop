@@ -14,17 +14,20 @@ RemoteDesktop::SocketHandler::SocketHandler(SOCKET socket, bool client) : _Socke
 }
 
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_SendLoop(char* data, int len){
+	int counter = 0;
 	while (len > 0){
-		//DEBUG_MSG("send len %", len);
 		auto sentamount = send(_Socket->socket, data, len, 0);
 		if (sentamount < 0){
 			auto sockerr = WSAGetLastError();
 			if (sockerr != WSAEMSGSIZE && sockerr != WSAEWOULDBLOCK){
 				DEBUG_MSG("Disconnecting %", sockerr);
-				return RemoteDesktop::Network_Return::FAILED;//disconnect client!!
+				return RemoteDesktop::Network_Return::FAILED;//disconnect client!!44
 			}
-			//DEBUG_MSG("Yeilding time: %    %", len, sockerr);
-			std::this_thread::yield();
+			if (counter++ > 100) {
+				DEBUG_MSG("Disconnecting socket due to timeout");
+				return RemoteDesktop::Network_Return::FAILED;//1 second and cannot send any data out.. disconect
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));//sleep
 			continue;//go back and try again
 		}
 		len -= sentamount;
@@ -64,8 +67,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int ds
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::CheckState(){
 	if (State == PEER_STATE_DISCONNECTED) return RemoteDesktop::Network_Return::COMPLETED;
-	char buf;
-	auto amtrec = recv(_Socket->socket, &buf, 1, MSG_PEEK);//check if the socket is in a disconnected state
+	auto amtrec = recv(_Socket->socket, nullptr, 0, 0);//check if the socket is in a disconnected state
 	if (amtrec == 0) return Network_Return::FAILED;
 	else {
 		auto errmsg = WSAGetLastError();

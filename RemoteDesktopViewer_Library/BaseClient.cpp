@@ -30,7 +30,7 @@ void RemoteDesktop::BaseClient::Connect(std::wstring host, std::wstring port, in
 void RemoteDesktop::BaseClient::_RunWrapper(int dst_id, std::wstring aeskey){
 	int counter = 0;
 
-	while (Running && ++counter< MaxConnectAttempts){
+	while (Running && ++counter < MaxConnectAttempts){
 		DEBUG_MSG("Connect Loop % ", dst_id);
 		_OnConnectingAttempt(counter, MaxConnectAttempts);
 		if (!_Connect(dst_id, aeskey)){
@@ -55,7 +55,7 @@ bool RemoteDesktop::BaseClient::_Connect(int dst_id, std::wstring aeskey){
 	Socket->Connected_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnConnectHandler, this);
 	Socket->Receive_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnReceiveHandler, this);
 	Socket->Disconnect_CallBack = DELEGATE(&RemoteDesktop::BaseClient::_OnDisconnectHandler, this);
-	
+
 	Socket->Exchange_Keys(dst_id, -1, aeskey);
 	return true;
 }
@@ -63,7 +63,7 @@ void RemoteDesktop::BaseClient::_Run(){
 	auto newevent = WSACreateEvent();
 
 	WSAEventSelect(Socket->get_Socket(), newevent, FD_CLOSE | FD_READ);
-
+	int counter = 0;
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
 
@@ -81,11 +81,14 @@ void RemoteDesktop::BaseClient::_Run(){
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				break;// get out of loop and try reconnecting
 			}
-		}		
-		if (Index == WSA_WAIT_TIMEOUT)
-		{//this will check every timeout... which is good
-			Socket->CheckState();
 		}
+		if (counter++ > 5 || Index == WSA_WAIT_TIMEOUT){
+			DEBUG_MSG("Checking Timeouts!");
+			Socket->CheckState();
+			counter = 0;
+		}
+
+
 	}
 	DEBUG_MSG("Ending Loop");
 	WSACloseEvent(newevent);
@@ -118,7 +121,7 @@ void RemoteDesktop::BaseClient::Send(NetworkMessages m, NetworkMsg& msg){
 }
 
 void RemoteDesktop::BaseClient::Stop() {
-	Running = false; 
+	Running = false;
 	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
 		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
 	}

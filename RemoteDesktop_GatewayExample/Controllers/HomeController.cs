@@ -11,7 +11,6 @@ namespace RemoteDesktop_GatewayExample.Controllers
         // GET: Home
         public ActionResult Index()
         {
-            var testing = new RemoteDesktop_CSLibrary.Client();
             return View();
         }
     }

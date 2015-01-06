@@ -14,9 +14,9 @@ namespace RemoteDesktop_GatewayServer.Controllers
 {
     //ALWAYS REQUIRE HTTPS for release builds
 #if !DEBUG
-   // [RequireHttps]
+    [RequireHttps]
 #endif
-    public class RAT_SupportController : Controller
+    public class RAT_SupportBaseController : Controller
     {
         private string GetIP4Address()
         {
@@ -43,24 +43,18 @@ namespace RemoteDesktop_GatewayServer.Controllers
 
             return IP4Address;
         }
-
-        public ActionResult Index()
+        protected ActionResult GetID(string computername, string username, string mac, string session)
         {
-           
-            return View();
-        }
-        public ActionResult GetID(string computername, string username, string mac, string session)
-        {
-            Debug.WriteLine("Received GetID request " + computername + "  " + username + "  " + mac + "  " + session);
+            //Debug.WriteLine("Received GetID request " + computername + "  " + username + "  " + mac + "  " + session);
             var c = RemoteDesktop_GatewayServer.Signalr.ProxyWatcher.ReserveID(GetIP4Address(), computername, username, mac, session);
             if (c == null) return Content("");
             var st = c.Src_ID.ToString() + "\n";
             st += c.AES_Session_Key;
             return Content(st);
         }
-        private void SetSettings(RemoteDesktop_GatewayServer.Code.ResourceLayout res)
-        { 
-            string absoluteUrlBase = String.Format("{0}://{1}",   Request.Url.Scheme, Request.Url.Host +  (Request.Url.IsDefaultPort   ? ""  : String.Format(":{0}", Request.Url.Port))); 
+        protected void SetSettings(RemoteDesktop_GatewayServer.Code.ResourceLayout res)
+        {
+            string absoluteUrlBase = String.Format("{0}://{1}", Request.Url.Scheme, Request.Url.Host + (Request.Url.IsDefaultPort ? "" : String.Format(":{0}", Request.Url.Port)));
             res.IDS_STRINGDEFAULTGATEWAY = ConfigurationManager.AppSettings["RAT_GatewayHostName"];
             res.IDS_STRINGDEFAULTPROXYGETSESSIONURL = absoluteUrlBase + Url.Action("GetID", ControllerContext.RouteData.Values["controller"].ToString());
             res.IDS_STRINGDEFAULTPORT = ConfigurationManager.AppSettings["RAT_Gateway_External_Connect_Port"];
@@ -69,7 +63,7 @@ namespace RemoteDesktop_GatewayServer.Controllers
             res.IDS_STRINGDISCLAIMERMESSAGE = ConfigurationManager.AppSettings["RAT_Disclaimer"];
             res.IDS_STRINGUNIQUE_ID = Guid.NewGuid().ToString();
         }
-        public ActionResult GetP2P_File()
+        protected ActionResult GetP2P_File()
         {
             string path = ConfigurationManager.AppSettings["RAT_P2P_File"];
             if (string.IsNullOrWhiteSpace(path))
@@ -83,7 +77,7 @@ namespace RemoteDesktop_GatewayServer.Controllers
             return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/exe", Path.GetFileName(realpath));
 
         }
-        public ActionResult GetGateway_File()
+        protected ActionResult GetGateway_File()
         {
             string path = ConfigurationManager.AppSettings["RAT_Gateway_File"];
             if (string.IsNullOrWhiteSpace(path))
@@ -91,38 +85,20 @@ namespace RemoteDesktop_GatewayServer.Controllers
             var realpath = "";
             if (path.StartsWith("~")) realpath = HttpContext.Server.MapPath(path);
             else realpath = path;
-            try
-            {
-                var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
-                SetSettings(res);
-                return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/exe", Path.GetFileName(realpath));
-            }
-            catch (Exception e)
-            {
-                return Content(e.Message);
-            }
-         
-        }
-        public ActionResult GetLog()
-        {
-            return new EmptyResult();
-         //   return Content(RemoteDesktop_GatewayServer.Code.ProxyServer.LOG);
-        }
-        [HttpPost]
-        public ActionResult Authenticate(string Username, string Password)
-        {
-            Debug.WriteLine("Received auth request " + Username + "  " + Password);
-            bool result = false;
-            //BELOW IS TESTING OF THE SERVICE.. Code should be replaced with real authentication code
-            if (!string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password))
-            {
-                result = (Username == "test") && (Password == "abc123");
-            }
 
-            if (result)
-            {
-                FormsAuthentication.SetAuthCookie(Username, false);
-            }
+            var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
+            SetSettings(res);
+            return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/exe", Path.GetFileName(realpath));
+
+
+        }
+        //protected ActionResult GetLog()
+        //{
+        //    return Content(RemoteDesktop_GatewayServer.Code.GatewayServer.LOG);
+        //}
+
+        protected ActionResult Authenticate(string Username, string Password)
+        {
             return new EmptyResult();
         }
     }

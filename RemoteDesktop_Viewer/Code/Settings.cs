@@ -18,7 +18,7 @@ namespace RemoteDesktop_Viewer.Code
 
         public static string Port { get { return "443"; } }
         public static string Gateway { get { return "localhost"; } }
-        public static string AuthenticationUrl { get { return "http://localhost:3406/RAT_Support/Authenticate"; } }
+        public static string AuthenticationUrl { get { return "http://localhost:3406/Support/Authenticate"; } }
         public static string SignalRHubName { get { return "ProxyHub"; } }
         public static string SignalRHubUrl { get { return "http://localhost:3406"; } }
 

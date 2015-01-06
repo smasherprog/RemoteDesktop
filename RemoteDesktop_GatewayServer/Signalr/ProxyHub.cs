@@ -4,12 +4,12 @@ using System.Linq;
 using System.Web;
 using Microsoft.AspNet.SignalR;
 using System.Threading.Tasks;
+
 namespace RemoteDesktop_GatewayServer.Signalr
 {
-    [AuthorizeClaimsAttribute]
+    [AuthorizeClaims]
     public class ProxyHub : Hub
     {
-        //THIS CLASS IS NOT THREAD SAFE YET.. JUST A PROTOTYPE.. MMM KAY!!!
         ProxyWatcher _ProxyWatcher;
         public ProxyHub() : this(ProxyWatcher.Instance) { }
         public ProxyHub(ProxyWatcher i)
@@ -20,6 +20,5 @@ namespace RemoteDesktop_GatewayServer.Signalr
         {
             return Clients.Caller.AvailableClients(RemoteDesktop_GatewayServer.Signalr.ProxyWatcher._GatewayServer.ClientManager.Clients);
         }
-
     }
 }

@@ -72,9 +72,6 @@
     <ClInclude Include="WinHttpClient.h">
       <Filter>Network\HTTP</Filter>
     </ClInclude>
-    <ClInclude Include="AdminStatus.h">
-      <Filter>Utilities</Filter>
-    </ClInclude>
     <ClInclude Include="Console.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -111,6 +108,9 @@
     </ClInclude>
     <ClInclude Include="Network_Client.h">
       <Filter>Network\Concrete</Filter>
+    </ClInclude>
+    <ClInclude Include="Firewall.h">
+      <Filter>Network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -156,9 +156,6 @@
     <ClCompile Include="Clipboard_Wrapper.cpp">
       <Filter>Wrappers</Filter>
     </ClCompile>
-    <ClCompile Include="AdminStatus.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="StringProcess.cpp">
       <Filter>Network\HTTP</Filter>
     </ClCompile>
@@ -180,6 +177,9 @@
     </ClCompile>
     <ClCompile Include="INetwork.cpp">
       <Filter>Network\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="Firewall.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

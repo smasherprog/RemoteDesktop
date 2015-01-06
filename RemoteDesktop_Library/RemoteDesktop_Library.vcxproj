@@ -109,7 +109,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -127,7 +127,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -151,7 +151,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -175,11 +175,10 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib</AdditionalDependencies>
+      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AdminStatus.h" />
     <ClInclude Include="atlrx.h" />
     <ClInclude Include="Clipboard.h" />
     <ClInclude Include="Clipboard_Monitor.h" />
@@ -192,6 +191,7 @@
     <ClInclude Include="Desktop_Monitor.h" />
     <ClInclude Include="Handle_Wrapper.h" />
     <ClInclude Include="Encryption.h" />
+    <ClInclude Include="Firewall.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="INetwork.h" />
     <ClInclude Include="lz4.h" />
@@ -212,7 +212,6 @@
     <ClInclude Include="xxhash.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AdminStatus.cpp" />
     <ClCompile Include="Clipboard.cpp" />
     <ClCompile Include="Clipboard_Monitor.cpp" />
     <ClCompile Include="Clipboard_Wrapper.cpp" />
@@ -221,6 +220,7 @@
     <ClCompile Include="Desktop_Capture_Container.cpp" />
     <ClCompile Include="Desktop_Monitor.cpp" />
     <ClCompile Include="Encryption.cpp" />
+    <ClCompile Include="Firewall.cpp" />
     <ClCompile Include="Handle_Wrapper.cpp" />
     <ClCompile Include="Image.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NoListing</AssemblerOutput>

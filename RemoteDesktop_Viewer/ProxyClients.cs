@@ -46,6 +46,7 @@ namespace RemoteDesktop_Viewer
             listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
             this.HandleDestroyed += ProxyClients_HandleDestroyed;
             contextMenuStrip1.Opening += contextMenuStrip1_Opening;
+    
         }
 
         void contextMenuStrip1_Opening(object sender, CancelEventArgs e)

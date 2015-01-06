@@ -9,7 +9,7 @@ namespace RemoteDesktop_GatewayServer.Code
 {
     public static class Constants{
         public const int MAXCLIENTS = 32;
-        public const int VIEWER_DISCONNECT_TIMEOUT = 500;//seconds
+        public const int VIEWER_DISCONNECT_TIMEOUT = 10;//seconds
         public const int SERVER_DISCONNECT_TIMEOUT = 500;//seconds
         public const int GATEWAY_HEADER_SIZE = 138;//in bytes  dst_id and src_id and encryption keys
         public const int WSAEWOULDBLOCK = 10035;

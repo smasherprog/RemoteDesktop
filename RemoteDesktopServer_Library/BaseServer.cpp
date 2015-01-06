@@ -111,7 +111,7 @@ void RemoteDesktop::BaseServer::_ConnectWrapper(unsigned short port, std::wstrin
 }
 void RemoteDesktop::BaseServer::_HandleDisconnects_DesktopSwitches(){
 	if (!_DesktopMonitor->Is_InputDesktopSelected()) _DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
-	
+
 	//handle client disconnects here
 	if (!_DisconectClientList.empty()){
 		std::lock_guard<std::mutex> lock(_DisconectClientLock);
@@ -203,7 +203,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 	SocketArray.push_back(std::make_shared<SocketHandler>(listensocket, false));
 
 	WSANETWORKEVENTS NetworkEvents;
-
+	int counter = 0;
 	while (Running && !EventArray.empty()) {
 
 		auto Index = WSAWaitForMultipleEvents(EventArray.size(), EventArray.data(), FALSE, 1000, FALSE);
@@ -232,14 +232,17 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 				_OnDisconnectHandler(SocketArray[Index].get());
 			}
 		}
-		_HandleDisconnects_DesktopSwitches();
-		if (Index == WSA_WAIT_TIMEOUT)
-		{//this will check every timeout... which is good
-			std::lock_guard<std::mutex> lo(_SocketArrayLock);
-			for (auto& c : SocketArray) {
-				c->CheckState();
-			}
+		if (counter++ > 5 || Index == WSA_WAIT_TIMEOUT){
+			DEBUG_MSG("Checking Timeouts!");
+			_HandleDisconnects_DesktopSwitches();
+	
+				std::lock_guard<std::mutex> lo(_SocketArrayLock);
+				for (auto& c : SocketArray) {
+					c->CheckState();
+				}
+			
 		}
+
 	}
 
 	DEBUG_MSG("_Listen Exiting");

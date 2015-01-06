@@ -6,6 +6,8 @@
 #include "Lmcons.h"
 #include "Handle_Wrapper.h"
 #include "Desktop_Monitor.h"
+#include "Firewall.h"
+#include "Shellapi.h"
 
 bool RemoteDesktop::_INTERNAL::NetworkStarted = false;
 
@@ -16,28 +18,176 @@ bool RemoteDesktop::StartupNetwork(){
 	return RemoteDesktop::_INTERNAL::NetworkStarted;
 }
 void RemoteDesktop::ShutDownNetwork(){
-	if(RemoteDesktop::_INTERNAL::NetworkStarted) WSACleanup();
+	if (RemoteDesktop::_INTERNAL::NetworkStarted) WSACleanup();
 	RemoteDesktop::_INTERNAL::NetworkStarted = false;
 }
-void RemoteDesktop::PrimeNetwork(unsigned short int port){
-	if (!StartupNetwork()) return;
+BOOL IsAppRunningAsAdminMode()
+{
+	BOOL fIsRunAsAdmin = FALSE;
+	DWORD dwError = ERROR_SUCCESS;
+	PSID pAdministratorsGroup = NULL;
 
-	SOCKET listensocket = INVALID_SOCKET;
-
-	listensocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (listensocket == INVALID_SOCKET) return;
-	RemoteDesktop::StandardSocketSetup(listensocket);
-	sockaddr_in service;
-	service.sin_family = AF_INET;
-	service.sin_port = htons(port);
-	service.sin_addr.s_addr = INADDR_ANY;
-
-	if (bind(listensocket, (SOCKADDR *)& service, sizeof(service)) == 0) {
-		std::chrono::milliseconds dura(200);
-		std::this_thread::sleep_for(dura);
-		closesocket(listensocket);
-		std::this_thread::sleep_for(dura);
+	// Allocate and initialize a SID of the administrators group.
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	if (!AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&pAdministratorsGroup))
+	{
+		dwError = GetLastError();
+		goto Cleanup;
 	}
+
+	// Determine whether the SID of administrators group is enabled in 
+	// the primary access token of the process.
+	if (!CheckTokenMembership(NULL, pAdministratorsGroup, &fIsRunAsAdmin))
+	{
+		dwError = GetLastError();
+		goto Cleanup;
+	}
+
+Cleanup:
+	// Centralized cleanup for all allocated resources.
+	if (pAdministratorsGroup)
+	{
+		FreeSid(pAdministratorsGroup);
+		pAdministratorsGroup = NULL;
+	}
+
+	// Throw the error if something failed in the function.
+	if (ERROR_SUCCESS != dwError)
+	{
+		throw dwError;
+	}
+
+	return fIsRunAsAdmin;
+}
+BOOL IsElevated() {
+	BOOL fRet = FALSE;
+	HANDLE hToken = NULL;
+	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+		TOKEN_ELEVATION Elevation;
+		DWORD cbSize = sizeof(TOKEN_ELEVATION);
+		if (GetTokenInformation(hToken, TokenElevation, &Elevation, sizeof(Elevation), &cbSize)) {
+			fRet = Elevation.TokenIsElevated;
+		}
+	}
+	if (hToken) {
+		CloseHandle(hToken);
+	}
+	return fRet;
+}
+#include <lm.h>
+bool IsUserAdmin(){
+
+
+	int found;
+	DWORD i, l;
+	HANDLE hTok;
+	PSID pAdminSid;
+	SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
+
+	byte rawGroupList[4096];
+	TOKEN_GROUPS& groupList = *((TOKEN_GROUPS *)rawGroupList);
+
+	if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hTok))
+	{
+		printf("Cannot open thread token, trying process token [%lu].\n",
+			GetLastError());
+		if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hTok))
+		{
+			printf("Cannot open process token, quitting [%lu].\n",
+				GetLastError());
+			return false;
+		}
+	}
+
+	// normally, I should get the size of the group list first, but ...
+	l = sizeof(rawGroupList);
+	if (!GetTokenInformation(hTok, TokenGroups, &groupList, l, &l))
+	{
+		printf("Cannot get group list from token [%lu].\n",
+			GetLastError());
+		return false;
+	}
+
+	// here, we cobble up a SID for the Administrators group, to compare to.
+	if (!AllocateAndInitializeSid(&ntAuth, 2, SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pAdminSid))
+	{
+		printf("Cannot create SID for Administrators [%lu].\n",
+			GetLastError());
+		return false;
+	}
+
+	// now, loop through groups in token and compare
+	found = 0;
+	for (i = 0; i < groupList.GroupCount; ++i)
+	{
+		if (EqualSid(pAdminSid, groupList.Groups[i].Sid))
+		{
+			found = 1;
+			break;
+		}
+	}
+
+	FreeSid(pAdminSid);
+	CloseHandle(hTok);
+	if (!found){//search domain groups as well
+		DWORD rc;
+		wchar_t user_name[256];
+		USER_INFO_1 *info;
+		DWORD size = sizeof(user_name);
+
+		GetUserNameW(user_name, &size);
+
+		rc = NetUserGetInfo(NULL, user_name, 1, (byte **)&info);
+		if (rc != NERR_Success)
+			return false;
+
+		found = info->usri1_priv == USER_PRIV_ADMIN;
+		NetApiBufferFree(info);
+	}
+	return found;
+}
+
+bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
+	if (IsElevated()) return false;//allready elevated
+	if (!IsUserAdmin()) return false;// cannot elevate process anyway
+	//if (IsAppRunningAsAdminMode()) return false;//application is running as admin
+	//we have the power.. TRY TO ELVATE!!!
+
+	// Launch itself as admin
+	SHELLEXECUTEINFO sei = { sizeof(sei) };
+	std::wstring args;
+	for (auto i = 1; i < argc; i++) {//ignore the first arg, its the app name
+		args += L" ";
+		args += argv[i];
+	}
+	sei.lpVerb = L"runas";
+	sei.lpFile = argv[0];//first arg is the full path to the exe
+	sei.lpParameters = args.c_str();
+	sei.hwnd = NULL;
+	sei.nShow = SW_NORMAL;
+	ShellExecuteEx(&sei);
+	return true;//
+}
+
+void RemoteDesktop::PrimeNetwork(unsigned short int port){
+
+	WindowsFirewall firewall;
+
+	TCHAR szModuleName[MAX_PATH];
+	GetModuleFileName(NULL, szModuleName, MAX_PATH);
+	firewall.AddProgramException(szModuleName, L"RAT Gateway Tool");
+
+	std::chrono::milliseconds dura(200);
+	std::this_thread::sleep_for(dura);
+
+
 }
 void RemoteDesktop::StandardSocketSetup(SOCKET socket){
 	//set to non blocking
@@ -120,12 +270,12 @@ std::string RemoteDesktop::GetMAC(){
 		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;// Contains pointer to current adapter info
 		do {
 			if (pAdapterInfo->Type == MIB_IF_TYPE_ETHERNET){//get an ethernet interface
-				
+
 				sprintf_s(mac, "%02X:%02X:%02X:%02X:%02X:%02X",
 					pAdapterInfo->Address[0], pAdapterInfo->Address[1],
 					pAdapterInfo->Address[2], pAdapterInfo->Address[3],
 					pAdapterInfo->Address[4], pAdapterInfo->Address[5]);
-				macs= std::string(mac);
+				macs = std::string(mac);
 				break;
 			}
 			pAdapterInfo = pAdapterInfo->Next;

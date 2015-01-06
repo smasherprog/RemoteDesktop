@@ -12,7 +12,7 @@ void RemoteDesktop::INTERNAL::hwndtimercleanup(HWNDTimer* h){
 }
 void RemoteDesktop::INTERNAL::socketcleanup(SOCKETWrapper* s){
 	if (s->socket != INVALID_SOCKET){
-		shutdown(s->socket, SD_BOTH);
+		shutdown(s->socket, SD_SEND);
 		closesocket(s->socket);
 	}
 	delete s;

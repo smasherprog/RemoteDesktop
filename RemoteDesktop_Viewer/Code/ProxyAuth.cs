@@ -25,14 +25,32 @@ namespace RemoteDesktop_Viewer.Code
             _UsingWindowsAuth = windowsauth;
             _Authenticated = AuthenticateUser(username, password);
         }
+        public static void PreloadDLLS()
+        {
+            try
+            {
+
+
+                using (var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.SignalRHubUrl))
+                {
+                    connection.TransportConnectTimeout = new TimeSpan(0, 0, 4);
+                    IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
+          
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
         private bool AuthenticateUser(string user, string password)
         {
             _Authenticated = false;
-            if(_UsingWindowsAuth)
+            if (_UsingWindowsAuth)
             {
                 try
                 {
-                    using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.SignalRHubUrl))
+                    using (var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.SignalRHubUrl))
                     {
                         connection.TransportConnectTimeout = new TimeSpan(0, 0, 4);
                         Settings.SignalRHubUrl.Split('/').LastOrDefault();
@@ -42,14 +60,16 @@ namespace RemoteDesktop_Viewer.Code
                         DateTime dt = DateTime.Now;
                         connection.Start().Wait(3000);
                         //if an error is thrown, it will set authenticated to false. If the client waits toe 2 seconds, it timed out and authenticated needs to be false
-                        if((DateTime.Now - dt).TotalMilliseconds >= 3500) { _Authenticated = false; } else { _Authenticated = true; }
+                        if ((DateTime.Now - dt).TotalMilliseconds >= 3500) { _Authenticated = false; } else { _Authenticated = true; }
                         return _Authenticated;
                     }
-                } catch(Exception e)
+                }
+                catch (Exception e)
                 {
                     _Authenticated = false;
                 }
-            } else
+            }
+            else
             {
 
                 var request = WebRequest.Create(Settings.AuthenticationUrl) as HttpWebRequest;
@@ -63,16 +83,17 @@ namespace RemoteDesktop_Viewer.Code
                 request.ContentLength = bytes.Length;
                 try
                 {
-                    using(var requestStream = request.GetRequestStream())
+                    using (var requestStream = request.GetRequestStream())
                     {
                         requestStream.Write(bytes, 0, bytes.Length);
                     }
 
-                    using(var response = request.GetResponse() as HttpWebResponse)
+                    using (var response = request.GetResponse() as HttpWebResponse)
                     {
                         _AuthCookie = response.Cookies[".ASPXAUTH"];
                     }
-                } catch(Exception e)
+                }
+                catch (Exception e)
                 {
                     Debug.WriteLine(e.Message);
                 }

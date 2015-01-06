@@ -21,6 +21,7 @@ namespace RemoteDesktop_Viewer
         {
             InitializeComponent();
             textBox2.KeyUp += textBox1_KeyUp;
+            var task = System.Threading.Tasks.Task.Factory.StartNew(() => { RemoteDesktop_Viewer.Code.ProxyAuth.PreloadDLLS(); });
         }
 
         void textBox1_KeyUp(object sender, KeyEventArgs e)
