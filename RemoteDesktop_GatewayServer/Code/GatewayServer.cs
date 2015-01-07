@@ -96,19 +96,18 @@ namespace RemoteDesktop_GatewayServer.Code
         {
             foreach (var item in Connected.Where(a => a != null))
             {
-
                 if (item.SocketObject.ShouldDisconnect)
                 {
                   //  LOG += "Disconnecting " + item.ClientObject.Host + " because ShouldDisconnect == true<br/>";
                     Debug.WriteLine("Disconnecting a connected client because ShouldDisconnect == true");
                     Disconnect(item);
-                }
-                else if ((DateTime.Now - item.SocketObject.LastTimeHeard).TotalSeconds > Constants.VIEWER_DISCONNECT_TIMEOUT +30)
-                {
-               //     LOG += "Disconnecting  " + item.ClientObject.Host + " because timeout has been hit<br/>";
-                    Debug.WriteLine("Disconnecting a connected client because timeout has been hit");
-                    Disconnect(item);
-                }
+               }
+               // else if ((DateTime.Now - item.SocketObject.LastTimeHeard).TotalSeconds > Constants.SERVER_DISCONNECT_TIMEOUT)
+               // {
+               ////     LOG += "Disconnecting  " + item.ClientObject.Host + " because timeout has been hit<br/>";
+               //     Debug.WriteLine("Disconnecting a connected client because timeout has been hit");
+               //     Disconnect(item);
+               // }
             }
         }
         //Assumes a lock on the pendingconnections container....
@@ -119,16 +118,17 @@ namespace RemoteDesktop_GatewayServer.Code
             {
                 if (!IsSocketConnected(item.SocketObject))
                 {
-                   // LOG += "Disconnecting a Pending client because  !IsSocketConnected(item.SocketObject.SocketObject) == true<br/>";
+                    // LOG += "Disconnecting a Pending client because  !IsSocketConnected(item.SocketObject.SocketObject) == true<br/>";
                     Debug.WriteLine("Disconnecting a Pending client because  !IsSocketConnected(item.SocketObject.SocketObject) == true");
                     tmp.Add(item);
                 }
-                else if ((DateTime.Now - item.LastTimeHeard).TotalSeconds > Constants.VIEWER_DISCONNECT_TIMEOUT)
-                {
-                //    LOG += "Disconnecting a Pending client because timeout has been hit<br/>";
-                    Debug.WriteLine("Disconnecting a Pending client because timeout has been hit");
-                    tmp.Add(item);
-                }
+                //}
+                //else if ((DateTime.Now - item.LastTimeHeard).TotalSeconds > Constants.VIEWER_DISCONNECT_TIMEOUT)
+                //{
+                ////    LOG += "Disconnecting a Pending client because timeout has been hit<br/>";
+                //    Debug.WriteLine("Disconnecting a Pending client because timeout has been hit");
+                //    tmp.Add(item);
+                //}
             }
             //remove from pending buffer and dispose.. 
             foreach (var item in tmp)

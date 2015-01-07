@@ -42,7 +42,7 @@ namespace RemoteDesktop_Viewer
                 _Running = value;
                 if(!_Running && _FileSendingThread != null)
                 {
-                    _FileSendingThread.Join(100);
+                    _FileSendingThread.Join(500);
                     _FileSendingThread = null;
                 }
             }
@@ -160,10 +160,13 @@ namespace RemoteDesktop_Viewer
                 });
                 UpdateCounter = 0;
             }
-
         }
         private void SendFilesProc()
         {
+            try
+            {
+
+         
             _Running = true;
             _Started = DateTime.Now;
             var rootpath = GetRootPath();
@@ -172,11 +175,15 @@ namespace RemoteDesktop_Viewer
                 _CurrentFile = _PendingFiles[i].Item1;
                 SendFile(_Client, _PendingFiles[i].Item1, _PendingFiles[i].Item1.Remove(0, rootpath.Length), _OnFileTransferChanged_CallBack);
                 _TotalCount_to_Transfer++;
-
             }
             _PendingFiles.Clear();
             if(OnDoneEvent != null)
                 OnDoneEvent(this);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+            }
         }
 
 

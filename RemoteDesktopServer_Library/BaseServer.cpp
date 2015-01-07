@@ -7,6 +7,7 @@
 #include "Config.h"
 #include "ProxyConnectDialog.h"
 #include "Gateway.h"
+#include "..\RemoteDesktop_Library\NetworkProcessor.h"
 
 RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
@@ -150,6 +151,8 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
 
+	NetworkProcessor processor;
+
 	while (Running && !EventArray.empty() && !DisconnectReceived) {
 		auto Index = WaitForSingleObject(newevent, 1000);
 		if ((Index != WSA_WAIT_FAILED) && (Index != WSA_WAIT_TIMEOUT)) {
@@ -157,7 +160,7 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 			WSAEnumNetworkEvents(sock, newevent, &NetworkEvents);
 			if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				socket->Receive();
+				processor.ReceiveEvent(socket);
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				break;// get out of loop and try reconnecting
@@ -204,6 +207,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 
 	WSANETWORKEVENTS NetworkEvents;
 	int counter = 0;
+	NetworkProcessor processor;
 	while (Running && !EventArray.empty()) {
 
 		auto Index = WSAWaitForMultipleEvents(EventArray.size(), EventArray.data(), FALSE, 1000, FALSE);
@@ -214,15 +218,11 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 				&& NetworkEvents.iErrorCode[FD_ACCEPT_BIT] == ERROR_SUCCESS){
 				//create a new event handler for the new connect
 				if (EventArray.size() >= WSA_MAXIMUM_WAIT_EVENTS) continue;// ignore this event too many connections
-
 				_OnConnect(listensocket);
 			}
-
 			else if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				if (SocketArray[Index]->Receive() == Network_Return::FAILED) {
-					_OnDisconnectHandler(SocketArray[Index].get());
-				}
+				processor.ReceiveEvent(SocketArray[Index]);
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				if (Index == 0) {//stop all processing, set running to false and next loop will fail and cleanup

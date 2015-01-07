@@ -51,6 +51,7 @@ _SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\
 #if _DEBUG
 	_DebugConsole = std::make_unique<CConsole>();
 #endif
+	RemoteDesktop::AddFirewallException();
 
 	DWORD bufsize = (UNLEN + 1);
 	char buff[UNLEN + 1];
@@ -75,6 +76,7 @@ RemoteDesktop::RD_Server::~RD_Server(){
 			SetEvent(_SelfRemoveEventHandle.get());//signal the self removal process 
 		}
 		else DeleteMe();//try a self removal 
+		RemoteDesktop::RemoveFirewallException();
 	}
 }
 void RemoteDesktop::RD_Server::_CreateSystemMenu(){

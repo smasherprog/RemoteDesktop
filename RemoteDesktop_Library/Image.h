@@ -21,7 +21,15 @@ namespace RemoteDesktop{
 	public:
 
 		Image(const Image& other) = delete;
-		Image() {}
+		Image() {
+			if (!INTERNAL::BufferCache.empty()){
+				std::lock_guard<std::mutex> lock(INTERNAL::BufferCacheLock);
+				if (!INTERNAL::BufferCache.empty()){
+					data = std::move(INTERNAL::BufferCache.back());
+					INTERNAL::BufferCache.pop_back();
+				}
+			}
+		}
 		explicit Image(char* d, int h, int w) :Pixel_Stride(4), Height(h), Width(w) {
 			if (!INTERNAL::BufferCache.empty()){
 				std::lock_guard<std::mutex> lock(INTERNAL::BufferCacheLock);
@@ -53,7 +61,7 @@ namespace RemoteDesktop{
 			Compressed = std::move(other.Compressed);
 		}
 		~Image(){
-			if (data.size() > 100){
+			if (data.size() > 100 || INTERNAL::BufferCache.size()<15){
 				std::lock_guard<std::mutex> lock(INTERNAL::BufferCacheLock);
 				INTERNAL::BufferCache.emplace_back(std::move(data));
 			}

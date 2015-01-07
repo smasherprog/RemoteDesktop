@@ -176,7 +176,7 @@ bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
 	return true;//
 }
 
-void RemoteDesktop::PrimeNetwork(unsigned short int port){
+void RemoteDesktop::AddFirewallException(){
 
 	WindowsFirewall firewall;
 
@@ -186,13 +186,29 @@ void RemoteDesktop::PrimeNetwork(unsigned short int port){
 
 	std::chrono::milliseconds dura(200);
 	std::this_thread::sleep_for(dura);
+}
+//easier to add a remove via the command line
+void RemoteDesktop::RemoveFirewallException(){
 
+	WindowsFirewall firewall;
+
+	TCHAR szModuleName[MAX_PATH];
+	GetModuleFileName(NULL, szModuleName, MAX_PATH);
+	firewall.RemoveProgramException(szModuleName, L"RAT Gateway Tool");
+
+	std::chrono::milliseconds dura(200);
+	std::this_thread::sleep_for(dura);
 
 }
+
+
 void RemoteDesktop::StandardSocketSetup(SOCKET socket){
 	//set to non blocking
 	u_long iMode = 1;
 	ioctlsocket(socket, FIONBIO, &iMode);
+	int optLen = sizeof(int);
+	int optVal = 64 * 1024;
+	setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char *)&optVal, optLen);
 	//set no delay 
 	BOOL nodly = TRUE;
 	if (setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)&nodly, sizeof(nodly)) == SOCKET_ERROR){

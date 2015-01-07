@@ -7,6 +7,113 @@
 #include <oleauto.h>
 #include <stdio.h>
 
+
+HRESULT WindowsFirewallIsOn(IN INetFwProfile* fwProfile, OUT BOOL* fwOn)
+{
+	HRESULT hr = S_OK;
+	VARIANT_BOOL fwEnabled;
+
+	_ASSERT(fwProfile != NULL);
+	_ASSERT(fwOn != NULL);
+
+	*fwOn = FALSE;
+
+	// Get the current state of the firewall.
+	hr = fwProfile->get_FirewallEnabled(&fwEnabled);
+	if (FAILED(hr))
+	{
+		printf("get_FirewallEnabled failed: 0x%08lx\n", hr);
+		goto error;
+	}
+
+	// Check to see if the firewall is on.
+	if (fwEnabled != VARIANT_FALSE)
+	{
+		*fwOn = TRUE;
+		printf("The firewall is on.\n");
+	}
+	else
+	{
+		printf("The firewall is off.\n");
+	}
+
+error:
+
+	return hr;
+}
+
+
+HRESULT WindowsFirewallTurnOn(IN INetFwProfile* fwProfile)
+{
+	HRESULT hr = S_OK;
+	BOOL fwOn;
+
+	_ASSERT(fwProfile != NULL);
+
+	// Check to see if the firewall is off.
+	hr = WindowsFirewallIsOn(fwProfile, &fwOn);
+	if (FAILED(hr))
+	{
+		printf("WindowsFirewallIsOn failed: 0x%08lx\n", hr);
+		goto error;
+	}
+
+	// If it is, turn it on.
+	if (!fwOn)
+	{
+		// Turn the firewall on.
+		hr = fwProfile->put_FirewallEnabled(VARIANT_TRUE);
+		if (FAILED(hr))
+		{
+			printf("put_FirewallEnabled failed: 0x%08lx\n", hr);
+			goto error;
+		}
+
+		printf("The firewall is now on.\n");
+	}
+
+error:
+
+	return hr;
+}
+
+
+HRESULT WindowsFirewallTurnOff(IN INetFwProfile* fwProfile)
+{
+	HRESULT hr = S_OK;
+	BOOL fwOn;
+
+	_ASSERT(fwProfile != NULL);
+
+	// Check to see if the firewall is on.
+	hr = WindowsFirewallIsOn(fwProfile, &fwOn);
+	if (FAILED(hr))
+	{
+		printf("WindowsFirewallIsOn failed: 0x%08lx\n", hr);
+		goto error;
+	}
+
+	// If it is, turn it off.
+	if (fwOn)
+	{
+		// Turn the firewall off.
+		hr = fwProfile->put_FirewallEnabled(VARIANT_FALSE);
+		if (FAILED(hr))
+		{
+			printf("put_FirewallEnabled failed: 0x%08lx\n", hr);
+			goto error;
+		}
+
+		printf("The firewall is now off.\n");
+	}
+
+error:
+
+	return hr;
+}
+
+
+
 HRESULT WindowsFirewallInitialize(OUT INetFwProfile** fwProfile)
 {
 	HRESULT hr = S_OK;
@@ -325,7 +432,35 @@ bool RemoteDesktop::WindowsFirewall::AddProgramException(std::wstring exefullpat
 	if (FirewallProfile == nullptr) return false;
 	return SUCCEEDED(WindowsFirewallAddApp(FirewallProfile, exefullpath.c_str(), name.c_str()));
 }
+void RemoteDesktop::WindowsFirewall::RemoveProgramException(std::wstring exefullpath, std::wstring name){
+	STARTUPINFO si = { 0 };
+	PROCESS_INFORMATION pi = { 0 };
+	TCHAR szCmd[2 * MAX_PATH];
+	std::wstring command = L"cmd.exe /C netsh advfirewall firewall delete rule name=\"";
+	command += name;
+	command += L"\"";
+	command += L" program=\"";
+	command += exefullpath;
+	command += L"\"";
+	wcscpy_s(szCmd, command.c_str());
+	CreateProcess(NULL, szCmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
 
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+}
 
-
+bool RemoteDesktop::WindowsFirewall::IsOn(){
+	if (FirewallProfile == nullptr) return false;
+	BOOL onstat = FALSE;
+	if (SUCCEEDED(WindowsFirewallIsOn(FirewallProfile, &onstat))) return onstat == TRUE;
+	return false;
+}
+bool RemoteDesktop::WindowsFirewall::TurnOn(){
+	if (FirewallProfile == nullptr) return false;
+	return SUCCEEDED(WindowsFirewallTurnOn(FirewallProfile));
+}
+bool RemoteDesktop::WindowsFirewall::TurnOff(){
+	if (FirewallProfile == nullptr) return false;
+	return SUCCEEDED(WindowsFirewallTurnOff(FirewallProfile));
+}
 

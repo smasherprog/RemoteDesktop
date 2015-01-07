@@ -13,9 +13,9 @@ namespace RemoteDesktop{
 
 	class Client {
 
-		std::unique_ptr<Display> _Display;
-		std::unique_ptr<BaseClient> _NetworkClient;
-		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
+		std::shared_ptr<Display> _Display;
+		std::shared_ptr<BaseClient> _NetworkClient;
+		std::shared_ptr<ClipboardMonitor> _ClipboardMonitor;
 
 		HWND _HWND;
 

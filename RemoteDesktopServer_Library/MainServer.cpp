@@ -47,8 +47,6 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 		//in which case, try to launch the program normally.
 		if (ret == IDYES){
 			//the below line was added so that in cases where UAC is required to access the network, it will activate the pop up as early as possible
-			RemoteDesktop::PrimeNetwork(DefaultPort());
-
 			if (!InstallService(
 				Service_Name(),               // Name of service
 				Service_Display_Name(),       // Name to display

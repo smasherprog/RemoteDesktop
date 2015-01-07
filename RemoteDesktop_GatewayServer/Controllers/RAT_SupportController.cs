@@ -74,7 +74,15 @@ namespace RemoteDesktop_GatewayServer.Controllers
 
             var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
             SetSettings(res);
-            return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/exe", Path.GetFileName(realpath));
+            if (Request.Browser.Browser.ToLower() == "ie")
+            {
+                Response.AppendHeader("cache-control", "private");
+            }
+            else
+            {
+                Response.AppendHeader("cache-control", "no-cache");
+            }
+            return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
 
         }
         protected ActionResult GetGateway_File()
@@ -88,7 +96,15 @@ namespace RemoteDesktop_GatewayServer.Controllers
 
             var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
             SetSettings(res);
-            return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/exe", Path.GetFileName(realpath));
+            if (Request.Browser.Browser.ToLower() == "ie")
+            {
+                Response.AppendHeader("cache-control", "private");
+            }
+            else
+            {
+                Response.AppendHeader("cache-control", "no-cache");
+            }
+            return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
 
 
         }

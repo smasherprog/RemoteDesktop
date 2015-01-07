@@ -12,7 +12,12 @@ namespace RemoteDesktop{
 		WindowsFirewall();
 		~WindowsFirewall();
 
+		bool IsOn();
+		bool TurnOn();
+		bool TurnOff();
+
 		bool AddProgramException(std::wstring exefullpath, std::wstring name);
+		static void RemoveProgramException(std::wstring exefullpath, std::wstring name);
 		bool IsProgamEnabled(std::wstring exefullpath);
 	};
 }

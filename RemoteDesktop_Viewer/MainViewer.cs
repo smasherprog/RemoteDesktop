@@ -133,10 +133,11 @@ namespace RemoteDesktop_Viewer
 
             this.UIThread(() =>
             {
-                if(_Proxyd_Client != null)
+                if (_Proxyd_Client != null)
                 {
                     this.Text = "Connected to Proxy: " + _Host_Address + ":443 --> " + _Proxyd_Client.ComputerName + ":" + _Proxyd_Client.UserName + " Out: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedSendBPS) + "/s In: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedRecvBPS) + "/s";
-                } else
+                }
+                else
                 {
                     this.Text = "Connected to: " + _Host_Address + ":443,  Out: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedSendBPS) + "/s In: " + RemoteDesktop_CSLibrary.FormatBytes.Format(traffic.CompressedRecvBPS) + "/s";
                 }
@@ -147,7 +148,7 @@ namespace RemoteDesktop_Viewer
         private void Form1_DragEnter(object sender, DragEventArgs e)
         {
             // If the data is a file or a bitmap, display the copy cursor. 
-            if(e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Copy;
             else
                 e.Effect = DragDropEffects.None;
@@ -155,7 +156,7 @@ namespace RemoteDesktop_Viewer
         }
         private void OnCursorChanged(int c_type)
         {
-            if(OnCursorChangedEvent != null)
+            if (OnCursorChangedEvent != null)
                 OnCursorChangedEvent(c_type);
             viewPort1.UIThread(() =>
             {
@@ -164,16 +165,16 @@ namespace RemoteDesktop_Viewer
         }
         private void OnConnectingAttempt(int attempt, int maxattempts)
         {
-            if(OnConnectingAttemptEvent != null)
+            if (OnConnectingAttemptEvent != null)
                 OnConnectingAttemptEvent(attempt, maxattempts);
         }
         private void OnDisplayChanged(int x, int y)
         {
             var maxh = y + 15;
             var maxx = x + 18;
-            if(maxx > Screen.PrimaryScreen.Bounds.Width - 40)
+            if (maxx > Screen.PrimaryScreen.Bounds.Width - 40)
                 maxx = Screen.PrimaryScreen.Bounds.Width - 40;
-            if(maxh > Screen.PrimaryScreen.Bounds.Height - 50)
+            if (maxh > Screen.PrimaryScreen.Bounds.Height - 50)
                 maxh = Screen.PrimaryScreen.Bounds.Height - 50;
             viewPort1.UIThread(() =>
             {
@@ -186,7 +187,7 @@ namespace RemoteDesktop_Viewer
 
                 int titleHeight = screenRectangle.Top - this.Top;
                 this.Size = new Size(maxx, titleHeight + maxh);
-               
+
             });
         }
         private void Form1_DragDrop(object sender, DragEventArgs e)
@@ -217,7 +218,7 @@ namespace RemoteDesktop_Viewer
         {
             _Host_Address = proxy_host;
             _Proxyd_Client = c;
-            if(c == null)
+            if (c == null)
                 Connect(_Client, proxy_host, Settings.Port, -1, "");
             else
                 Connect(_Client, proxy_host, Settings.Port, c.Src_ID, c.AES_Session_Key);
@@ -226,12 +227,13 @@ namespace RemoteDesktop_Viewer
         static DateTime timer = DateTime.Now;
         public void Draw(IntPtr hdc)
         {
-            if((DateTime.Now - timer).TotalMilliseconds > 1000)
+            if ((DateTime.Now - timer).TotalMilliseconds > 1000)
             {
                 Debug.WriteLine("FPS: " + counter);
                 counter = 1;
                 timer = DateTime.Now;
-            } else
+            }
+            else
                 counter += 1;
             Draw(_Client, hdc);
         }
@@ -244,7 +246,7 @@ namespace RemoteDesktop_Viewer
             Debug.WriteLine("Onconnect in viewer");
             this.UIThread(() => { this.Text = "Connected to: " + _Host_Address + ":443"; });
 
-            if(OnConnectEvent != null)
+            if (OnConnectEvent != null)
                 OnConnectEvent();
 
             StopTrafficTimer();
@@ -255,17 +257,28 @@ namespace RemoteDesktop_Viewer
         private void OnDisconnect()
         {
             StopTrafficTimer();
-            if(OnDisconnectEvent != null)
+            if (OnDisconnectEvent != null)
                 OnDisconnectEvent();
             Debug.WriteLine("OnDisconnect in viewer");
         }
+        private static DateTime MouseThrottle = DateTime.Now;
+        //when transferring files, limit mouse messages they cause severe congestion!
         void MouseEvent(int action, int x, int y, int wheel)
         {
-            MouseEvent(_Client, action, x, y, wheel);
+            if ((action == InputListener.WM_MOUSEWHEEL || action == InputListener.WM_MOUSEMOVE) && _FileDownloadControls.Any())
+            {//limit mouse move messages to 10 per second
+                if ((DateTime.Now - MouseThrottle).Milliseconds > 100)
+                {
+                    MouseEvent(_Client, action, x, y, wheel);
+                    MouseThrottle = DateTime.Now;
+                }
+            }
+            else MouseEvent(_Client, action, x, y, wheel);
         }
+
         void StopTrafficTimer()
         {
-            if(_TrafficTimer != null)
+            if (_TrafficTimer != null)
             {
                 _TrafficTimer.Stop();
                 _TrafficTimer.Dispose();
@@ -275,10 +288,10 @@ namespace RemoteDesktop_Viewer
         {
             StopTrafficTimer();
 
-            foreach(var item in _FileDownloadControls)
+            foreach (var item in _FileDownloadControls)
                 item.Running = false;
             _FileDownloadControls.Clear();
-            if(_Client != IntPtr.Zero)
+            if (_Client != IntPtr.Zero)
                 Destroy_Client(_Client);
             _Client = IntPtr.Zero;
             viewPort1.OnDraw_CB = null;
@@ -287,7 +300,7 @@ namespace RemoteDesktop_Viewer
         bool ClosedCalled = false;
         void MainViewer_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(!ClosedCalled)
+            if (!ClosedCalled)
             {
                 ClosedCalled = true;
                 OnDisconnect();
@@ -303,7 +316,7 @@ namespace RemoteDesktop_Viewer
         private void button1_Click(object sender, EventArgs e)
         {
             var result = MessageBox.Show("Remove Service?", "Are you sure that you want to remove the service from the target machine? This will completely remove the service deleting all associated files. ", MessageBoxButtons.OKCancel);
-            if(result == System.Windows.Forms.DialogResult.OK)
+            if (result == System.Windows.Forms.DialogResult.OK)
             {
                 SendRemoveService(_Client);
             }

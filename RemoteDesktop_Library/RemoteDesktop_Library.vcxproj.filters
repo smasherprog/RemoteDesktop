@@ -112,6 +112,9 @@
     <ClInclude Include="Firewall.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="NetworkProcessor.h">
+      <Filter>Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NetworkSetup.cpp">
@@ -179,6 +182,9 @@
       <Filter>Network\Interface</Filter>
     </ClCompile>
     <ClCompile Include="Firewall.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkProcessor.cpp">
       <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>

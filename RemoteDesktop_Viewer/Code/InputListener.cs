@@ -48,7 +48,7 @@ namespace RemoteDesktop_Viewer.Code
         private DateTime KeyboardSecondCounter = DateTime.Now;
         private DateTime MouseSecondCounter = DateTime.Now;
 
-        private const int InputPerSec = 30;
+        private const int InputPerSec = 20;
         private List<int> Keys_Down;
         private int _LastMsg, _LastX, _LastY, _Lastwheel;
 

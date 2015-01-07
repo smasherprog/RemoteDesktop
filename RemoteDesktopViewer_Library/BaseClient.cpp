@@ -3,6 +3,7 @@
 #include "NetworkSetup.h"
 #include "CommonNetwork.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
+#include "..\RemoteDesktop_Library\NetworkProcessor.h"
 
 RemoteDesktop::BaseClient::BaseClient(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
@@ -66,7 +67,7 @@ void RemoteDesktop::BaseClient::_Run(){
 	int counter = 0;
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
-
+	NetworkProcessor processor;
 	while (Running && !DisconnectReceived) {
 
 		auto Index = WaitForSingleObject(newevent, 1000);
@@ -76,7 +77,7 @@ void RemoteDesktop::BaseClient::_Run(){
 			WSAEnumNetworkEvents(Socket->get_Socket(), newevent, &NetworkEvents);
 			if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				Socket->Receive();
+				processor.ReceiveEvent(Socket);
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				break;// get out of loop and try reconnecting

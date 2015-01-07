@@ -54,22 +54,23 @@ namespace RemoteDesktop_GatewayServer.Code
         void _TimeoutTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             var li = new List<Client>();
-            lock(ClientsLock)
+            lock (ClientsLock)
             {
-                for(var i = 0; i < _Clients.Length; i++)
+                for (var i = 0; i < _Clients.Length; i++)
                 {
                     var obj = _Clients[i];
-                    if(obj != null)
+                    if (obj != null)
                     {
                         var dt = (DateTime.Now - obj.ClientObject.ConnectTime).TotalSeconds;
 
-                        if(dt > Constants.SERVER_DISCONNECT_TIMEOUT && obj.ClientObject.Host == Client.Host_Type.Server && obj.ClientObject.Status != Client.Connection_Status.Paired)//disconnect servers if they have not connected within a timeout
+                        if (dt > Constants.SERVER_DISCONNECT_TIMEOUT && obj.ClientObject.Host == Client.Host_Type.Server && obj.ClientObject.Status != Client.Connection_Status.Paired)//disconnect servers if they have not connected within a timeout
                         {
                             li.Add(obj.ClientObject);
                             obj.SocketObject.ShouldDisconnect = true;// this will cause the server to disconnect, if it is connected
                             _Clients[i] = null;
                             Ids.Enqueue(i);
-                        } else if(dt > Constants.VIEWER_DISCONNECT_TIMEOUT && obj.ClientObject.Host == Client.Host_Type.Viewer && obj.ClientObject.Status != Client.Connection_Status.Paired)
+                        }
+                        else if (dt > Constants.VIEWER_DISCONNECT_TIMEOUT && obj.ClientObject.Host == Client.Host_Type.Viewer && obj.ClientObject.Status != Client.Connection_Status.Paired)
                         {
                             obj.SocketObject.ShouldDisconnect = true;// this will cause the viewer to disconnect
                         }
@@ -77,7 +78,7 @@ namespace RemoteDesktop_GatewayServer.Code
                     }
                 }
             }
-            if(li.Any() && OnClientDisconnectEvent != null)
+            if (li.Any() && OnClientDisconnectEvent != null)
                 OnClientDisconnectEvent(li);
         }
         public List<Client_Wrapper> Add(ServerSocket c, int dst_id, int src_id)

@@ -16,9 +16,13 @@ RemoteDesktop::Client::Client(HWND hwnd,
 	void(__stdcall * oncursorchange)(int),
 	void(__stdcall * onprimchanged)(int, int),
 	void(__stdcall * onconnectingattempt)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnPrimaryChanged(onprimchanged), _OnConnectingAttempt(onconnectingattempt) {
-	_Display = std::make_unique<Display>(hwnd, oncursorchange);
-	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Client::_OnClipboardChanged, this));
+	_Display = std::make_shared<Display>(hwnd, oncursorchange);
+	_ClipboardMonitor = std::make_shared<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Client::_OnClipboardChanged, this));
 	DEBUG_MSG("Client()");
+}
+void Send(std::shared_ptr <RemoteDesktop::BaseClient>& ptr, RemoteDesktop::NetworkMessages m, RemoteDesktop::NetworkMsg& msg){
+	auto copy = ptr;
+	if (copy) copy->Send(m, msg);
 }
 
 RemoteDesktop::Client::~Client(){
@@ -28,7 +32,7 @@ void RemoteDesktop::Client::OnDisconnect(){
 	_OnDisconnect();
 }
 void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port, int id, std::wstring aeskey){
-	_NetworkClient = std::make_unique<BaseClient>(DELEGATE(&RemoteDesktop::Client::OnConnect, this),
+	_NetworkClient = std::make_shared<BaseClient>(DELEGATE(&RemoteDesktop::Client::OnConnect, this),
 		DELEGATE(&RemoteDesktop::Client::OnReceive, this),
 		DELEGATE(&RemoteDesktop::Client::OnDisconnect, this), _OnConnectingAttempt);
 	_NetworkClient->Connect(host, port, id, aeskey);
@@ -49,8 +53,7 @@ void RemoteDesktop::Client::_OnClipboardChanged(const Clipboard_Data& c){
 	msg.data.push_back(DataPackage(c.m_pDataRTF.data(), rtfsize));
 	msg.push_back(textsize);
 	msg.data.push_back(DataPackage(c.m_pDataText.data(), textsize));
-
-	_NetworkClient->Send(NetworkMessages::CLIPBOARDCHANGED, msg);
+	Send(_NetworkClient, NetworkMessages::CLIPBOARDCHANGED, msg);
 
 }
 void RemoteDesktop::Client::_Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -95,7 +98,7 @@ void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 
 	NetworkMsg msg;
 	msg.push_back(h);
-	_NetworkClient->Send(NetworkMessages::CONNECTIONINFO, msg);
+	Send(_NetworkClient, NetworkMessages::CONNECTIONINFO, msg);
 	_OnConnect();
 }
 
@@ -106,7 +109,7 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 	h.VK = VK;
 	h.down = down == true ? 0 : -1;
 	msg.push_back(h);
-	_NetworkClient->Send(NetworkMessages::KEYEVENT, msg);
+	Send(_NetworkClient, NetworkMessages::KEYEVENT, msg);
 }
 void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wheel){
 	NetworkMsg msg;
@@ -121,17 +124,17 @@ void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wh
 	else {
 		memcpy(&_LastMouseEvent, &h, sizeof(h));
 		msg.push_back(h);
-		_NetworkClient->Send(NetworkMessages::MOUSEEVENT, msg);
+		Send(_NetworkClient, NetworkMessages::MOUSEEVENT, msg);
 	}
 
 }
 void RemoteDesktop::Client::SendCAD(){
 	NetworkMsg msg;
-	_NetworkClient->Send(NetworkMessages::CAD, msg);
+	Send(_NetworkClient, NetworkMessages::CAD, msg);
 }
 void RemoteDesktop::Client::SendRemoveService(){
 	NetworkMsg msg;
-	_NetworkClient->Send(NetworkMessages::DISCONNECTANDREMOVE, msg);
+	Send(_NetworkClient, NetworkMessages::DISCONNECTANDREMOVE, msg);
 	_NetworkClient->MaxConnectAttempts = 1;//this will cause a quick disconnect
 }
 
@@ -146,12 +149,14 @@ RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
 void RemoteDesktop::Client::SendSettings(Settings_Header h){
 	NetworkMsg msg;
 	msg.push_back(h);
-	_NetworkClient->Send(NetworkMessages::SETTINGS, msg);
+	Send(_NetworkClient, NetworkMessages::SETTINGS, msg);
 }
 
 void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int)){
 	std::string filename = absolute_path;
-	std::string relative = relative_path;
+	std::string relative = relative_path; 
+	auto clienthold = _NetworkClient;
+	if (!clienthold) return;
 	if (IsFile(filename)){
 
 		auto total_size = filesize(absolute_path);
@@ -159,7 +164,8 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		File_Header fh;
 		fh.ID = 0;
 		strcpy_s(fh.RelativePath, relative_path);
-		char buffer[FILECHUNKSIZE];
+		std::vector<char> buffer;
+		buffer.reserve(FILECHUNKSIZE);
 	
 		size_t total_chunks = total_size / FILECHUNKSIZE;
 		size_t last_chunk_size = total_size % FILECHUNKSIZE;
@@ -173,21 +179,24 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		}
 
 		std::ifstream infile(absolute_path, std::ifstream::binary);
-
-		for (size_t chunk = 0; chunk < total_chunks; ++chunk)
+		
+		for (size_t chunk = 0; chunk < total_chunks && clienthold->NetworkRunning(); ++chunk)
 		{
 			size_t this_chunk_size =
 				chunk == total_chunks - 1 /* if last chunk */
 				? last_chunk_size /* then fill chunk with remaining bytes */
 				: FILECHUNKSIZE; /* else fill entire chunk */
-			infile.read(buffer, this_chunk_size); /* this many bytes is to be read */
+			infile.read(buffer.data(), this_chunk_size); /* this many bytes is to be read */
 			fh.ChunkSize = this_chunk_size;
+
 			NetworkMsg msg;
 			msg.push_back(fh);
-			msg.data.push_back(DataPackage(buffer, fh.ChunkSize));
-			_NetworkClient->Send(NetworkMessages::FILE, msg);
+			msg.data.push_back(DataPackage(buffer.data(), fh.ChunkSize));
+		
+			clienthold->Send(NetworkMessages::FILE, msg);
 			fh.ID += 1;
 			onfilechanged(fh.ChunkSize);
+			//std::this_thread::sleep_for(std::chrono::milliseconds(5));//sleep to allow other traffic to flow
 		}
 	}
 	else {//this is a folder
@@ -196,7 +205,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		unsigned char size = relative.size();
 		msg.data.push_back(DataPackage((char*)&size, sizeof(size)));
 		msg.data.push_back(DataPackage(relative.c_str(), relative.size()));
-		_NetworkClient->Send(NetworkMessages::FOLDER, msg); 
+		clienthold->Send(NetworkMessages::FOLDER, msg);
 		onfilechanged(0);
 	}
 
@@ -219,7 +228,8 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(height) - sizeof(width), height, width));
 
 		_OnPrimaryChanged(img.Width, img.Height);
-		_Display->NewImage(img);
+		auto copy = _Display;
+		if (copy) copy->NewImage(img);
 
 	}
 	else if (header->Packet_Type == NetworkMessages::UPDATEREGION){
@@ -229,14 +239,16 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		beg += sizeof(rect);
 		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(rect), rect.height, rect.width));
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
-		_Display->UpdateImage(img, rect);
+		auto copy = _Display;
+		if (copy) copy->UpdateImage(img, rect);
 
 	}
 	else if (header->Packet_Type == NetworkMessages::MOUSEEVENT){
 		MouseEvent_Header h;
 		memcpy(&h, beg, sizeof(h));
 		assert(header->PayloadLen == sizeof(h));
-		_Display->UpdateMouse(h);
+		auto copy = _Display;
+		if (copy) copy->UpdateMouse(h);
 	}
 	else if (header->Packet_Type == NetworkMessages::CLIPBOARDCHANGED){
 		_Handle_ClipBoard(header, data, sh);

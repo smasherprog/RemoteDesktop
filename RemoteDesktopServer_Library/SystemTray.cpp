@@ -49,6 +49,7 @@ RemoteDesktop::SystemTray::~SystemTray(){
 void RemoteDesktop::SystemTray::_Cleanup(){
 	Hmenu = nullptr;
 	_SystemTrayIcon = nullptr;
+	_TrayIconCreated = false;
 	if (notifyIconData.hWnd != 0) {
 		Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 		memset(&notifyIconData, 0, sizeof(notifyIconData));
@@ -94,11 +95,12 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 
 	if (Shell_NotifyIcon(NIM_ADD, &notifyIconData)){
 		_TrayIconCreated = true;
+		if (IconReadyCallback){
+			IconReadyCallback();//let creator know the items can be added to the menu
+			AddMenuItem(L"About", DELEGATE(&RemoteDesktop::SystemTray::_ShowAboutDialog, this));
+		}
 	}
-	if (IconReadyCallback){
-		IconReadyCallback();//let creator know the items can be added to the menu
-		AddMenuItem(L"About", DELEGATE(&RemoteDesktop::SystemTray::_ShowAboutDialog, this));
-	}
+
 }
 
 LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -178,7 +180,7 @@ void RemoteDesktop::SystemTray::AddMenuItem(const wchar_t* itemname, Delegate<vo
 	CallBacks.push_back(cb);
 }
 void RemoteDesktop::SystemTray::Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout){
-	
+
 	if (!_TrayIconCreated) return;
 	NOTIFYICONDATA ni;
 	memset(&ni, 0, sizeof(NOTIFYICONDATA));
