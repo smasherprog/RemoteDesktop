@@ -82,6 +82,7 @@ namespace RemoteDesktop_GatewayServer.Controllers
             {
                 Response.AppendHeader("cache-control", "no-cache");
             }
+
             return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
 
         }
@@ -105,8 +106,18 @@ namespace RemoteDesktop_GatewayServer.Controllers
                 Response.AppendHeader("cache-control", "no-cache");
             }
             return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
-
-
+            //zip code below
+            using (var zip = new Ionic.Zip.ZipFile())
+            {
+                var name = Path.GetFileName(realpath);
+                zip.AddEntry(name, RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res));
+                zip.Comment = "Remote Network Access Tool Self Extracting Zip";
+                var tmp = Path.GetTempPath() + "RAT.zip";
+                zip.Save(tmp);
+                var b = System.IO.File.ReadAllBytes(tmp);
+                System.IO.File.Delete(tmp);
+                return File(b, "application/x-zip-compressed", "RAT.zip");
+            }
         }
         //protected ActionResult GetLog()
         //{

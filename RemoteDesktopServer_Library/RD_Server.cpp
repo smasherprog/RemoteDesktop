@@ -11,6 +11,7 @@
 #include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktopServer_Library\SystemTray.h"
 #include "..\RemoteDesktop_Library\Desktop_Capture_Container.h"
+#include "..\RemoteDesktop_Library\EventLog.h"
 
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\Utilities.h"
@@ -247,6 +248,7 @@ void RemoteDesktop::RD_Server::_Handle_ConnectionInfo(Packet_Header* header, con
 	h.UserName[UNAMELEN] = 0;
 	sh->UserName = std::wstring(h.UserName);
 	if (sh->UserName.size() > 2){
+		EventLog::WriteLog(sh->UserName + L" has connected to this machine");
 		auto con = sh->UserName + L" has connected to your machine . . .";
 		_SystemTray->Popup(L"Connection Established", con.c_str(), 2000);
 	}
@@ -288,6 +290,7 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 }
 void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) {
 	if (sh->UserName.size()>2){
+		EventLog::WriteLog(sh->UserName + L" has Disconnected from this machine");
 		auto con = sh->UserName + L" has Disconnected from your machine . . .";
 		_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
 	} 

@@ -67,7 +67,7 @@ void RemoteDesktop::BaseClient::_Run(){
 	int counter = 0;
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
-	NetworkProcessor processor;
+	//NetworkProcessor processor;
 	while (Running && !DisconnectReceived) {
 
 		auto Index = WaitForSingleObject(newevent, 1000);
@@ -77,7 +77,8 @@ void RemoteDesktop::BaseClient::_Run(){
 			WSAEnumNetworkEvents(Socket->get_Socket(), newevent, &NetworkEvents);
 			if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				processor.ReceiveEvent(Socket);
+				Socket->Receive();
+			//	processor.ReceiveEvent(Socket);
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				break;// get out of loop and try reconnecting

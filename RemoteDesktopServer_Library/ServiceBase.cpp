@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ServiceBase.h"
+#include "..\RemoteDesktop_Library\EventLog.h"
 
 // Initialize the singleton service instance.
 CServiceBase *CServiceBase::s_service = NULL;
@@ -195,8 +196,7 @@ void CServiceBase::Start(DWORD dwArgc, PWSTR *pszArgv)
 	}
 	catch (DWORD dwError)
 	{
-		// Log the error.
-		WriteErrorLogEntry(L"Service Start", dwError);
+		RemoteDesktop::EventLog::WriteLog(L"Service Start", dwError);
 
 		// Set the service status to be stopped.
 		SetServiceStatus(SERVICE_STOPPED, dwError);
@@ -204,7 +204,7 @@ void CServiceBase::Start(DWORD dwArgc, PWSTR *pszArgv)
 	catch (...)
 	{
 		// Log the error.
-		WriteEventLogEntry(L"Service failed to start.", EVENTLOG_ERROR_TYPE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to start.", EVENTLOG_ERROR_TYPE);
 
 		// Set the service status to be stopped.
 		SetServiceStatus(SERVICE_STOPPED);
@@ -257,7 +257,7 @@ void CServiceBase::Stop()
 	catch (DWORD dwError)
 	{
 		// Log the error.
-		WriteErrorLogEntry(L"Service Stop", dwError);
+		RemoteDesktop::EventLog::WriteLog(L"Service Stop", dwError);
 
 		// Set the orginal service status.
 		SetServiceStatus(dwOriginalState);
@@ -265,7 +265,7 @@ void CServiceBase::Stop()
 	catch (...)
 	{
 		// Log the error.
-		WriteEventLogEntry(L"Service failed to stop.", EVENTLOG_ERROR_TYPE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to stop.", EVENTLOG_ERROR_TYPE);
 
 		// Set the orginal service status.
 		SetServiceStatus(dwOriginalState);
@@ -312,7 +312,7 @@ void CServiceBase::Pause()
 	catch (DWORD dwError)
 	{
 		// Log the error.
-		WriteErrorLogEntry(L"Service Pause", dwError);
+		RemoteDesktop::EventLog::WriteLog(L"Service Pause", dwError);
 
 		// Tell SCM that the service is still running.
 		SetServiceStatus(SERVICE_RUNNING);
@@ -320,7 +320,7 @@ void CServiceBase::Pause()
 	catch (...)
 	{
 		// Log the error.
-		WriteEventLogEntry(L"Service failed to pause.", EVENTLOG_ERROR_TYPE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to pause.", EVENTLOG_ERROR_TYPE);
 
 		// Tell SCM that the service is still running.
 		SetServiceStatus(SERVICE_RUNNING);
@@ -365,7 +365,7 @@ void CServiceBase::Continue()
 	catch (DWORD dwError)
 	{
 		// Log the error.
-		WriteErrorLogEntry(L"Service Continue", dwError);
+		RemoteDesktop::EventLog::WriteLog(L"Service Continue", dwError);
 
 		// Tell SCM that the service is still paused.
 		SetServiceStatus(SERVICE_PAUSED);
@@ -373,7 +373,7 @@ void CServiceBase::Continue()
 	catch (...)
 	{
 		// Log the error.
-		WriteEventLogEntry(L"Service failed to resume.", EVENTLOG_ERROR_TYPE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to resume.", EVENTLOG_ERROR_TYPE);
 
 		// Tell SCM that the service is still paused.
 		SetServiceStatus(SERVICE_PAUSED);
@@ -414,12 +414,12 @@ void CServiceBase::Shutdown()
 	catch (DWORD dwError)
 	{
 		// Log the error.
-		WriteErrorLogEntry(L"Service Shutdown", dwError);
+		RemoteDesktop::EventLog::WriteLog(L"Service Shutdown", dwError);
 	}
 	catch (...)
 	{
 		// Log the error.
-		WriteEventLogEntry(L"Service failed to shut down.", EVENTLOG_ERROR_TYPE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to shut down.", EVENTLOG_ERROR_TYPE);
 	}
 }
 
@@ -472,64 +472,3 @@ void CServiceBase::SetServiceStatus(DWORD dwCurrentState,
 	::SetServiceStatus(m_statusHandle, &m_status);
 }
 
-
-//
-//   FUNCTION: CServiceBase::WriteEventLogEntry(PWSTR, WORD)
-//
-//   PURPOSE: Log a message to the Application event log.
-//
-//   PARAMETERS:
-//   * pszMessage - string message to be logged.
-//   * wType - the type of event to be logged. The parameter can be one of 
-//     the following values.
-//
-//     EVENTLOG_SUCCESS
-//     EVENTLOG_AUDIT_FAILURE
-//     EVENTLOG_AUDIT_SUCCESS
-//     EVENTLOG_ERROR_TYPE
-//     EVENTLOG_INFORMATION_TYPE
-//     EVENTLOG_WARNING_TYPE
-//
-void CServiceBase::WriteEventLogEntry(PWSTR pszMessage, WORD wType)
-{
-	HANDLE hEventSource = NULL;
-	LPCWSTR lpszStrings[2] = { NULL, NULL };
-
-	hEventSource = RegisterEventSource(NULL, m_name);
-	if (hEventSource)
-	{
-		lpszStrings[0] = m_name;
-		lpszStrings[1] = pszMessage;
-
-		ReportEvent(hEventSource,  // Event log handle
-			wType,                 // Event type
-			0,                     // Event category
-			0,                     // Event identifier
-			NULL,                  // No security identifier
-			2,                     // Size of lpszStrings array
-			0,                     // No binary data
-			lpszStrings,           // Array of strings
-			NULL                   // No binary data
-			);
-
-		DeregisterEventSource(hEventSource);
-	}
-}
-
-
-//
-//   FUNCTION: CServiceBase::WriteErrorLogEntry(PWSTR, DWORD)
-//
-//   PURPOSE: Log an error message to the Application event log.
-//
-//   PARAMETERS:
-//   * pszFunction - the function that gives the error
-//   * dwError - the error code
-//
-void CServiceBase::WriteErrorLogEntry(PWSTR pszFunction, DWORD dwError)
-{
-	wchar_t szMessage[260];
-	StringCchPrintf(szMessage, ARRAYSIZE(szMessage),
-		L"%s failed w/err 0x%08lx", pszFunction, dwError);
-	WriteEventLogEntry(szMessage, EVENTLOG_ERROR_TYPE);
-}

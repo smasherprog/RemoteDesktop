@@ -115,6 +115,12 @@
     <ClInclude Include="NetworkProcessor.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="PacketBufferPool.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="EventLog.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NetworkSetup.cpp">
@@ -186,6 +192,9 @@
     </ClCompile>
     <ClCompile Include="NetworkProcessor.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="EventLog.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

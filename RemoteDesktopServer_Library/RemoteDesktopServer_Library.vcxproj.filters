@@ -80,6 +80,9 @@
     <ClInclude Include="Gateway.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
+    <ClInclude Include="EventLogMessages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -133,9 +136,13 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
+    <ResourceCompile Include="EventLogMessages.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico" />
     <Image Include="logo.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="EventLogMessages.mc" />
   </ItemGroup>
 </Project>

@@ -7,7 +7,6 @@
 #include "Config.h"
 #include "ProxyConnectDialog.h"
 #include "Gateway.h"
-#include "..\RemoteDesktop_Library\NetworkProcessor.h"
 
 RemoteDesktop::BaseServer::BaseServer(Delegate<void, std::shared_ptr<SocketHandler>&> c,
 	Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> r,
@@ -151,7 +150,7 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 	WSANETWORKEVENTS NetworkEvents;
 	DEBUG_MSG("Starting Loop");
 
-	NetworkProcessor processor;
+	//NetworkProcessor processor;
 
 	while (Running && !EventArray.empty() && !DisconnectReceived) {
 		auto Index = WaitForSingleObject(newevent, 1000);
@@ -160,7 +159,7 @@ void RemoteDesktop::BaseServer::_RunReverse(SOCKET sock, std::wstring aes){
 			WSAEnumNetworkEvents(sock, newevent, &NetworkEvents);
 			if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				processor.ReceiveEvent(socket);
+				socket->Receive(); 
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				break;// get out of loop and try reconnecting
@@ -207,7 +206,7 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 
 	WSANETWORKEVENTS NetworkEvents;
 	int counter = 0;
-	NetworkProcessor processor;
+	//NetworkProcessor processor;
 	while (Running && !EventArray.empty()) {
 
 		auto Index = WSAWaitForMultipleEvents(EventArray.size(), EventArray.data(), FALSE, 1000, FALSE);
@@ -222,7 +221,9 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ)
 				&& NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				processor.ReceiveEvent(SocketArray[Index]);
+				SocketArray[Index]->Receive();
+				//processor.ReceiveEvent(SocketArray[Index]);
+
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				if (Index == 0) {//stop all processing, set running to false and next loop will fail and cleanup
@@ -235,12 +236,12 @@ bool RemoteDesktop::BaseServer::_Listen(unsigned short port){
 		if (counter++ > 5 || Index == WSA_WAIT_TIMEOUT){
 			DEBUG_MSG("Checking Timeouts!");
 			_HandleDisconnects_DesktopSwitches();
-	
-				std::lock_guard<std::mutex> lo(_SocketArrayLock);
-				for (auto& c : SocketArray) {
-					c->CheckState();
-				}
-			
+
+			std::lock_guard<std::mutex> lo(_SocketArrayLock);
+			for (auto& c : SocketArray) {
+				c->CheckState();
+			}
+
 		}
 
 	}

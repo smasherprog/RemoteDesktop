@@ -5,9 +5,10 @@
 #include "ServerService.h"
 #include "RD_Server.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
+#include "..\RemoteDesktop_Library\EventLog.h"
 
 void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
-
+	EventLog::Init(Service_Name());
 #if !_DEBUG
 	if (RemoteDesktop::TryToElevate(argv, argc)) return;//if the app was able to elevate, shut this instance down
 #endif

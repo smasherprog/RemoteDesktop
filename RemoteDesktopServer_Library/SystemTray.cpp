@@ -3,12 +3,12 @@
 #include "resource.h"
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 
-#define ID_TRAY_APP_ICON    1001
-#define ID_TRAY_START       1002
-#define ID_TRAY_BALLOON		1004
-#define ID_TRAY_APP_TIMER   1005
-#define WM_SYSICON          (WM_USER + 1)
 
+#define WM_SYSICON          (WM_USER + 1)
+#define ID_TRAY_APP_ICON    WM_SYSICON+1
+#define ID_TRAY_BALLOON		WM_SYSICON+2
+#define ID_TRAY_APP_TIMER   WM_SYSICON+3
+#define ID_TRAY_START       WM_SYSICON+4
 
 HWND AboutHwnd = nullptr;
 
@@ -41,19 +41,21 @@ void RemoteDesktop::SystemTray::_ShowAboutDialog(){
 RemoteDesktop::SystemTray::SystemTray() :
 _SystemTrayIcon(RAIIHICON((HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0))),
 Hmenu(RAIIHMENU(CreatePopupMenu())) {
+
 }
 RemoteDesktop::SystemTray::~SystemTray(){
 	Stop();
 	_Cleanup();
 }
-void RemoteDesktop::SystemTray::_Cleanup(){
+void RemoteDesktop::SystemTray::_Cleanup(){	
+	if (notifyIconData.hWnd != 0) {
+		Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
+		notifyIconData.hWnd = 0;
+	}
 	Hmenu = nullptr;
 	_SystemTrayIcon = nullptr;
 	_TrayIconCreated = false;
-	if (notifyIconData.hWnd != 0) {
-		Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
-		memset(&notifyIconData, 0, sizeof(notifyIconData));
-	}
+
 }
 void RemoteDesktop::SystemTray::Start(Delegate<void> readycb){
 	IconReadyCallback = readycb;
@@ -76,6 +78,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	return c->WindowProc(hWnd, msg, wParam, lParam);
 }
 void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
+	if (!FindWindow(L"Shell_TrayWnd", 0))
+		return;
 
 	if (_TrayIconCreated) return;
 
@@ -92,10 +96,11 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 	notifyIconData.hIcon = _SystemTrayIcon.get();
 	TCHAR szTIP[64] = TEXT("Remote Desktop Process");
 	wcscpy_s(notifyIconData.szTip, szTIP);
-
 	if (Shell_NotifyIcon(NIM_ADD, &notifyIconData)){
-		_TrayIconCreated = true;
+		_TrayIconCreated = true;	
+	
 		if (IconReadyCallback){
+		
 			IconReadyCallback();//let creator know the items can be added to the menu
 			AddMenuItem(L"About", DELEGATE(&RemoteDesktop::SystemTray::_ShowAboutDialog, this));
 		}
@@ -103,19 +108,17 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 
 }
 
+
 LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (msg == s_uTaskbarRestart){
 		_TrayIconCreated = false;
-		if (FindWindow(L"Shell_TrayWnd", 0)){
-			_CreateIcon(Hwnd);
-		}
+		_CreateIcon(Hwnd);
+	
 	}
 	switch (msg){
 	case(WM_TIMER) :
-		if (FindWindow(L"Shell_TrayWnd", 0)){
 			_CreateIcon(Hwnd);
-		}
-				   break;
+				break;
 	case(WM_QUIT) :
 	case(WM_CLOSE) :
 	case(WM_DESTROY) :
@@ -148,8 +151,7 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 }
 void RemoteDesktop::SystemTray::_Run(){
 	_Running = true;
-	DesktopMonitor dekstopmonitor;
-	if (!dekstopmonitor.Is_InputDesktopSelected()) dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
+	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
 	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 
 	auto myclass = L"systrayclass";
@@ -182,19 +184,18 @@ void RemoteDesktop::SystemTray::AddMenuItem(const wchar_t* itemname, Delegate<vo
 void RemoteDesktop::SystemTray::Popup(const wchar_t* title, const wchar_t* message, unsigned int timeout){
 
 	if (!_TrayIconCreated) return;
-	NOTIFYICONDATA ni;
-	memset(&ni, 0, sizeof(NOTIFYICONDATA));
-	ni.cbSize = sizeof(NOTIFYICONDATA);
-	ni.hWnd = Hwnd;
-	ni.uID = ID_TRAY_APP_ICON;
-	ni.uVersion = NOTIFYICON_VERSION;
 
-	Shell_NotifyIcon(NIM_SETVERSION, &ni);
-	ni.uFlags = NIF_INFO;
-	ni.uTimeout = timeout;
-	wcscpy_s(ni.szInfo, message);
-	wcscpy_s(ni.szInfoTitle, title);
-	Shell_NotifyIcon(NIM_MODIFY, &ni);
-	ni.uVersion = 0;
-	Shell_NotifyIcon(NIM_SETVERSION, &ni);
+	notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+	notifyIconData.hWnd = Hwnd;
+	notifyIconData.uID = ID_TRAY_APP_ICON;
+	notifyIconData.uVersion = NOTIFYICON_VERSION;
+
+	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
+	notifyIconData.uFlags = NIF_INFO;
+	notifyIconData.uTimeout = timeout;
+	wcscpy_s(notifyIconData.szInfo, message);
+	wcscpy_s(notifyIconData.szInfoTitle, title);
+	Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
+	notifyIconData.uVersion = 0;
+	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
 }

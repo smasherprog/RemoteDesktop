@@ -8,6 +8,7 @@
 #include "Desktop_Monitor.h"
 #include "Firewall.h"
 #include "Shellapi.h"
+#include "SocketHandler.h"
 
 bool RemoteDesktop::_INTERNAL::NetworkStarted = false;
 
@@ -299,4 +300,42 @@ std::string RemoteDesktop::GetMAC(){
 	}
 	free(AdapterInfo);
 	return macs;
+}	
+RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SocketHandler* sock, char* data, int len){
+	
+	while (len > 0){
+		DEBUG_MSG("SendLoop %", len);
+		auto sentamount = send(sock->get_Socket(), data, len, 0);
+		if (sentamount < 0){
+			auto sockerr = WSAGetLastError();
+			if (sockerr != WSAEMSGSIZE && sockerr != WSAEWOULDBLOCK){
+				auto amtrec = recv(sock->get_Socket(), nullptr, 0, 0);//check if the socket is in a disconnected state
+				if (amtrec == 0) return RemoteDesktop::Network_Return::FAILED;
+				else if (amtrec<0) sockerr = WSAGetLastError();
+				DEBUG_MSG("Disconnecting %", sockerr);
+				return RemoteDesktop::Network_Return::FAILED;//disconnect client!!44
+			}
+			DEBUG_MSG("Yeilding % %", len, sockerr);
+			std::this_thread::yield();
+			continue;//go back and try again
+		}
+		len -= sentamount;
+	}
+	return RemoteDesktop::Network_Return::COMPLETED;
+}
+RemoteDesktop::Network_Return RemoteDesktop::ReceiveLoop(SocketHandler* sock, std::vector<char>& outdata, int& datareceived){
+
+	if (datareceived - outdata.size() < STARTBUFFERSIZE) outdata.resize(outdata.size() + STARTBUFFERSIZE);//grow ahead by chunks
+	auto amtrec = recv(sock->get_Socket(), outdata.data() + datareceived, outdata.size() - datareceived, 0);//read as much as possible
+	if (amtrec > 0){
+		datareceived += amtrec;
+		return ReceiveLoop(sock, outdata, datareceived);
+	}
+	else if (amtrec == 0) return RemoteDesktop::Network_Return::FAILED;
+	else {
+		auto errmsg = WSAGetLastError();
+		if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE)  return RemoteDesktop::Network_Return::PARTIALLY_COMPLETED;
+		DEBUG_MSG("_ReceiveLoop DISCONNECTING %", errmsg);
+		return RemoteDesktop::Network_Return::FAILED;
+	}
 }

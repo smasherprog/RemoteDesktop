@@ -15,7 +15,8 @@ namespace RemoteDesktop{
 		bool _TrayIconCreated = false;
 		std::thread _BackGroundThread; 
 		NOTIFYICONDATA notifyIconData;
-		
+		DesktopMonitor dekstopmonitor;
+	
 		void _Cleanup();
 		void _Run();
 		void _ShowAboutDialog();

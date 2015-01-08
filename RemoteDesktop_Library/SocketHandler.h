@@ -13,6 +13,7 @@
 #include <mutex>
 #include "Delegate.h"
 #include "Handle_Wrapper.h"
+#include "NetworkProcessor.h"
 
 namespace RemoteDesktop{
 	enum PeerState{
@@ -23,14 +24,20 @@ namespace RemoteDesktop{
 		PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES
 	};
 
+	namespace INTERNAL{
+		//improves speed when memory allocations are kept down because vector resize always does a memset on the unintialized elements
+		extern std::vector<std::vector<char>> SocketBufferCache;
+		extern std::mutex SocketBufferCacheLock;
+	}
 	class SocketHandler{
+		
 		std::mutex _SendLock;
-		std::vector<char> _ReceivedBuffer, _SendBuffer;
-		std::vector<char> _ReceivedCompressionBuffer, _SendCompressionBuffer;
-		int _ReceivedBufferCounter = 0;
 
-		Network_Return _SendLoop(char* data, int len);
-		Network_Return _ReceiveLoop();
+		std::vector<char> _SendBuffer, _ReceivedBuffer, OtherReceiveBuffer;
+
+		std::vector<char> _ReceivedCompressionBuffer, _SendCompressionBuffer;
+
+		int _ReceivedBufferCounter = 0;
 
 		Packet_Encrypt_Header _Encypt_Header;
 		Encryption _Encyption;
@@ -41,8 +48,9 @@ namespace RemoteDesktop{
 		
 		RAIISOCKET_TYPE _Socket;
 		Network_Return _Disconnect();
+		NetworkProcessor _Processor;
 		
-		
+		void _Receive(std::vector<char>& buffer, int count);
 
 	public:
 		explicit SocketHandler(SOCKET socket, bool client);

@@ -195,6 +195,7 @@
   <ItemGroup>
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="EventLogMessages.h" />
     <ClInclude Include="Gateway.h" />
     <ClInclude Include="MainServer.h" />
     <ClInclude Include="MouseCapture.h" />
@@ -240,11 +241,29 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="EventLogMessages.rc" />
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="logo.bmp" />
     <Image Include="icon1.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="EventLogMessages.mc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <FileType>Text</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">mc.exe %(FullPath)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).rc</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">mc.exe %(FullPath)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).rc</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mc.exe %(FullPath)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).rc</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mc.exe %(FullPath)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).rc</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -53,12 +53,6 @@ public:
 		DWORD dwWin32ExitCode = NO_ERROR,
 		DWORD dwWaitHint = 0);
 
-	// Log a message to the Application event log.
-	void WriteEventLogEntry(PWSTR pszMessage, WORD wType);
-
-	// Log an error message to the Application event log.
-	void WriteErrorLogEntry(PWSTR pszFunction,
-		DWORD dwError = GetLastError());
 
 private:
 

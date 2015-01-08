@@ -58,7 +58,7 @@ namespace RemoteDesktop_Viewer.Code
                         connection.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
                         connection.Error += connection_Error;
                         DateTime dt = DateTime.Now;
-                        connection.Start().Wait(3000);
+                        connection.Start();
                         //if an error is thrown, it will set authenticated to false. If the client waits toe 2 seconds, it timed out and authenticated needs to be false
                         if ((DateTime.Now - dt).TotalMilliseconds >= 3500) { _Authenticated = false; } else { _Authenticated = true; }
                         return _Authenticated;
@@ -77,7 +77,7 @@ namespace RemoteDesktop_Viewer.Code
                 request.Method = "POST";
                 request.ContentType = "application/x-www-form-urlencoded";
                 request.CookieContainer = new CookieContainer();
-                request.Timeout = 5000;//5 second timeout..
+                request.Timeout = 13000;//5 second timeout..
                 var authCredentials = "UserName=" + user + "&Password=" + password;
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(authCredentials);
                 request.ContentLength = bytes.Length;
