@@ -254,6 +254,26 @@ void RemoteDesktop::RD_Server::_Handle_ConnectionInfo(Packet_Header* header, con
 	}
 
 }
+void RemoteDesktop::RD_Server::_Handle_ElevateProcess(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	
+	int len = 0;
+	memcpy(&len, data, sizeof(len));
+	data += sizeof(len);
+	std::vector<wchar_t> username;
+	username.resize(len);
+	memcpy(username.data(), data, len);
+	data += len;
+
+	len = 0;
+	memcpy(&len, data, sizeof(len));
+	data += sizeof(len);
+
+	std::vector<wchar_t> password;
+	password.resize(len);
+	memcpy(password.data(), data, len);
+
+}
+
 void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	switch (header->Packet_Type){
 	case NetworkMessages::KEYEVENT:
@@ -282,6 +302,9 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 		break;
 	case NetworkMessages::CONNECTIONINFO:
 		_Handle_ConnectionInfo(header, data, sh);
+		break;
+	case NetworkMessages::ELEVATEPROCESS:
+		_Handle_ElevateProcess(header, data, sh);
 		break;
 
 	default:

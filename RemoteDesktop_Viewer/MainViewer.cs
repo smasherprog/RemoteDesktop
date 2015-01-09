@@ -47,7 +47,9 @@ namespace RemoteDesktop_Viewer
         static extern void SendCAD(IntPtr client);
         [DllImport(Settings.DLL_Name)]
         static extern void SendRemoveService(IntPtr client);
-
+        [DllImport(Settings.DLL_Name, CharSet = CharSet.Unicode)]
+        static extern void ElevateProcess(IntPtr client, string username, string password);
+        
         [DllImport(Settings.DLL_Name)]
         static extern RemoteDesktop_Viewer.Code.Settings.Traffic_Stats get_TrafficStats(IntPtr client);
 
@@ -113,6 +115,10 @@ namespace RemoteDesktop_Viewer
 
             button2.MouseEnter += button_MouseEnter;
             button2.MouseLeave += button_MouseLeave;
+
+            button4.MouseEnter += button_MouseEnter;
+            button4.MouseLeave += button_MouseLeave;
+
             for(var i = 0; i < _Displays.Length; i++)
                 _Displays[i] = new Rectangle(0, 0, 0, 0);
         }
@@ -334,6 +340,19 @@ namespace RemoteDesktop_Viewer
         private void OnSettingsChanged(RemoteDesktop_Viewer.Code.Settings.Settings_Header h)
         {
             SendSettings(_Client, h.Image_Quality, h.GrayScale, h.ShareClip);
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            var f = new AdminLogin();
+            f.OnLoginEvent += f_OnLoginEvent;
+            FormClosing += (a, c) => { f.Close(); };
+            f.ShowDialog(this);
+        }
+
+        void f_OnLoginEvent(string username, string password)
+        {
+            ElevateProcess(_Client, username, password);
         }
     }
 }

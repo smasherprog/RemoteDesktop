@@ -45,6 +45,7 @@ namespace RemoteDesktop{
 		void KeyEvent(int VK, bool down) ;
 		void MouseEvent(unsigned int action, int x, int y, int wheel=0);
 
+		void ElevateProcess(wchar_t* username, wchar_t* password);
 		void SendRemoveService();
 		void SendCAD();
 		void SendFile(const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int));

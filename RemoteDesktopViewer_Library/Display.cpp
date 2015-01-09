@@ -123,32 +123,3 @@ void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 	}
 	InvalidateRect(_HWND, NULL, false);
 }
-//
-//bool RemoteDesktop::Display::SetCursor(){
-//
-//	RECT rect;
-//	if (!GetClientRect(_HWND, &rect)) return true;
-//
-//	ClientToScreen(_HWND, (LPPOINT)&rect.left);
-//	ClientToScreen(_HWND, (LPPOINT)&rect.right);
-//
-//	if (rect.bottom == 0 && rect.left == 0 && rect.right == 0 && rect.top == 0) {
-//		DEBUG_MSG("Exiting cannot see window");
-//		return true;
-//	}
-//
-//	POINT p;
-//	if (!GetCursorPos(&p)) {
-//		DEBUG_MSG("Exiting cannot GetCursorPos");
-//		return true;
-//	}
-//	bool inwindow = p.x > rect.left && p.x < rect.right && p.y> rect.top && p.y < rect.bottom;
-//	if (inwindow && (GetFocus() == _HWND)) {
-//
-//		//DEBUG_MSG("Setting cursor %", HCursor.ID);
-//		::SetCursor(HCursor.HCursor);
-//		return true;
-//	}
-//	return false;
-//
-//}

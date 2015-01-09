@@ -33,6 +33,7 @@
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.viewPort1 = new RemoteDesktop_Viewer.Code.ViewPort();
+            this.button4 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
@@ -49,6 +50,7 @@
             // 
             // viewPort1
             // 
+            this.viewPort1.Controls.Add(this.button4);
             this.viewPort1.Controls.Add(this.button2);
             this.viewPort1.Controls.Add(this.button1);
             this.viewPort1.Controls.Add(this.button3);
@@ -57,9 +59,20 @@
             this.viewPort1.Size = new System.Drawing.Size(1236, 784);
             this.viewPort1.TabIndex = 2;
             // 
+            // button4
+            // 
+            this.button4.ImageIndex = 2;
+            this.button4.Location = new System.Drawing.Point(365, -16);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(24, 24);
+            this.button4.TabIndex = 4;
+            this.button4.Text = "C";
+            this.toolTip1.SetToolTip(this.button4, "Change Image Settings");
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
             // button2
             // 
-            this.button2.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.button2.ImageIndex = 2;
             this.button2.Location = new System.Drawing.Point(400, -16);
             this.button2.Name = "button2";
@@ -72,7 +85,6 @@
             // 
             // button1
             // 
-            this.button1.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.button1.BackColor = System.Drawing.Color.Crimson;
             this.button1.ImageIndex = 1;
             this.button1.Location = new System.Drawing.Point(836, -16);
@@ -86,7 +98,6 @@
             // 
             // button3
             // 
-            this.button3.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.button3.ImageIndex = 2;
             this.button3.ImageList = this.imageList1;
             this.button3.Location = new System.Drawing.Point(435, -16);
@@ -103,7 +114,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(1236, 784);
+            this.ClientSize = new System.Drawing.Size(1249, 784);
             this.Controls.Add(this.viewPort1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainViewer";
@@ -122,6 +133,7 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button4;
 
     }
 }

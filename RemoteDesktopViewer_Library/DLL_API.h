@@ -19,6 +19,7 @@ extern "C" {
 	DLLEXPORT void __stdcall MouseEvent(void* client, unsigned int action, int x, int y, int wheel);
 	DLLEXPORT void __stdcall SendCAD(void* client);
 	DLLEXPORT void __stdcall SendRemoveService(void* client);
+	DLLEXPORT void __stdcall ElevateProcess(void* client, wchar_t* username, wchar_t* password);
 	DLLEXPORT void __stdcall SendFile(void* client, const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int));
 	DLLEXPORT void __stdcall SendSettings(void* client, int img_quality, bool gray, bool shareclip);
 	DLLEXPORT RemoteDesktop::Traffic_Stats __stdcall get_TrafficStats(void* client);

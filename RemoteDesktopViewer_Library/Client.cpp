@@ -137,7 +137,16 @@ void RemoteDesktop::Client::SendRemoveService(){
 	Send(_NetworkClient, NetworkMessages::DISCONNECTANDREMOVE, msg);
 	_NetworkClient->MaxConnectAttempts = 1;//this will cause a quick disconnect
 }
-
+void RemoteDesktop::Client::ElevateProcess(wchar_t* username, wchar_t* password){
+	NetworkMsg msg;
+	int len = wcslen(username) * 2;
+	msg.data.push_back(DataPackage((char*)&len, len));
+	msg.data.push_back(DataPackage((char*)username, len));
+	int otherlen = wcslen(password) * 2;
+	msg.data.push_back(DataPackage((char*)&otherlen, otherlen));
+	msg.data.push_back(DataPackage((char*)password, otherlen));
+	//Send(_NetworkClient, NetworkMessages::ELEVATEPROCESS, msg);
+}
 
 RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
 	auto s = _NetworkClient->Socket;
