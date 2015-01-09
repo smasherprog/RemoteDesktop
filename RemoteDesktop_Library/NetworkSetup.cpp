@@ -304,7 +304,7 @@ std::string RemoteDesktop::GetMAC(){
 RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SocketHandler* sock, char* data, int len){
 	
 	while (len > 0){
-		DEBUG_MSG("SendLoop %", len);
+		//DEBUG_MSG("SendLoop %", len);
 		auto sentamount = send(sock->get_Socket(), data, len, 0);
 		if (sentamount < 0){
 			auto sockerr = WSAGetLastError();

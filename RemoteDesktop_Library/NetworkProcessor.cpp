@@ -17,7 +17,7 @@ RemoteDesktop::NetworkProcessor::~NetworkProcessor(){
 	}
 }
 bool RemoteDesktop::NetworkProcessor::Add(std::vector<char>& buffer, int counter){
-	DEBUG_MSG("Add %", counter);
+	//DEBUG_MSG("Add %", counter);
 	int timewait = 0;
 	while (_Count>1024*1024*30){//dont exceed 30 MB....
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -32,7 +32,7 @@ bool RemoteDesktop::NetworkProcessor::Add(std::vector<char>& buffer, int counter
 	_ReceiveBuffer_In.resize(_Count + counter);
 	memcpy(_ReceiveBuffer_In.data() + _Count, buffer.data(), counter);
 	_Count += counter;
-	DEBUG_MSG("Waking other thread up");
+//	DEBUG_MSG("Waking other thread up");
 	_CV.notify_one();
 	return true;
 }
@@ -40,7 +40,7 @@ void RemoteDesktop::NetworkProcessor::_Run(){
 	while (_Running){
 		std::unique_lock<std::mutex> lk(_Lock);
 		_CV.wait(lk);
-		DEBUG_MSG("_RUn Woke up!");
+	//	DEBUG_MSG("_RUn Woke up!");
 		if (!_DesktopMonitor->Is_InputDesktopSelected()) _DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 		if (!_Running) return;
 		int count = 0;
@@ -51,7 +51,7 @@ void RemoteDesktop::NetworkProcessor::_Run(){
 			_ReceiveBuffer_Out.resize(count);
 			memcpy(_ReceiveBuffer_Out.data(), _ReceiveBuffer_In.data(), count);
 		}
-		DEBUG_MSG("Processing % ", count);
+	//	DEBUG_MSG("Processing % ", count);
 		if (!_Running) return;
 		_Receive_CallBack(_ReceiveBuffer_Out, count);
 	}

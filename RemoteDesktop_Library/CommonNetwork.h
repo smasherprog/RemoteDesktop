@@ -20,7 +20,18 @@ namespace RemoteDesktop{
 	struct KeyEvent_Header{
 		int VK;
 		char down = 0;
-	};		
+	};	
+	struct New_Image_Header{
+		int Index;
+		int XOffset;
+		int YOffset;
+		int Width;
+		int Height;
+	};
+	struct Update_Image_Header{
+		int Index;
+		Rect rect;
+	};
 	struct ConnectionInfo_Header{
 		wchar_t UserName[UNAMELEN + 1];
 	};

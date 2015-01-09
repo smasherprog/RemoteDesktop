@@ -289,34 +289,36 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	}
 }
 void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) {
-	if (sh->UserName.size()>2){
+	if (sh->UserName.size() > 2){
 		EventLog::WriteLog(sh->UserName + L" has Disconnected from this machine");
 		auto con = sh->UserName + L" has Disconnected from your machine . . .";
 		_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
-	} 
+	}
 
 }
 
-void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg){
+void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg, int index){
 	if (_NewClients.empty()) return;
 	auto sendimg = imgg.Clone();
 
 	sendimg.Compress();
 	NetworkMsg msg;
-	int sz[2];
-	sz[0] = sendimg.Height;
-	sz[1] = sendimg.Width;
-	DEBUG_MSG("Servicing new Client %, %, %", sendimg.Height, sendimg.Width, sendimg.size_in_bytes());
-	msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
+	New_Image_Header h;
+	h.YOffset = h.XOffset = 0;
+	h.Index = index;
+	h.Height = imgg.Height;
+	h.Width = imgg.Width;
+	DEBUG_MSG("Servicing new Client %,  %, %, %", index, sendimg.Height, sendimg.Width, sendimg.size_in_bytes());
+
+	msg.push_back(h);
 	msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
 
 	std::lock_guard<std::mutex> lock(_NewClientLock);
 	for (auto& a : _NewClients){
 		a->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
-	_NewClients.clear();
 }
-bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _lastimg){
+bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _lastimg, int index){
 	bool reschange = (imgg.Height != _lastimg.Height || imgg.Width != _lastimg.Width) && (imgg.Height > 0 && _lastimg.Width > 0);
 	//if there was a resolution change
 	if (reschange){
@@ -324,11 +326,13 @@ bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _las
 		auto sendimg = imgg.Clone();
 		sendimg.Compress();
 		NetworkMsg msg;
-		int sz[2];
-		sz[0] = sendimg.Height;
-		sz[1] = sendimg.Width;
+		New_Image_Header h;
+		h.YOffset = h.XOffset = 0;
+		h.Index = index;
+		h.Height = imgg.Height;
+		h.Width = imgg.Width;
 
-		msg.data.push_back(DataPackage((char*)&sz, sizeof(int) * 2));
+		msg.push_back(h);
 		msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
 		_NetworkServer->SendToAll(NetworkMessages::RESOLUTIONCHANGE, msg);
 		return true;
@@ -337,13 +341,17 @@ bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _las
 }
 
 
-void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect){
+void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, int index){
 	if (rect.width > 0 && rect.height > 0){
 
 		NetworkMsg msg;
 		auto imgdif = Image::Copy(img, rect);
 		imgdif.Compress();
-		msg.push_back(rect);
+		Update_Image_Header h;
+		h.rect = rect;
+		h.Index = index;
+
+		msg.push_back(h);
 		msg.data.push_back(DataPackage((char*)imgdif.get_Data(), imgdif.size_in_bytes()));
 
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
@@ -412,14 +420,18 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bo
 		_Handle_MouseUpdates(mousecapturing);
 
 		auto currentimages(CaptureDesktops());
-		if (!currentimages.empty() && !_LastImages.empty()){
-			for (auto i = 0; i < 1; i++){
-				_HandleNewClients(*currentimages[i]);
-				if (!_HandleResolutionUpdates(*currentimages[i], *_LastImages[i])){
-					auto rect = Image::Difference(*_LastImages[i], *currentimages[i]);
-					_Handle_ScreenUpdates(*currentimages[i], rect);
-				}
+
+		auto m = min(currentimages.size(), _LastImages.size());
+		for (auto i = 0; i < m; i++){
+			_HandleNewClients(*currentimages[i], i);
+			if (!_HandleResolutionUpdates(*currentimages[i], *_LastImages[i], i)){
+				auto rect = Image::Difference(*_LastImages[i], *currentimages[i]);
+				_Handle_ScreenUpdates(*currentimages[i], rect, i);
 			}
+		}
+		{
+			std::lock_guard<std::mutex> lock(_NewClientLock);
+			_NewClients.clear();
 		}
 
 		_LastImages = currentimages;

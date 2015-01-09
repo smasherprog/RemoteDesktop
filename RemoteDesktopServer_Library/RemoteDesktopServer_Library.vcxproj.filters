@@ -136,7 +136,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
-    <ResourceCompile Include="EventLogMessages.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico" />

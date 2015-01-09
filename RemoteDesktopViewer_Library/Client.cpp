@@ -14,8 +14,8 @@ RemoteDesktop::Client::Client(HWND hwnd,
 	void(__stdcall * onconnect)(),
 	void(__stdcall * ondisconnect)(), 
 	void(__stdcall * oncursorchange)(int),
-	void(__stdcall * onprimchanged)(int, int),
-	void(__stdcall * onconnectingattempt)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnPrimaryChanged(onprimchanged), _OnConnectingAttempt(onconnectingattempt) {
+	void(__stdcall * ondisplaychanged)(int, int, int, int, int),
+	void(__stdcall * onconnectingattempt)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnDisplaysChanged(ondisplaychanged), _OnConnectingAttempt(onconnectingattempt) {
 	_Display = std::make_shared<Display>(hwnd, oncursorchange);
 	_ClipboardMonitor = std::make_shared<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Client::_OnClipboardChanged, this));
 	DEBUG_MSG("Client()");
@@ -217,35 +217,32 @@ void RemoteDesktop::Client::Draw(HDC hdc){
 
 void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	auto t = Timer(true);
-	auto beg = data;
 	if (header->Packet_Type == NetworkMessages::RESOLUTIONCHANGE){
+		New_Image_Header h;
+		memcpy(&h, data, sizeof(h));
+		data += sizeof(h);
 
-		int height(0), width(0);
-		memcpy(&height, beg, sizeof(height));
-		beg += sizeof(height);
-		memcpy(&width, beg, sizeof(width));
-		beg += sizeof(width);
-		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(height) - sizeof(width), height, width));
-
-		_OnPrimaryChanged(img.Width, img.Height);
+		Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.Height, h.Width));
+		
+		_OnDisplaysChanged(h.Index, h.XOffset, h.YOffset, h.Width, h.Height);
 		auto copy = _Display;
-		if (copy) copy->NewImage(img);
+		if (copy) copy->Add(img, h);
 
 	}
 	else if (header->Packet_Type == NetworkMessages::UPDATEREGION){
+		Update_Image_Header h;
+		memcpy(&h, data, sizeof(h));
+		data += sizeof(h);
 		
-		Rect rect;
-		memcpy(&rect, beg, sizeof(rect));
-		beg += sizeof(rect);
-		Image img(Image::Create_from_Compressed_Data((char*)beg, header->PayloadLen - sizeof(rect), rect.height, rect.width));
+		Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.rect.height, h.rect.width));
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
 		auto copy = _Display;
-		if (copy) copy->UpdateImage(img, rect);
+		if (copy) copy->Update(img, h);
 
 	}
 	else if (header->Packet_Type == NetworkMessages::MOUSEEVENT){
 		MouseEvent_Header h;
-		memcpy(&h, beg, sizeof(h));
+		memcpy(&h, data, sizeof(h));
 		assert(header->PayloadLen == sizeof(h));
 		auto copy = _Display;
 		if (copy) copy->UpdateMouse(h);

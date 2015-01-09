@@ -37,9 +37,9 @@ namespace RemoteDesktop{
 
 		std::mutex _NewClientLock;
 
-		void _HandleNewClients(Image& img);
-		bool _HandleResolutionUpdates(Image& img, Image& _lastimg);
-		void _Handle_ScreenUpdates(Image& img, Rect& rect);
+		void _HandleNewClients(Image& img, int index);
+		bool _HandleResolutionUpdates(Image& img, Image& _lastimg, int index);
+		void _Handle_ScreenUpdates(Image& img, Rect& rect, int index);
 		void _Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing);
 
 		void _Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh);

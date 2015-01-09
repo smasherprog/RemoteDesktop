@@ -10,7 +10,7 @@ extern "C" {
 	DLLEXPORT void* __stdcall Create_Client(void* hwnd, void(__stdcall * onconnect)(),
 		void(__stdcall * ondisconnect)(),
 		void(__stdcall * oncursorchange)(int),
-		void(__stdcall * onprimchanged)(int, int),
+		void(__stdcall * ondisplaychanged)(int, int, int, int, int),
 		void(__stdcall * onconnectingattempt)(int, int));
 	DLLEXPORT void __stdcall Destroy_Client(void* client);
 	DLLEXPORT void __stdcall Connect(void* client, wchar_t* ip_or_host, wchar_t* port, int id, wchar_t* aeskey);

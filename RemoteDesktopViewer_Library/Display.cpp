@@ -22,16 +22,9 @@ RemoteDesktop::Display::Display(HWND hwnd, void(__stdcall * oncursorchange)(int)
 	}
 }
 
-void _Draw(HDC hdc, HDC memhdc, HBITMAP bmp, int width, int height){
-	HBITMAP hOldBitmap = (HBITMAP)SelectObject(memhdc, bmp);
-	BitBlt(hdc, 0, 0, width, height, memhdc, 0, 0, SRCCOPY);
-	SelectObject(memhdc, hOldBitmap);
-}
 
 void RemoteDesktop::Display::Draw(HDC hdc){
-	auto ptr = _HBITMAP_wrapper.get();
-	if (ptr == nullptr) return;
-
+	DEBUG_MSG("Drawing");
 	RECT rect;
 	GetClientRect(_HWND, &rect);
 
@@ -44,20 +37,29 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	}
 
 	std::lock_guard<std::mutex> lock(_DrawLock);
-
-	auto hMemDC = CreateCompatibleDC(hdc);
 	
-	_Draw(hdc, hMemDC, ptr->Bitmap, ptr->width, ptr->height);
+	auto hMemDC(RAIIHDC(CreateCompatibleDC(hdc)));
+	int xoffset = 0;
+
+	for (auto a : _Images){
+		if (!a) continue;
+		auto hOldBitmap = (HBITMAP)SelectObject(hMemDC.get(), a->Bitmap);
+		DEBUG_MSG("Draw % % % % %",a->Context.Index, xoffset + a->Context.XOffset, a->Context.YOffset, a->Context.Width, a->Context.Height);
+		BitBlt(hdc, xoffset + a->Context.XOffset, a->Context.YOffset, a->Context.Width, a->Context.Height, hMemDC.get(), 0, 0, SRCCOPY);
+		xoffset += a->Context.XOffset + a->Context.Width;
+		SelectObject(hMemDC.get(), hOldBitmap);
+	}
 
 	if (GetFocus() != _HWND) {
 		DrawIcon(hdc, _MousePos.left, _MousePos.top, HCursor.HCursor);
 	}
-	DeleteDC(hMemDC);
 }
 
-void RemoteDesktop::Display::NewImage(Image& img){
+void RemoteDesktop::Display::Add(Image& img, New_Image_Header& h) {
+	DEBUG_MSG("Adding Image index %", h.Index);
 	BITMAPINFO   bi;
 	memset(&bi, 0, sizeof(bi));
+	assert(h.Index < MAX_DISPLAYS);
 
 	bi.bmiHeader.biSize = sizeof(bi);
 	bi.bmiHeader.biWidth = img.Width;
@@ -73,28 +75,30 @@ void RemoteDesktop::Display::NewImage(Image& img){
 
 	auto hDC = GetDC(_HWND);
 	void* raw_data = nullptr;
-	_HBITMAP_wrapper = std::make_unique<HBITMAP_wrapper>(CreateDIBSection(hDC, &bi, DIB_RGB_COLORS, &raw_data, NULL, NULL));
-	_HBITMAP_wrapper->height = img.Height;
-	_HBITMAP_wrapper->width = img.Width;
-	_HBITMAP_wrapper->raw_data = (unsigned char*)raw_data;
+	auto t = std::make_shared<HBITMAP_wrapper>(CreateDIBSection(hDC, &bi, DIB_RGB_COLORS, &raw_data, NULL, NULL), h);
+
+	t->raw_data = (unsigned char*)raw_data;
 	assert(img.Height*img.Width * 4 == bi.bmiHeader.biSizeImage);
 	memcpy(raw_data, img.get_Data(), img.size_in_bytes());
-	ReleaseDC(_HWND, hDC); 
+
+	_Images[h.Index] = t;
+
+	ReleaseDC(_HWND, hDC);
 	InvalidateRect(_HWND, NULL, false);
 
 }
-void RemoteDesktop::Display::UpdateImage(Image& img, Rect& h){
+void RemoteDesktop::Display::Update(Image& img, Update_Image_Header& h){
 	//DEBUG_MSG("UpdateImage");
-	auto ptr = _HBITMAP_wrapper.get();
-	if (ptr != nullptr) {
-		img.Decompress();
-		std::lock_guard<std::mutex> lock(_DrawLock);
-		Image::Copy(img, h.left, h.top, ptr->width * 4, (char*)ptr->raw_data, ptr->height, ptr->width);
-	}	
-	//DEBUG_MSG("UpdateImage 2");
-	if (ptr != nullptr) 
-		InvalidateRect(_HWND, NULL, false); 
-	
+	assert(h.Index < MAX_DISPLAYS);
+	auto t = _Images[h.Index];
+	if (!t) return;
+
+	img.Decompress();
+	std::lock_guard<std::mutex> lock(_DrawLock);
+	Image::Copy(img, h.rect.left, h.rect.top, t->Context.Width * 4, (char*)t->raw_data, t->Context.Height, t->Context.Width);
+
+	InvalidateRect(_HWND, NULL, false);
+
 }
 void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 	_MousePos = h.pos;

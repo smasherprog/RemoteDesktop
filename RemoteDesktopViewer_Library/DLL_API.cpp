@@ -2,8 +2,8 @@
 #include "DLL_API.h"
 #include "Client.h"
 
-void* __stdcall Create_Client(void* hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * onprimchanged)(int, int), void(__stdcall * onconnectingattempt)(int, int)){
-	return new RemoteDesktop::Client((HWND)hwnd, onconnect, ondisconnect, oncursorchange, onprimchanged, onconnectingattempt);
+void* __stdcall Create_Client(void* hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * ondisplaychanged)(int, int, int, int, int), void(__stdcall * onconnectingattempt)(int, int)){
+	return new RemoteDesktop::Client((HWND)hwnd, onconnect, ondisconnect, oncursorchange, ondisplaychanged, onconnectingattempt);
 }
 void __stdcall Destroy_Client(void* client){
 	if (client != NULL) {

@@ -6,28 +6,29 @@
 #include "MouseCommon.h"
 #include "Rect.h"
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
+#include "..\RemoteDesktop_Library\Image.h"
+#include "..\RemoteDesktop_Library\CommonNetwork.h"
 
 namespace RemoteDesktop{
 	class HBITMAP_wrapper{
 	public:
 		HBITMAP Bitmap = nullptr;
-		int height = 0;
-		int width = 0;
+		New_Image_Header Context;
 		unsigned char* raw_data = nullptr;
-		explicit HBITMAP_wrapper(HBITMAP s) : Bitmap(s) { }
+		explicit HBITMAP_wrapper(HBITMAP s, New_Image_Header& c) : Bitmap(s), Context(c) { }
 		~HBITMAP_wrapper()
 		{
 			if (Bitmap != nullptr)DeleteObject(Bitmap);
 		}
 
 	};
-	class Image;
-	struct Image_Diff_Header;
+
 	struct MouseEvent_Header;
 
 	class Display{
 
-		std::unique_ptr<HBITMAP_wrapper> _HBITMAP_wrapper;
+		std::shared_ptr<HBITMAP_wrapper> _Images[MAX_DISPLAYS];
+
 		HWND _HWND;
 		std::mutex _DrawLock;
 	
@@ -40,8 +41,8 @@ namespace RemoteDesktop{
 	public:
 		Display(HWND hwnd, void(__stdcall * oncursorchange)(int));
 
-		void NewImage(Image& img);
-		void UpdateImage(Image& img, Rect& h);
+		void Add(Image& img, New_Image_Header& h);
+		void Update(Image& img, Update_Image_Header& h);
 		void UpdateMouse(MouseEvent_Header& h);
 		void Draw(HDC hdc);
 		//bool SetCursor();

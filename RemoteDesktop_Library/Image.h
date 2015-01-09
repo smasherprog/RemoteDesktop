@@ -4,6 +4,8 @@
 #include <vector>
 #include <mutex>
 
+#define MAX_DISPLAYS 4
+
 namespace RemoteDesktop{
 	namespace Image_Settings{
 		extern int Quality;
