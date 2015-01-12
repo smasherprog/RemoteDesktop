@@ -10,11 +10,12 @@ namespace RemoteDesktop{
 	struct Packet_Header;
 	class ClipboardMonitor;
 	struct Clipboard_Data;
+	class INetwork;
 
 	class Client {
 
 		std::shared_ptr<Display> _Display;
-		std::shared_ptr<BaseClient> _NetworkClient;
+		std::shared_ptr<INetwork> _NetworkClient;
 		std::shared_ptr<ClipboardMonitor> _ClipboardMonitor;
 
 		HWND _HWND;
@@ -33,12 +34,13 @@ namespace RemoteDesktop{
 
 		void SendFileOrFolder(std::string root1, std::string fullpath);
 		MouseEvent_Header _LastMouseEvent;
+		std::weak_ptr<RemoteDesktop::SocketHandler> Socket;
 
 	public:
 		Client(HWND hwnd, void(__stdcall * onconnect)(), void(__stdcall * ondisconnect)(), void(__stdcall * oncursorchange)(int), void(__stdcall * ondisplaychanged)(int, int, int, int, int), void(__stdcall * onconnectingattempt)(int, int));
 		~Client();	
 	
-		void Connect(std::wstring host, std::wstring port, int dst_id, std::wstring aeskey);
+		void Connect( std::wstring port,std::wstring host, int dst_id, std::wstring aeskey);
 		void Stop();
 
 		void Draw(HDC hdc);

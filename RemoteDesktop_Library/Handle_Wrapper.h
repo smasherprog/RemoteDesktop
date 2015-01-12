@@ -27,6 +27,9 @@ namespace RemoteDesktop{
 	typedef std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::CloseHandle)> RAIIHANDLE_TYPE;
 #define RAIIHANDLE(handle) std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::CloseHandle)>(handle, &::CloseHandle)
 
+	typedef std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::WSACloseEvent)> RAIIWSAEVENT_TYPE;
+#define RAIIWSAEVENT(handle) std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::WSACloseEvent)>(handle, &::WSACloseEvent)
+
 	typedef std::unique_ptr<std::remove_pointer<HMODULE>::type, decltype(&::FreeLibrary)> RAIIHMODULE_TYPE;
 #define RAIIHMODULE(handle) std::unique_ptr<std::remove_pointer<HMODULE>::type, decltype(&::FreeLibrary)>(handle, &::FreeLibrary)
 

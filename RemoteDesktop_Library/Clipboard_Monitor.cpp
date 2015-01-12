@@ -9,7 +9,9 @@ RemoteDesktop::ClipboardMonitor::ClipboardMonitor(Delegate<void, const Clipboard
 }
 RemoteDesktop::ClipboardMonitor::~ClipboardMonitor(){
 	_Running = false;
-	if (_BackGroundWorker.joinable()) _BackGroundWorker.join();
+	BEGINTRY
+		if (std::this_thread::get_id() != _BackGroundWorker.get_id() && _BackGroundWorker.joinable()) _BackGroundWorker.join();
+	ENDTRY
 }
 void RemoteDesktop::ClipboardMonitor::set_ShareClipBoard(bool s){
 	_ShareClipboard = s;

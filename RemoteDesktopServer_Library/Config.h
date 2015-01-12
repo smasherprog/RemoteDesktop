@@ -5,7 +5,7 @@
 
 wchar_t* Service_Name();
 wchar_t* Service_Display_Name();
-int DefaultPort();
+wchar_t* DefaultPort();
 wchar_t* DefaultGateway();
 wchar_t* DefaultProxyGetSessionURL();
 wchar_t* DisclaimerMessage();

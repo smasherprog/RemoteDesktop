@@ -121,6 +121,18 @@
     <ClInclude Include="EventLog.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="UserInfo.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessUtils.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Network_Server.h">
+      <Filter>Network\Concrete</Filter>
+    </ClInclude>
+    <ClInclude Include="Gateway.h">
+      <Filter>Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NetworkSetup.cpp">
@@ -195,6 +207,18 @@
     </ClCompile>
     <ClCompile Include="EventLog.cpp">
       <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="UserInfo.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessUtils.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Network_Server.cpp">
+      <Filter>Network\Concrete</Filter>
+    </ClCompile>
+    <ClCompile Include="Gateway.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

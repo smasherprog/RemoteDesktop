@@ -58,7 +58,7 @@ bool InstallService(PWSTR pszServiceName,
 		if (schService.get() == nullptr) DEBUG_MSG("CreateService failed w / err %", GetLastError());
 		else {
 			wprintf(L"%s is installed.\n", pszServiceName);
-			return StartService(schService.get(), 0, NULL);
+			return StartService(schService.get(), 0, NULL) == TRUE;
 		}
 	}
 	return false;

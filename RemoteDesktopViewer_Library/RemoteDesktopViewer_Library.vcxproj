@@ -172,14 +172,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="BaseClient.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="DLL_API.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BaseClient.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="DLL_API.cpp" />

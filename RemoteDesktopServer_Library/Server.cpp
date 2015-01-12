@@ -1,9 +1,8 @@
 #include "stdafx.h"
-#include "RD_Server.h"
+#include "Server.h"
 #include "MouseCapture.h"
 #include "Desktop_Monitor.h"
-#include "BaseServer.h"
-#include "SocketHandler.h"
+#include "..\RemoteDesktop_Library\SocketHandler.h"
 #include "Rect.h"
 #include "..\RemoteDesktop_Library\CommonNetwork.h"
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
@@ -16,6 +15,11 @@
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\Utilities.h"
 #include "Lmcons.h"
+#include "GatewayConnectDialog.h"
+#include "NewConnectDialog.h"
+#include "..\RemoteDesktop_Library\Network_Server.h"
+#include "..\RemoteDesktop_Library\Network_Client.h"
+#include "Strsafe.h"
 
 #if _DEBUG
 #include "Console.h"
@@ -44,7 +48,7 @@ void DeleteMe(){
 }
 
 
-RemoteDesktop::RD_Server::RD_Server() :
+RemoteDesktop::Server::Server() :
 _CADEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRDCad"))),
 _SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRemoveSelf")))
 {
@@ -62,16 +66,13 @@ _SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\
 
 	mousecapturing = std::make_unique<MouseCapture>();
 	_DesktopMonitor = std::make_unique<DesktopMonitor>();
-	_NetworkServer = std::make_unique<BaseServer>(
-		DELEGATE(&RemoteDesktop::RD_Server::OnConnect, this),
-		DELEGATE(&RemoteDesktop::RD_Server::OnReceive, this),
-		DELEGATE(&RemoteDesktop::RD_Server::OnDisconnect, this));
-	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::RD_Server::_OnClipboardChanged, this));
+	_NewClients.reserve(10);//I reserve extra space to allow for accessing past the actual array bounds in some cases. This will only cause an error if the memory is outside of the array capacity
+	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Server::_OnClipboardChanged));
 	_SystemTray = std::make_unique<SystemTray>();
-	_SystemTray->Start(DELEGATE(&RemoteDesktop::RD_Server::_CreateSystemMenu, this));
-}
-RemoteDesktop::RD_Server::~RD_Server(){
+	_SystemTray->Start(DELEGATE(&RemoteDesktop::Server::_CreateSystemMenu));
 
+}
+RemoteDesktop::Server::~Server(){
 	if (_RemoveOnExit) {
 		if (_SelfRemoveEventHandle.get() != nullptr) {
 			SetEvent(_SelfRemoveEventHandle.get());//signal the self removal process 
@@ -80,25 +81,25 @@ RemoteDesktop::RD_Server::~RD_Server(){
 		RemoteDesktop::RemoveFirewallException();
 	}
 }
-void RemoteDesktop::RD_Server::_CreateSystemMenu(){
-	_SystemTray->AddMenuItem(L"Exit", DELEGATE(&RemoteDesktop::RD_Server::_TriggerShutDown, this));
-	_SystemTray->AddMenuItem(L"Exit and Remove", DELEGATE(&RemoteDesktop::RD_Server::_TriggerShutDown_and_RemoveSelf, this));
+void RemoteDesktop::Server::_CreateSystemMenu(){
+	_SystemTray->AddMenuItem(L"Exit", DELEGATE(&RemoteDesktop::Server::_TriggerShutDown));
+	_SystemTray->AddMenuItem(L"Exit and Remove", DELEGATE(&RemoteDesktop::Server::_TriggerShutDown_and_RemoveSelf));
 
 }
 
-void RemoteDesktop::RD_Server::_TriggerShutDown(){
-	_NetworkServer->GracefulStop();//this will cause the main loop to stop and the program to exit
+void RemoteDesktop::Server::_TriggerShutDown(){
+	_NetworkServer->Stop(false);//this will cause the main loop to stop and the program to exit
 }
-void RemoteDesktop::RD_Server::_TriggerShutDown_and_RemoveSelf(){
+void RemoteDesktop::Server::_TriggerShutDown_and_RemoveSelf(){
 	_TriggerShutDown();
 	_RemoveOnExit = true;
 }
 
-void RemoteDesktop::RD_Server::_Handle_DisconnectandRemove(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+void RemoteDesktop::Server::_Handle_DisconnectandRemove(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	_TriggerShutDown_and_RemoveSelf();
 }
 
-void RemoteDesktop::RD_Server::_Handle_Settings(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+void RemoteDesktop::Server::_Handle_Settings(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	Settings_Header h;
 	assert(header->PayloadLen >= sizeof(h));
 	memcpy(&h, data, sizeof(h));
@@ -108,7 +109,7 @@ void RemoteDesktop::RD_Server::_Handle_Settings(Packet_Header* header, const cha
 
 	//DEBUG_MSG("Setting Quality to % and GrayScale to %", q, g);
 }
-void RemoteDesktop::RD_Server::_OnClipboardChanged(const Clipboard_Data& c){
+void RemoteDesktop::Server::_OnClipboardChanged(const Clipboard_Data& c){
 	NetworkMsg msg;
 	int dibsize(c.m_pDataDIB.size()), htmlsize(c.m_pDataHTML.size()), rtfsize(c.m_pDataRTF.size()), textsize(c.m_pDataText.size());
 
@@ -121,9 +122,9 @@ void RemoteDesktop::RD_Server::_OnClipboardChanged(const Clipboard_Data& c){
 	msg.push_back(textsize);
 	msg.data.push_back(DataPackage(c.m_pDataText.data(), textsize));
 
-	_NetworkServer->SendToAll(NetworkMessages::CLIPBOARDCHANGED, msg);
+	_NetworkServer->Send(NetworkMessages::CLIPBOARDCHANGED, msg);
 }
-void RemoteDesktop::RD_Server::_Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+void RemoteDesktop::Server::_Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	Clipboard_Data clip;
 	int dibsize(0), htmlsize(0), rtfsize(0), textsize(0);
 
@@ -153,12 +154,37 @@ void RemoteDesktop::RD_Server::_Handle_ClipBoard(Packet_Header* header, const ch
 	_ClipboardMonitor->Restore(clip);
 }
 
-
-void RemoteDesktop::RD_Server::OnConnect(std::shared_ptr<SocketHandler>& sh){
-	std::lock_guard<std::mutex> lock(_NewClientLock);
-	_NewClients.push_back(sh);
-	DEBUG_MSG("New Client OnConnect");
+void RemoteDesktop::Server::_OnAllowConnection(std::wstring name){
+	std::lock_guard<std::mutex> lock(_ClientLock);
+	DEBUG_MSG("Allowing %", ws2s(name));
+	_PendingNewClients.erase(std::remove_if(_PendingNewClients.begin(), _PendingNewClients.end(), [&](std::shared_ptr<SocketHandler>& ptr){
+		if (ptr->Connection_Info.full_name == name){
+			_NewClients.push_back(ptr);
+			return true;
+		}
+		else return false;
+	}), _PendingNewClients.end());
 }
+void RemoteDesktop::Server::_OnDenyConnection(std::wstring name){
+	{
+		std::lock_guard<std::mutex> lock(_ClientLock);
+		auto begit = std::remove_if(_PendingNewClients.begin(), _PendingNewClients.end(), [&](std::shared_ptr<RemoteDesktop::SocketHandler>& ptr) {
+			return ptr->Connection_Info.full_name == name;
+		});
+		auto copybeg = begit;
+		while (copybeg != _PendingNewClients.end()){
+			(*copybeg)->Send(CONNECT_REQUEST_FAILED);
+			(*copybeg)->Disconnect();
+			++copybeg;
+		}
+		_PendingNewClients.erase(begit, _PendingNewClients.end());
+	}
+
+	auto a = _GatewayConnect_Dialog;
+	if (a) a->Show();
+}
+
+
 void _HandleKeyEvent(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	RemoteDesktop::KeyEvent_Header h;
 	assert(header->PayloadLen >= sizeof(h));
@@ -171,7 +197,7 @@ void _HandleKeyEvent(RemoteDesktop::Packet_Header* header, const char* data, std
 	SendInput(1, &inp, sizeof(INPUT));
 }
 
-void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh){
+void  RemoteDesktop::Server::_Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	MouseEvent_Header h;
 	assert(header->PayloadLen == sizeof(h));
 	memcpy(&h, data, sizeof(h));
@@ -213,7 +239,7 @@ void  RemoteDesktop::RD_Server::_Handle_MouseUpdate(Packet_Header* header, const
 	//mouse_event(inp.mi.dwFlags, inp.mi.dx, inp.mi.dy, inp.mi.mouseData, 0);
 	SendInput(1, &inp, sizeof(inp));
 }
-void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+void RemoteDesktop::Server::_Handle_File(RemoteDesktop::Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	File_Header fh;
 	assert(header->PayloadLen > sizeof(fh));
 	memcpy(&fh, data, sizeof(fh));
@@ -231,7 +257,7 @@ void RemoteDesktop::RD_Server::_Handle_File(RemoteDesktop::Packet_Header* header
 
 }
 
-void RemoteDesktop::RD_Server::_Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+void RemoteDesktop::Server::_Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	unsigned char size = (unsigned char)*data;
 	data++;
 	std::string fname(data, size);
@@ -241,40 +267,31 @@ void RemoteDesktop::RD_Server::_Handle_Folder(Packet_Header* header, const char*
 	CreateDirectoryA(path.c_str(), NULL);
 	DEBUG_MSG("% END FOLDER: %", path.size(), path);
 }
-void RemoteDesktop::RD_Server::_Handle_ConnectionInfo(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	ConnectionInfo_Header h;
-	assert(header->PayloadLen == sizeof(h));
-	memcpy(&h, data, header->PayloadLen);
-	h.UserName[UNAMELEN] = 0;
-	sh->UserName = std::wstring(h.UserName);
-	if (sh->UserName.size() > 2){
-		EventLog::WriteLog(sh->UserName + L" has connected to this machine");
-		auto con = sh->UserName + L" has connected to your machine . . .";
-		_SystemTray->Popup(L"Connection Established", con.c_str(), 2000);
+void RemoteDesktop::Server::_Handle_ConnectionRequest(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+
+	assert(header->PayloadLen == sizeof(sh->Connection_Info));
+	memcpy(&sh->Connection_Info, data, sizeof(sh->Connection_Info));
+	auto uname = std::wstring(sh->Connection_Info.full_name);
+	if (uname.size() > 2){
+
+		DEBUG_MSG("Connect Request from %", ws2s(uname));
+		EventLog::WriteLog(uname + L" is attempted to connect to this machine");
+		auto a = _GatewayConnect_Dialog;
+		if (a) a->Close();
+		_NewConnect_Dialog = std::make_shared<NewConnect_Dialog>();
+		_NewConnect_Dialog->Show(uname);
+		_NewConnect_Dialog->OnAllow = DELEGATE(&RemoteDesktop::Server::_OnAllowConnection);
+		_NewConnect_Dialog->OnDeny = DELEGATE(&RemoteDesktop::Server::_OnDenyConnection);
 	}
-
 }
-void RemoteDesktop::RD_Server::_Handle_ElevateProcess(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-	
-	int len = 0;
-	memcpy(&len, data, sizeof(len));
-	data += sizeof(len);
-	std::vector<wchar_t> username;
-	username.resize(len);
-	memcpy(username.data(), data, len);
-	data += len;
-
-	len = 0;
-	memcpy(&len, data, sizeof(len));
-	data += sizeof(len);
-
-	std::vector<wchar_t> password;
-	password.resize(len);
-	memcpy(password.data(), data, len);
-
+void RemoteDesktop::Server::_Handle_ElevateProcess(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	Elevate_Header h;
+	assert(header->PayloadLen == sizeof(h));
+	memcpy(&h, data, sizeof(h));
+	DEBUG_MSG("Got here");
 }
 
-void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
+void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh) {
 	switch (header->Packet_Type){
 	case NetworkMessages::KEYEVENT:
 		_HandleKeyEvent(header, data, sh);
@@ -300,8 +317,8 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 	case NetworkMessages::SETTINGS:
 		_Handle_Settings(header, data, sh);
 		break;
-	case NetworkMessages::CONNECTIONINFO:
-		_Handle_ConnectionInfo(header, data, sh);
+	case NetworkMessages::CONNECT_REQUEST:
+		_Handle_ConnectionRequest(header, data, sh);
 		break;
 	case NetworkMessages::ELEVATEPROCESS:
 		_Handle_ElevateProcess(header, data, sh);
@@ -311,17 +328,18 @@ void RemoteDesktop::RD_Server::OnReceive(Packet_Header* header, const char* data
 		break;
 	}
 }
-void RemoteDesktop::RD_Server::OnDisconnect(std::shared_ptr<SocketHandler>& sh) {
-	if (sh->UserName.size() > 2){
-		EventLog::WriteLog(sh->UserName + L" has Disconnected from this machine");
-		auto con = sh->UserName + L" has Disconnected from your machine . . .";
+void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHandler>& sh) {
+	if (!sh) return;
+	auto usname = std::wstring(sh->Connection_Info.full_name);
+	if (usname.size() > 2){
+		EventLog::WriteLog(usname + L" has Disconnected from this machine");
+		auto con = usname + L" has Disconnected from your machine . . .";
 		_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
 	}
-
 }
 
-void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg, int index){
-	if (_NewClients.empty()) return;
+void RemoteDesktop::Server::_HandleNewClients(Image& imgg, int index, std::vector<std::shared_ptr<SocketHandler>>& newclients){
+	if (newclients.empty()) return;
 	auto sendimg = imgg.Clone();
 
 	sendimg.Compress();
@@ -336,12 +354,12 @@ void RemoteDesktop::RD_Server::_HandleNewClients(Image& imgg, int index){
 	msg.push_back(h);
 	msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
 
-	std::lock_guard<std::mutex> lock(_NewClientLock);
-	for (auto& a : _NewClients){
-		a->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
+	for (size_t i = 0; i < newclients.size(); i++){
+		auto a(newclients[i]);
+		if (a) a->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
 }
-bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _lastimg, int index){
+bool RemoteDesktop::Server::_HandleResolutionUpdates(Image& imgg, Image& _lastimg, int index){
 	bool reschange = (imgg.Height != _lastimg.Height || imgg.Width != _lastimg.Width) && (imgg.Height > 0 && _lastimg.Width > 0);
 	//if there was a resolution change
 	if (reschange){
@@ -357,14 +375,14 @@ bool RemoteDesktop::RD_Server::_HandleResolutionUpdates(Image& imgg, Image& _las
 
 		msg.push_back(h);
 		msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
-		_NetworkServer->SendToAll(NetworkMessages::RESOLUTIONCHANGE, msg);
+		_NetworkServer->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
 		return true;
 	}
 	return false;
 }
 
 
-void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, int index){
+void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, int index){
 	if (rect.width > 0 && rect.height > 0){
 
 		NetworkMsg msg;
@@ -378,11 +396,13 @@ void RemoteDesktop::RD_Server::_Handle_ScreenUpdates(Image& img, Rect& rect, int
 		msg.data.push_back(DataPackage((char*)imgdif.get_Data(), imgdif.size_in_bytes()));
 
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
-		_NetworkServer->SendToAll(NetworkMessages::UPDATEREGION, msg);
+		_NetworkServer->Send(NetworkMessages::UPDATEREGION, msg);
 	}
 
 }
-void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing){
+
+
+void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing){
 	static auto begintimer = std::chrono::high_resolution_clock::now();
 
 	mousecapturing->Update();
@@ -397,21 +417,46 @@ void RemoteDesktop::RD_Server::_Handle_MouseUpdates(const std::unique_ptr<MouseC
 		h.pos = mousecapturing->Current_ScreenPos;
 		h.HandleID = mousecapturing->Current_Mouse;
 		msg.push_back(h);
-		_NetworkServer->SendToAll(NetworkMessages::MOUSEEVENT, msg);
+		_NetworkServer->Send(NetworkMessages::MOUSEEVENT, msg);
 		if (mousecapturing->Last_Mouse != mousecapturing->Current_Mouse) DEBUG_MSG("Sending mouse Iconchange %", mousecapturing->Current_Mouse);
 		mousecapturing->Last_ScreenPos = mousecapturing->Current_ScreenPos;
 		mousecapturing->Last_Mouse = mousecapturing->Current_Mouse;
 
 	}
 }
+void RemoteDesktop::Server::OnConnect(std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+		std::lock_guard<std::mutex> lock(_ClientLock);
+		_PendingNewClients.push_back(sh);
+		DEBUG_MSG("New Client OnConnect");
+}
+void RemoteDesktop::Server::_ShowGatewayDialog(int id){
+	_GatewayConnect_Dialog = std::make_shared<GatewayConnect_Dialog>();
+	_GatewayConnect_Dialog->Show(id);
+}
+void RemoteDesktop::Server::Listen(std::wstring port, std::wstring host){
+	_NetworkServer = std::make_unique<Network_Server>();
+	_NetworkServer->OnConnected = std::bind(&RemoteDesktop::Server::OnConnect, this, std::placeholders::_1);
+	_NetworkServer->OnReceived = std::bind(&RemoteDesktop::Server::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	_NetworkServer->OnDisconnect = std::bind(&RemoteDesktop::Server::OnDisconnect, this, std::placeholders::_1);
+	_NetworkServer->Start(port, host);
+	_Run();
+}
+void RemoteDesktop::Server::ReverseConnect(std::wstring port, std::wstring host, std::wstring gatewayurl){
+	_NetworkServer = std::make_unique<Network_Client>();
+	_NetworkServer->OnConnected = std::bind(&RemoteDesktop::Server::OnConnect, this, std::placeholders::_1);
+	_NetworkServer->OnReceived = std::bind(&RemoteDesktop::Server::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	_NetworkServer->OnDisconnect = std::bind(&RemoteDesktop::Server::OnDisconnect, this, std::placeholders::_1);
+	auto ptr = (Network_Client*)_NetworkServer.get();
 
+	ptr->OnGatewayConnected = std::bind(&RemoteDesktop::Server::_ShowGatewayDialog, this, std::placeholders::_1);
+	ptr->Start(port, host, gatewayurl);
+	_Run();
+}
 
-void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bool reverseconnecttoproxy) {
-	_RunningReverseProxy = reverseconnecttoproxy;
+void RemoteDesktop::Server::_Run() {
 
 	//switch to input desktop 
 	_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
-	_NetworkServer->StartListening(port, host);
 
 	auto _LastImages(CaptureDesktops());
 
@@ -421,19 +466,20 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bo
 
 	DWORD dwEvent;
 	auto lastwaittime = FRAME_CAPTURE_INTERVAL;
+	std::vector<std::shared_ptr<SocketHandler>> tmpbuffer;
 
 	while (_NetworkServer->Is_Running()){
 		if (shutdownhandle.get() == NULL) std::this_thread::sleep_for(std::chrono::milliseconds(lastwaittime));//sleep
 		else {
 			dwEvent = WaitForSingleObject(shutdownhandle.get(), lastwaittime);
 			if (dwEvent == 0){
-				_NetworkServer->GracefulStop();//stop program!
+				_NetworkServer->Stop(false);//stop program!
 				break;
 			}
 		}
 		auto t1 = Timer(true);
 
-		if (_NetworkServer->Client_Count() <= 0) {
+		if (_NetworkServer->Connection_Count() <= 0) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));//sleep if there are no clients connected.
 			continue;
 		}
@@ -443,20 +489,26 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bo
 		_Handle_MouseUpdates(mousecapturing);
 
 		auto currentimages(CaptureDesktops());
+		{
+			std::lock_guard<std::mutex> lock(_ClientLock);
+			for (size_t i = 0; i < _NewClients.size(); i++) tmpbuffer.push_back(_NewClients[i]);
+			_NewClients.clear();
+		}
+		for (auto& a : tmpbuffer){
+			std::wstring name = a->Connection_Info.full_name;
+			name += L" has connected to your computer . . . ";
+			if (name.size()>2) _SystemTray->Popup(L"New Connection Established", name.c_str(), 10000);
+		}
 
 		auto m = min(currentimages.size(), _LastImages.size());
-		for (auto i = 0; i < m; i++){
-			_HandleNewClients(*currentimages[i], i);
+		for (size_t i = 0; i < m; i++){
+			_HandleNewClients(*currentimages[i], i, tmpbuffer);
 			if (!_HandleResolutionUpdates(*currentimages[i], *_LastImages[i], i)){
 				auto rect = Image::Difference(*_LastImages[i], *currentimages[i]);
 				_Handle_ScreenUpdates(*currentimages[i], rect, i);
 			}
 		}
-		{
-			std::lock_guard<std::mutex> lock(_NewClientLock);
-			_NewClients.clear();
-		}
-
+		tmpbuffer.clear();//make sure to clear the new clienrts
 		_LastImages = currentimages;
 		t1.Stop();
 		auto tim = (int)t1.Elapsed_milli();
@@ -465,5 +517,5 @@ void RemoteDesktop::RD_Server::Listen(unsigned short port, std::wstring host, bo
 		//DEBUG_MSG("Time for work... %", t1.Elapsed_milli());
 	}
 	DEBUG_MSG("Stopping Main Server Loop");
-	_NetworkServer->ForceStop();//stop program!
+	_NetworkServer = nullptr;
 }

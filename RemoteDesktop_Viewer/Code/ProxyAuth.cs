@@ -35,8 +35,10 @@ namespace RemoteDesktop_Viewer.Code
                 {
                     connection.TransportConnectTimeout = new TimeSpan(0, 0, 4);
                     IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
-          
                 }
+                var request = WebRequest.Create(Settings.AuthenticationUrl) as HttpWebRequest;
+
+                request.Method = "POST";
             }
             catch (Exception e)
             {
@@ -57,10 +59,8 @@ namespace RemoteDesktop_Viewer.Code
                         IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
                         connection.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
                         connection.Error += connection_Error;
-                        DateTime dt = DateTime.Now;
-                        connection.Start();
-                        //if an error is thrown, it will set authenticated to false. If the client waits toe 2 seconds, it timed out and authenticated needs to be false
-                        if ((DateTime.Now - dt).TotalMilliseconds >= 3500) { _Authenticated = false; } else { _Authenticated = true; }
+                        connection.Start().Wait(Settings.AuthenticationTimeout);
+                         _Authenticated = true;
                         return _Authenticated;
                     }
                 }
@@ -73,11 +73,11 @@ namespace RemoteDesktop_Viewer.Code
             {
 
                 var request = WebRequest.Create(Settings.AuthenticationUrl) as HttpWebRequest;
-
+                
                 request.Method = "POST";
                 request.ContentType = "application/x-www-form-urlencoded";
                 request.CookieContainer = new CookieContainer();
-                request.Timeout = 13000;//5 second timeout..
+                request.Timeout = Settings.AuthenticationTimeout;
                 var authCredentials = "UserName=" + user + "&Password=" + password;
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(authCredentials);
                 request.ContentLength = bytes.Length;

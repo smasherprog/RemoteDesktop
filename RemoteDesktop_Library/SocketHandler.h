@@ -34,7 +34,6 @@ namespace RemoteDesktop{
 		std::mutex _SendLock;
 
 		std::vector<char> _SendBuffer, _ReceivedBuffer, OtherReceiveBuffer;
-
 		std::vector<char> _ReceivedCompressionBuffer, _SendCompressionBuffer;
 
 		int _ReceivedBufferCounter = 0;
@@ -47,28 +46,34 @@ namespace RemoteDesktop{
 		Network_Return _Complete_Key_Exchange();
 		
 		RAIISOCKET_TYPE _Socket;
-		Network_Return _Disconnect();
-		NetworkProcessor _Processor;
 		
+		NetworkProcessor _Processor;
+		Network_Return _Disconnect();
 		void _Receive(std::vector<char>& buffer, int count);
 
 	public:
 		explicit SocketHandler(SOCKET socket, bool client);
-
+		~SocketHandler();
 		Network_Return Exchange_Keys(int dst_id, int src_id, std::wstring aeskey);
 		PeerState State = PEER_STATE_DISCONNECTED;
-		Network_Return Send(NetworkMessages m, const NetworkMsg& msg);
+		Network_Return Send(NetworkMessages m, const NetworkMsg& msg); 
+		Network_Return Send(NetworkMessages m);
 		Network_Return Receive();
 		SOCKET get_Socket() const { return _Socket ? _Socket->socket : INVALID_SOCKET; }
 
-		Delegate<void, Packet_Header*, const char*, SocketHandler*> Receive_CallBack;
-		Delegate<void, SocketHandler*> Connected_CallBack;
-		Delegate<void, SocketHandler*> Disconnect_CallBack;
+		//this is a graceful disconnect and will disconnect on the next loop iteration
+		//will not call any disconnect callbacks until the disconnect actually occurs
+		void Disconnect(){ State = PEER_STATE_DISCONNECTED; }
+
+		
+		std::function<void(Packet_Header*, const char*, SocketHandler*)> Receive_CallBack;
+		std::function<void(SocketHandler*)> Connected_CallBack;
+		std::function<void(SocketHandler*)> Disconnect_CallBack;
 	
 		Traffic_Monitor Traffic;
 		Network_Return CheckState();
 		
-		std::wstring UserName;
+		User_Info_Header Connection_Info;
 	};
 };
 

@@ -6,6 +6,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "Delegate.h"
+#include <atomic>
 
 namespace RemoteDesktop{
 	class DesktopMonitor;
@@ -16,8 +17,7 @@ namespace RemoteDesktop{
 		std::thread _Worker;
 		std::mutex _Lock, _ContainerLock;
 		std::condition_variable _CV;
-
-		bool _Running = false;
+		std::atomic<bool> _Running;
 
 		int _Count = 0;
 		std::vector<char> _ReceiveBuffer_In;
@@ -35,6 +35,7 @@ namespace RemoteDesktop{
 
 		bool Add(std::vector<char>& buffer, int counter);
 
+		void Stop(bool blocking);
 	};
 
 }

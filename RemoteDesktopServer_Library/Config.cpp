@@ -11,10 +11,10 @@ wchar_t* Service_Display_Name(){
 	LoadString(GetModuleHandle(NULL), IDS_STRINGSERVICE_DISPLAY_NAME, b, 255);
 	return b;
 }
-int DefaultPort(){
+wchar_t* DefaultPort(){
 	static wchar_t b[256];
 	LoadString(GetModuleHandle(NULL), IDS_STRINGDEFAULTPORT, b, 255);
-	return std::stoi(b);
+	return b;
 }
 wchar_t* DefaultGateway(){
 	static wchar_t b[256];

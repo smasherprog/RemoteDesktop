@@ -3,11 +3,14 @@
 #include "Config.h"
 #include "ServiceInstaller.h"
 #include "ServerService.h"
-#include "RD_Server.h"
+#include "Server.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "..\RemoteDesktop_Library\EventLog.h"
+#include "..\RemoteDesktop_Library\UserInfo.h"
+#include "..\RemoteDesktop_Library\ProcessUtils.h"
 
-void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
+void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gateway){
+
 	EventLog::Init(Service_Name());
 #if !_DEBUG
 	if (RemoteDesktop::TryToElevate(argv, argc)) return;//if the app was able to elevate, shut this instance down
@@ -27,8 +30,8 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 		}
 		else if (_wcsicmp(L"run", argv[1] + 1) == 0)
 		{
-			auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
-			if (startasproxy) _Server->Listen(DefaultPort(), DefaultGateway(), startasproxy);
+			auto _Server = std::make_unique<RemoteDesktop::Server>();
+			if (reverseconnect_to_gateway) _Server->ReverseConnect(DefaultPort(), DefaultGateway(), DefaultProxyGetSessionURL());
 			else _Server->Listen(DefaultPort());
 		}
 	}
@@ -36,7 +39,7 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 	{
 		
 		auto ret = IDYES;
-		if (startasproxy){
+		if (reverseconnect_to_gateway){
 			ret = MessageBox(
 				NULL,
 				DisclaimerMessage(),
@@ -56,8 +59,8 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool startasproxy){
 				NULL,
 				NULL
 				)){
-				auto _Server = std::make_unique<RemoteDesktop::RD_Server>();
-				if (startasproxy) _Server->Listen(DefaultPort(), DefaultGateway(), startasproxy);
+				auto _Server = std::make_unique<RemoteDesktop::Server>();
+				if (reverseconnect_to_gateway) _Server->ReverseConnect(DefaultPort(), DefaultGateway(), DefaultProxyGetSessionURL());
 				else _Server->Listen(DefaultPort());
 			}
 		}

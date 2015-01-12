@@ -5,9 +5,6 @@
 #include "Ping.h"
 #include "NetworkSetup.h"
 
-#pragma comment(lib, "iphlpapi.lib")
-
-
 bool RemoteDesktop::Ping(wchar_t* ip){
 StartupNetwork();
 	char SendData[32] = "Data Buffer";

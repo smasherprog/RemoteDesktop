@@ -4,6 +4,7 @@
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 #include "SoftwareCAD.h"
 #include "sas.h"
+#include "Strsafe.h"
 
 RemoteDesktop::ServiceMonitor::ServiceMonitor(){
 	if (!IsSASCadEnabled()) Enable_SASCAD();
@@ -13,15 +14,15 @@ RemoteDesktop::ServiceMonitor::~ServiceMonitor(){
 }
 void RemoteDesktop::ServiceMonitor::Start(){
 
-	Stop(); 
+	Stop();
 	Running = true;
 	_BackGroundNetworkWorker = std::thread(&ServiceMonitor::_Run, this);
 }
 void RemoteDesktop::ServiceMonitor::Stop(){
 	Running = false;
-	if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id()){
-		if (_BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
-	}
+	BEGINTRY
+		if (std::this_thread::get_id() != _BackGroundNetworkWorker.get_id() && _BackGroundNetworkWorker.joinable()) _BackGroundNetworkWorker.join();
+	ENDTRY
 }
 
 
@@ -46,7 +47,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 
 	while (Running){
 		DEBUG_MSG("Waiting for CAD Event");
-		
+
 		auto Index = WaitForMultipleObjects(2, evs, false, 1000);
 		if (Index == 0){
 			SendSAS(FALSE);
@@ -63,7 +64,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 
 			break;
 		}
-		
+
 		_LastSession = WTSGetActiveConsoleSessionId();
 
 		if ((_LastSession != 0xFFFFFFFF) && (_LastSession >= 0) && (_LastSession != _CurrentSession)){
@@ -83,7 +84,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 					_App = _LaunchProcess(L" -run");
 				}
 				else {
-		
+
 					TerminateProcess(_App->hProcess, 0);
 					Sleep(3000);
 					_App = _LaunchProcess(L" -run");
@@ -97,13 +98,13 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 
 	}
 	if (ExitProgHandle.get() != nullptr) SetEvent(ExitProgHandle.get()); // signal to shut down if running
-	if (_App) WaitForSingleObject(_App->hProcess, 5000);	
+	if (_App) WaitForSingleObject(_App->hProcess, 5000);
 
 }
 
 std::shared_ptr<PROCESS_INFORMATION> RemoteDesktop::ServiceMonitor::_LaunchProcess(wchar_t* args){
 	wchar_t szPath[MAX_PATH];
-	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));	
+	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
 	if (args != nullptr) wcscat_s(szPath, args);
 	return LaunchProcess(szPath, _CurrentSession);
 }

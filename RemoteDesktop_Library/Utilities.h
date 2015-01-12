@@ -268,4 +268,8 @@ inline std::string ws2s(const std::wstring& wstr)
 
 	return converterX.to_bytes(wstr);
 }
+
+#define BEGINTRY try{
+#define ENDTRY }catch (std::exception& e){	DEBUG_MSG(e.what()); } catch (...){ DEBUG_MSG("Caught default exception at line: % and file: % ", __LINE__, __FILE__); }
+
 #endif

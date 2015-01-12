@@ -3,13 +3,11 @@
 #include "resource.h"
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 
-
 #define WM_SYSICON          (WM_USER + 1)
 #define ID_TRAY_APP_ICON    WM_SYSICON+1
 #define ID_TRAY_BALLOON		WM_SYSICON+2
 #define ID_TRAY_APP_TIMER   WM_SYSICON+3
 #define ID_TRAY_START       WM_SYSICON+4
-
 HWND AboutHwnd = nullptr;
 
 INT_PTR CALLBACK AboutDlgProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -47,7 +45,7 @@ RemoteDesktop::SystemTray::~SystemTray(){
 	Stop();
 	_Cleanup();
 }
-void RemoteDesktop::SystemTray::_Cleanup(){	
+void RemoteDesktop::SystemTray::_Cleanup(){
 	if (notifyIconData.hWnd != 0) {
 		Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 		notifyIconData.hWnd = 0;
@@ -64,9 +62,9 @@ void RemoteDesktop::SystemTray::Start(Delegate<void> readycb){
 void RemoteDesktop::SystemTray::Stop(){
 	_Running = false;
 	PostMessage(Hwnd, WM_QUIT, 0, 0);
-	if (std::this_thread::get_id() != _BackGroundThread.get_id()){
-		if (_BackGroundThread.joinable()) _BackGroundThread.join();
-	}
+	BEGINTRY
+		if (std::this_thread::get_id() != _BackGroundThread.get_id() && _BackGroundThread.joinable()) _BackGroundThread.join();
+	ENDTRY
 }
 
 UINT s_uTaskbarRestart = 0;
@@ -97,12 +95,12 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 	TCHAR szTIP[64] = TEXT("Remote Desktop Process");
 	wcscpy_s(notifyIconData.szTip, szTIP);
 	if (Shell_NotifyIcon(NIM_ADD, &notifyIconData)){
-		_TrayIconCreated = true;	
-	
+		_TrayIconCreated = true;
+
 		if (IconReadyCallback){
-		
+
 			IconReadyCallback();//let creator know the items can be added to the menu
-			AddMenuItem(L"About", DELEGATE(&RemoteDesktop::SystemTray::_ShowAboutDialog, this));
+			AddMenuItem(L"About", DELEGATE(&RemoteDesktop::SystemTray::_ShowAboutDialog));
 		}
 	}
 
@@ -113,12 +111,12 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 	if (msg == s_uTaskbarRestart){
 		_TrayIconCreated = false;
 		_CreateIcon(Hwnd);
-	
+
 	}
 	switch (msg){
 	case(WM_TIMER) :
-			_CreateIcon(Hwnd);
-				break;
+		_CreateIcon(Hwnd);
+		break;
 	case(WM_QUIT) :
 	case(WM_CLOSE) :
 	case(WM_DESTROY) :
@@ -137,7 +135,7 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 			// TrackPopupMenu blocks the app until TrackPopupMenu returns
 			UINT clicked = TrackPopupMenu(Hmenu.get(), TPM_RETURNCMD | TPM_NONOTIFY, curPoint.x, curPoint.y, 0, hWnd, NULL);
 			SendMessage(hWnd, WM_NULL, 0, 0); // send benign message to window to make sure the menu goes away.
-			for (auto i = 0; i < CallBacks.size(); i++){
+			for (size_t i = 0; i < CallBacks.size(); i++){
 				if (clicked == ID_TRAY_START + i){
 					CallBacks[i]();//call the callback
 					break;//  no more searching

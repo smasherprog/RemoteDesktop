@@ -87,37 +87,24 @@ namespace RemoteDesktop_GatewayServer.Controllers
 
         }
         protected ActionResult GetGateway_File()
-        {
+        {       
+            if (Request.Browser.Browser.ToLower() == "ie")  Response.AppendHeader("cache-control", "private");
+            else  Response.AppendHeader("cache-control", "no-cache");
+            
             string path = ConfigurationManager.AppSettings["RAT_Gateway_File"];
             if (string.IsNullOrWhiteSpace(path))
                 throw new Exception("Missing RAT Gateway File");
             var realpath = "";
             if (path.StartsWith("~")) realpath = HttpContext.Server.MapPath(path);
             else realpath = path;
+            return File(realpath, "application/octet-stream", Path.GetFileName(realpath));
 
             var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
             SetSettings(res);
-            if (Request.Browser.Browser.ToLower() == "ie")
-            {
-                Response.AppendHeader("cache-control", "private");
-            }
-            else
-            {
-                Response.AppendHeader("cache-control", "no-cache");
-            }
+    
             return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
             //zip code below
-            using (var zip = new Ionic.Zip.ZipFile())
-            {
-                var name = Path.GetFileName(realpath);
-                zip.AddEntry(name, RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res));
-                zip.Comment = "Remote Network Access Tool Self Extracting Zip";
-                var tmp = Path.GetTempPath() + "RAT.zip";
-                zip.Save(tmp);
-                var b = System.IO.File.ReadAllBytes(tmp);
-                System.IO.File.Delete(tmp);
-                return File(b, "application/x-zip-compressed", "RAT.zip");
-            }
+ 
         }
         //protected ActionResult GetLog()
         //{

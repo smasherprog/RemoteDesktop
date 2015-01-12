@@ -4,7 +4,6 @@
 #include "..\RemoteDesktop_Library\WinHttpClient.h"
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
-#include "Config.h"
 
 int GetFileCreateTime()//used for randomness in session 
 {
@@ -31,7 +30,7 @@ int GetFileCreateTime()//used for randomness in session
 	return (int)stLocal.wMonth + (int)stLocal.wDay + (int)stLocal.wYear + (int)stLocal.wHour + (int)stLocal.wMinute + (int)stLocal.wSecond + (int)stLocal.wMilliseconds;//this is just some randomness to add into the mix
 
 }
-bool RemoteDesktop::GetGatewayID_and_Key(int& id, std::wstring& aeskey){
+bool RemoteDesktop::GetGatewayID_and_Key(int& id, std::wstring& aeskey, std::wstring gatewayurl){
 	char comp[MAX_COMPUTERNAME_LENGTH + 1];
 	DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
 	GetComputerNameA(comp, &len);
@@ -40,12 +39,11 @@ bool RemoteDesktop::GetGatewayID_and_Key(int& id, std::wstring& aeskey){
 	std::string username = RemoteDesktop::DesktopMonitor::get_ActiveUser();
 
 	auto mac = GetMAC();
-	std::wstring uniqueid(Unique_ID());
-	if (uniqueid.size() <= 3){
-		uniqueid = std::to_wstring(GetFileCreateTime());//fallback
-	}
+	std::wstring uniqueid = std::to_wstring(GetFileCreateTime());//fallback
+	
 	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac + "&session=" + ws2s(uniqueid);
-	WinHttpClient cl(DefaultProxyGetSessionURL());
+	DEBUG_MSG("Getting ID: % %", ws2s(gatewayurl), adddata);
+	WinHttpClient cl(gatewayurl);
 	cl.SetAdditionalDataToSend((BYTE*)adddata.c_str(), adddata.size());
 
 	// Set request headers.

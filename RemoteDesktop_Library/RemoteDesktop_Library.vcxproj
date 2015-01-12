@@ -190,6 +190,7 @@
     <ClInclude Include="Desktop_Capture_Container.h" />
     <ClInclude Include="Desktop_Monitor.h" />
     <ClInclude Include="EventLog.h" />
+    <ClInclude Include="Gateway.h" />
     <ClInclude Include="Handle_Wrapper.h" />
     <ClInclude Include="Encryption.h" />
     <ClInclude Include="Firewall.h" />
@@ -201,8 +202,10 @@
     <ClInclude Include="MouseCommon.h" />
     <ClInclude Include="NetworkProcessor.h" />
     <ClInclude Include="Network_Client.h" />
+    <ClInclude Include="Network_Server.h" />
     <ClInclude Include="PacketBufferPool.h" />
     <ClInclude Include="Ping.h" />
+    <ClInclude Include="ProcessUtils.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="NetworkSetup.h" />
     <ClInclude Include="RegExp.h" />
@@ -210,6 +213,7 @@
     <ClInclude Include="StringProcess.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Traffic_Monitor.h" />
+    <ClInclude Include="UserInfo.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="WinHttpClient.h" />
     <ClInclude Include="xxhash.h" />
@@ -225,6 +229,7 @@
     <ClCompile Include="Encryption.cpp" />
     <ClCompile Include="EventLog.cpp" />
     <ClCompile Include="Firewall.cpp" />
+    <ClCompile Include="Gateway.cpp" />
     <ClCompile Include="Handle_Wrapper.cpp" />
     <ClCompile Include="Image.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NoListing</AssemblerOutput>
@@ -254,7 +259,9 @@
     <ClCompile Include="NetworkProcessor.cpp" />
     <ClCompile Include="NetworkSetup.cpp" />
     <ClCompile Include="Network_Client.cpp" />
+    <ClCompile Include="Network_Server.cpp" />
     <ClCompile Include="Ping.cpp" />
+    <ClCompile Include="ProcessUtils.cpp" />
     <ClCompile Include="SocketHandler.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -265,6 +272,7 @@
     <ClCompile Include="StringProcess.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Traffic_Monitor.cpp" />
+    <ClCompile Include="UserInfo.cpp" />
     <ClCompile Include="WinHttpClient.cpp" />
     <ClCompile Include="xxhash.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

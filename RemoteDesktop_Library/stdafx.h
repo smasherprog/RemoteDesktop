@@ -2,10 +2,6 @@
 #pragma once
 
 #if _DEBUG
-
-#include <tchar.h>
-#include <strsafe.h>
-
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
@@ -23,3 +19,6 @@
 #include "Utilities.h"
 #include <vector>
 #include <string>
+#include <tchar.h>
+#include "Shellapi.h"
+#include <strsafe.h>

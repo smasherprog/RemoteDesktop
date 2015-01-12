@@ -1,137 +1,99 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Header Files\Service">
-      <UniqueIdentifier>{d7f01dfa-6377-45e6-810c-9202ceae8a5c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Service">
-      <UniqueIdentifier>{bd207d27-58d6-4a86-b0a7-30943bea89ca}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Server">
-      <UniqueIdentifier>{a1fc9848-1f01-4a1e-ae57-22f79ebb3e0c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Server">
+    <Filter Include="Server">
       <UniqueIdentifier>{08388162-7190-4f84-a024-b46101efd16b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\SysTray">
+    <Filter Include="Service">
+      <UniqueIdentifier>{bd207d27-58d6-4a86-b0a7-30943bea89ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SysTray">
       <UniqueIdentifier>{28c569a5-24bc-4956-a7be-f3524e2450da}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\SysTray">
-      <UniqueIdentifier>{96de8975-1cc9-4bf7-9cdf-d984794da158}</UniqueIdentifier>
+    <Filter Include="Server\Dialogs">
+      <UniqueIdentifier>{6a0eab8e-e403-48f4-a45b-e6dbd1f39c6c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ServiceInstaller.h">
-      <Filter>Header Files\Service</Filter>
-    </ClInclude>
-    <ClInclude Include="ServiceBase.h">
-      <Filter>Header Files\Service</Filter>
-    </ClInclude>
-    <ClInclude Include="ServerService.h">
-      <Filter>Header Files\Service</Filter>
-    </ClInclude>
-    <ClInclude Include="ServiceMonitor.h">
-      <Filter>Header Files\Service</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseServer.h">
-      <Filter>Header Files\Server</Filter>
+    <ClInclude Include="MainServer.h">
+      <Filter>Server</Filter>
     </ClInclude>
     <ClInclude Include="MouseCapture.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
-    <ClInclude Include="ScreenCapture.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
-    <ClInclude Include="RD_Server.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
-    <ClInclude Include="ServiceHelpers.h">
-      <Filter>Header Files\Service</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SystemTray.h">
-      <Filter>Header Files\SysTray</Filter>
-    </ClInclude>
-    <ClInclude Include="MainServer.h">
-      <Filter>Header Files\Server</Filter>
+      <Filter>Server</Filter>
     </ClInclude>
     <ClInclude Include="SoftwareCAD.h">
-      <Filter>Header Files\Server</Filter>
+      <Filter>Server</Filter>
     </ClInclude>
-    <ClInclude Include="ProxyConnectDialog.h">
-      <Filter>Header Files\Server</Filter>
+    <ClInclude Include="ServerService.h">
+      <Filter>Service</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ServiceBase.h">
+      <Filter>Service</Filter>
     </ClInclude>
-    <ClInclude Include="Gateway.h">
-      <Filter>Header Files\Server</Filter>
+    <ClInclude Include="ServiceHelpers.h">
+      <Filter>Service</Filter>
     </ClInclude>
-    <ClInclude Include="EventLogMessages.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ServiceInstaller.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceMonitor.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemTray.h">
+      <Filter>SysTray</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="EventLogMessages.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="NewConnectDialog.h">
+      <Filter>Server\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="GatewayConnectDialog.h">
+      <Filter>Server\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Server</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ServiceInstaller.cpp">
-      <Filter>Source Files\Service</Filter>
+      <Filter>Service</Filter>
     </ClCompile>
     <ClCompile Include="ServiceBase.cpp">
-      <Filter>Source Files\Service</Filter>
+      <Filter>Service</Filter>
     </ClCompile>
     <ClCompile Include="ServerService.cpp">
-      <Filter>Source Files\Service</Filter>
+      <Filter>Service</Filter>
     </ClCompile>
     <ClCompile Include="ServiceMonitor.cpp">
-      <Filter>Source Files\Service</Filter>
-    </ClCompile>
-    <ClCompile Include="BaseServer.cpp">
-      <Filter>Source Files\Server</Filter>
+      <Filter>Service</Filter>
     </ClCompile>
     <ClCompile Include="MouseCapture.cpp">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="ScreenCapture.cpp">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="RD_Server.cpp">
-      <Filter>Source Files\Server</Filter>
+      <Filter>Server</Filter>
     </ClCompile>
     <ClCompile Include="ServiceHelpers.cpp">
-      <Filter>Source Files\Service</Filter>
+      <Filter>Service</Filter>
     </ClCompile>
     <ClCompile Include="SystemTray.cpp">
-      <Filter>Source Files\SysTray</Filter>
+      <Filter>SysTray</Filter>
     </ClCompile>
     <ClCompile Include="MainServer.cpp">
-      <Filter>Source Files\Server</Filter>
+      <Filter>Server</Filter>
     </ClCompile>
     <ClCompile Include="SoftwareCAD.cpp">
-      <Filter>Source Files\Service</Filter>
+      <Filter>Service</Filter>
     </ClCompile>
-    <ClCompile Include="ProxyConnectDialog.cpp">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="NewConnectDialog.cpp">
+      <Filter>Server\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="Config.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="GatewayConnectDialog.cpp">
+      <Filter>Server\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="Gateway.cpp">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Server.cpp">
+      <Filter>Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

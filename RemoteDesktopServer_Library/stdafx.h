@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 
-#include <stdio.h>
 #include <tchar.h>
 #include "Shellapi.h"
 #include <strsafe.h>

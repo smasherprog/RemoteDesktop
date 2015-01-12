@@ -8,23 +8,35 @@
 std::vector<std::vector<char>> RemoteDesktop::INTERNAL::SocketBufferCache;
 std::mutex RemoteDesktop::INTERNAL::SocketBufferCacheLock;
 
-RemoteDesktop::SocketHandler::SocketHandler(SOCKET socket, bool client) : _Socket(RAIISOCKET(socket)), _Processor(DELEGATE(&RemoteDesktop::SocketHandler::_Receive, this)) {
-	State = PEER_STATE_DISCONNECTED;
+RemoteDesktop::SocketHandler::SocketHandler(SOCKET socket, bool client) : _Socket(RAIISOCKET(socket)), _Processor(DELEGATE(&RemoteDesktop::SocketHandler::_Receive)) {
+	if (client)	State = PEER_STATE_DISCONNECTED;
+	else State = PEER_STATE_CONNECTED;//servers just listen so they are in a good state
 	_SendBuffer.reserve(STARTBUFFERSIZE);
 	_ReceivedCompressionBuffer.reserve(STARTBUFFERSIZE);
 	_SendCompressionBuffer.reserve(STARTBUFFERSIZE);
+	memset(&Connection_Info, 0, sizeof(Connection_Info));
+	//init to empty functions
+	Connected_CallBack = [&](SocketHandler* ptr){
+		DEBUG_MSG("DEFAULT CONNECT CALLED");
+	};
+	Receive_CallBack = [&](Packet_Header* p, const char* d, SocketHandler* s){
+		DEBUG_MSG("DEFAULT RECEIVE CALLED");
+	};
+	Disconnect_CallBack = [&](SocketHandler* ptr){
+		DEBUG_MSG("DEFAULT DISCONNECT CALLED");
+	};
+
 	_Encyption.Init(client);
 }
-
+RemoteDesktop::SocketHandler::~SocketHandler(){
+	_Processor.Stop(true);
+	DEBUG_MSG("~SocketHandler");
+}
 void RemoteDesktop::SocketHandler::_Receive(std::vector<char>& buffer, int count){
-
-
-	DEBUG_MSG("_Receive %   %", count, _ReceivedBufferCounter);
+	//	DEBUG_MSG("_Receive %   %", count, _ReceivedBufferCounter);
 	_ReceivedBuffer.resize(_ReceivedBufferCounter + count);
 	memcpy(_ReceivedBuffer.data() + _ReceivedBufferCounter, buffer.data(), count);
 	_ReceivedBufferCounter += count;
-	
-
 	_Decrypt_Received_Data();// NEXT!!
 }
 
@@ -59,16 +71,20 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int ds
 	return ret;
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::CheckState(){
-	if (State == PEER_STATE_DISCONNECTED) return RemoteDesktop::Network_Return::COMPLETED;
+	if (State == PEER_STATE_DISCONNECTED) return RemoteDesktop::Network_Return::FAILED;
 	auto amtrec = recv(_Socket->socket, nullptr, 0, 0);//check if the socket is in a disconnected state
-	if (amtrec == 0) return Network_Return::FAILED;
+	if (amtrec == 0) return Network_Return::PARTIALLY_COMPLETED;
 	else {
 		auto errmsg = WSAGetLastError();
 		if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE)  return Network_Return::PARTIALLY_COMPLETED;
-		DEBUG_MSG("CheckState DISCONNECTING %", errmsg);
+		DEBUG_MSG("2 CheckState DISCONNECTING %", errmsg);
 		return _Disconnect();
 	}
 	return RemoteDesktop::Network_Return::COMPLETED;
+}
+RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Send(NetworkMessages m){
+	NetworkMsg msg;
+	return Send(m, msg);
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Send(NetworkMessages m, const NetworkMsg& msg){
 	if (State == PEER_STATE_DISCONNECTED) return Network_Return::FAILED;
@@ -86,7 +102,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 	}
 
 	auto beg = _SendBuffer.data();
-	for (auto i = 0; i < msg.data.size(); i++){
+	for (size_t i = 0; i < msg.data.size(); i++){
 		memcpy(beg, msg.data[i].data, msg.data[i].len);
 		beg += msg.data[i].len;
 	}
@@ -120,7 +136,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Encrypt_And_Send(Ne
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Receive() {
 	int counter = 0;
 	auto retcode = ReceiveLoop(this, OtherReceiveBuffer, counter);
-	
+
 	if (retcode == Network_Return::PARTIALLY_COMPLETED) {
 		if (!_Processor.Add(OtherReceiveBuffer, counter)) return Network_Return::FAILED;
 		return Network_Return::PARTIALLY_COMPLETED;
@@ -129,7 +145,8 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Receive() {
 
 }
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Disconnect(){
-	State = PEER_STATE_DISCONNECTED;//force disconnect
+	State = PEER_STATE_DISCONNECTED;//set disconnect
+	_Processor.Stop(true);//stop processesing
 	DEBUG_MSG("_Disconnect SocketHandler");
 	if (Disconnect_CallBack) Disconnect_CallBack(this);
 	return Network_Return::FAILED;//disconnect!RemoteDesktop_Viewer
@@ -169,7 +186,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 
 				if (pac_header->PayloadLen > (encrypt_p_header->PayloadLen - IVSIZE - sizeof(Packet_Header))) return _Disconnect();//malformed packet
 
-				DEBUG_MSG("Received size %", encrypt_p_header->PayloadLen);
+				//DEBUG_MSG("Received size %", encrypt_p_header->PayloadLen);
 				if (pac_header->Packet_Type < 0){//compressed packet
 					pac_header->Packet_Type *= -1;//remove the negative sign
 					auto assumed_uncompressedsize = Compression_Handler::Decompressed_Size(beg);//get the size of the uncompresseddata
@@ -177,7 +194,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 					if (assumed_uncompressedsize >= MAXMESSAGESIZE) return _Disconnect();//Buffer Overflow.. disconnect!
 					_ReceivedCompressionBuffer.reserve(assumed_uncompressedsize);
 					auto newsize = Compression_Handler::Decompress(beg, _ReceivedCompressionBuffer.data(), pac_header->PayloadLen, _ReceivedCompressionBuffer.capacity());
-					DEBUG_MSG("Compressed assumed size %,  output  % type %", assumed_uncompressedsize, newsize, pac_header->Packet_Type);
+					//DEBUG_MSG("Compressed assumed size %,  output  % type %", assumed_uncompressedsize, newsize, pac_header->Packet_Type);
 					if (newsize != assumed_uncompressedsize) return _Disconnect();//malformed packet data . . . disconnect!
 
 					Traffic.UpdateRecv(assumed_uncompressedsize + TOTALHEADERSIZE, pac_header->PayloadLen + TOTALHEADERSIZE);
@@ -187,7 +204,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::_Decrypt_Received_Da
 					pac_header->PayloadLen = beforesize;//restore
 				}
 				else if (Receive_CallBack) {
-					DEBUG_MSG("uncompressed size % type %", pac_header->PayloadLen, pac_header->Packet_Type);
+					//DEBUG_MSG("uncompressed size % type %", pac_header->PayloadLen, pac_header->Packet_Type);
 					Traffic.UpdateRecv(pac_header->PayloadLen + TOTALHEADERSIZE, pac_header->PayloadLen + TOTALHEADERSIZE);//same size for each if no compression occurs
 					Receive_CallBack(pac_header, beg, this);
 				}

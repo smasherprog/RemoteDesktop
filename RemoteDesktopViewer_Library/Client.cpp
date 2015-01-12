@@ -3,25 +3,26 @@
 #include "Console.h"
 #include "CommonNetwork.h"
 #include "Display.h"
-#include "BaseClient.h"
+#include "..\RemoteDesktop_Library\Network_Client.h"
 #include "..\RemoteDesktop_Library\SocketHandler.h"
 #include "..\RemoteDesktop_Library\Image.h"
-#include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 #include <Lmcons.h>
+#include "..\RemoteDesktop_Library\UserInfo.h"
+
 
 RemoteDesktop::Client::Client(HWND hwnd,
 	void(__stdcall * onconnect)(),
-	void(__stdcall * ondisconnect)(), 
+	void(__stdcall * ondisconnect)(),
 	void(__stdcall * oncursorchange)(int),
 	void(__stdcall * ondisplaychanged)(int, int, int, int, int),
 	void(__stdcall * onconnectingattempt)(int, int)) : _HWND(hwnd), _OnConnect(onconnect), _OnDisconnect(ondisconnect), _OnDisplaysChanged(ondisplaychanged), _OnConnectingAttempt(onconnectingattempt) {
 	_Display = std::make_shared<Display>(hwnd, oncursorchange);
-	_ClipboardMonitor = std::make_shared<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Client::_OnClipboardChanged, this));
+	_ClipboardMonitor = std::make_shared<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Client::_OnClipboardChanged));
 	DEBUG_MSG("Client()");
 }
-void Send(std::shared_ptr <RemoteDesktop::BaseClient>& ptr, RemoteDesktop::NetworkMessages m, RemoteDesktop::NetworkMsg& msg){
-	auto copy = ptr;
+void Send(std::weak_ptr<RemoteDesktop::SocketHandler>& ptr, RemoteDesktop::NetworkMessages m, RemoteDesktop::NetworkMsg& msg){
+	std::shared_ptr<RemoteDesktop::SocketHandler> copy(ptr.lock());
 	if (copy) copy->Send(m, msg);
 }
 
@@ -31,14 +32,17 @@ RemoteDesktop::Client::~Client(){
 void RemoteDesktop::Client::OnDisconnect(){
 	_OnDisconnect();
 }
-void RemoteDesktop::Client::Connect(std::wstring host, std::wstring port, int id, std::wstring aeskey){
-	_NetworkClient = std::make_shared<BaseClient>(DELEGATE(&RemoteDesktop::Client::OnConnect, this),
-		DELEGATE(&RemoteDesktop::Client::OnReceive, this),
-		DELEGATE(&RemoteDesktop::Client::OnDisconnect, this), _OnConnectingAttempt);
-	_NetworkClient->Connect(host, port, id, aeskey);
+void RemoteDesktop::Client::Connect(std::wstring port, std::wstring host, int id, std::wstring aeskey){
+	_NetworkClient = std::make_shared<Network_Client>();
+	_NetworkClient->OnConnected = std::bind(&RemoteDesktop::Client::OnConnect, this, std::placeholders::_1);
+	_NetworkClient->OnReceived = std::bind(&RemoteDesktop::Client::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	_NetworkClient->OnDisconnect = std::bind(&RemoteDesktop::Client::OnDisconnect, this);
+	_NetworkClient->OnConnectingAttempt = _OnConnectingAttempt;
+	auto ptr = (Network_Client*)_NetworkClient.get();
+	ptr->Start(port, host, id, aeskey);
 }
 void RemoteDesktop::Client::Stop(){
-	_NetworkClient->Stop();
+	_NetworkClient->Stop(true);
 }
 void RemoteDesktop::Client::_OnClipboardChanged(const Clipboard_Data& c){
 
@@ -53,7 +57,7 @@ void RemoteDesktop::Client::_OnClipboardChanged(const Clipboard_Data& c){
 	msg.data.push_back(DataPackage(c.m_pDataRTF.data(), rtfsize));
 	msg.push_back(textsize);
 	msg.data.push_back(DataPackage(c.m_pDataText.data(), textsize));
-	Send(_NetworkClient, NetworkMessages::CLIPBOARDCHANGED, msg);
+	Send(Socket, NetworkMessages::CLIPBOARDCHANGED, msg);
 
 }
 void RemoteDesktop::Client::_Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -88,17 +92,11 @@ void RemoteDesktop::Client::_Handle_ClipBoard(Packet_Header* header, const char*
 
 
 void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
+	Socket = sh;
 	DEBUG_MSG("Connection Successful");
-	ConnectionInfo_Header h;
-	memset(&h, 0, sizeof(h));
-
-	DWORD username_len = UNAMELEN + 1;
-	GetUserName(h.UserName, &username_len);
-	h.UserName[username_len] = 0;
-
 	NetworkMsg msg;
-	msg.push_back(h);
-	Send(_NetworkClient, NetworkMessages::CONNECTIONINFO, msg);
+	msg.push_back(GetUserInfo());
+	Send(Socket, NetworkMessages::CONNECT_REQUEST, msg);
 	_OnConnect();
 }
 
@@ -109,7 +107,7 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 	h.VK = VK;
 	h.down = down == true ? 0 : -1;
 	msg.push_back(h);
-	Send(_NetworkClient, NetworkMessages::KEYEVENT, msg);
+	Send(Socket, NetworkMessages::KEYEVENT, msg);
 }
 void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wheel){
 	NetworkMsg msg;
@@ -124,33 +122,37 @@ void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wh
 	else {
 		memcpy(&_LastMouseEvent, &h, sizeof(h));
 		msg.push_back(h);
-		Send(_NetworkClient, NetworkMessages::MOUSEEVENT, msg);
+		Send(Socket, NetworkMessages::MOUSEEVENT, msg);
 	}
 
 }
 void RemoteDesktop::Client::SendCAD(){
 	NetworkMsg msg;
-	Send(_NetworkClient, NetworkMessages::CAD, msg);
+	Send(Socket, NetworkMessages::CAD, msg);
 }
 void RemoteDesktop::Client::SendRemoveService(){
 	NetworkMsg msg;
-	Send(_NetworkClient, NetworkMessages::DISCONNECTANDREMOVE, msg);
-	_NetworkClient->MaxConnectAttempts = 1;//this will cause a quick disconnect
+	Send(Socket, NetworkMessages::DISCONNECTANDREMOVE, msg);
+	_NetworkClient->Set_RetryAttempts(1);//this will cause a quick disconnect
 }
 void RemoteDesktop::Client::ElevateProcess(wchar_t* username, wchar_t* password){
 	NetworkMsg msg;
-	int len = wcslen(username) * 2;
+	std::wstring user(username);
+	int len = user.size();
 	msg.data.push_back(DataPackage((char*)&len, len));
 	msg.data.push_back(DataPackage((char*)username, len));
-	int otherlen = wcslen(password) * 2;
+	std::wstring pass(password);
+	int otherlen = pass.size();
 	msg.data.push_back(DataPackage((char*)&otherlen, otherlen));
 	msg.data.push_back(DataPackage((char*)password, otherlen));
-	//Send(_NetworkClient, NetworkMessages::ELEVATEPROCESS, msg);
+	Send(Socket, NetworkMessages::ELEVATEPROCESS, msg);
 }
 
 RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
-	auto s = _NetworkClient->Socket;
+
+	std::shared_ptr<RemoteDesktop::SocketHandler> s(Socket.lock());
 	if (s) return s->Traffic.get_TrafficStats();
+
 	RemoteDesktop::Traffic_Stats tmp;
 	memset(&tmp, 0, sizeof(tmp));
 	return tmp;
@@ -158,13 +160,13 @@ RemoteDesktop::Traffic_Stats RemoteDesktop::Client::get_TrafficStats() const{
 void RemoteDesktop::Client::SendSettings(Settings_Header h){
 	NetworkMsg msg;
 	msg.push_back(h);
-	Send(_NetworkClient, NetworkMessages::SETTINGS, msg);
+	Send(Socket, NetworkMessages::SETTINGS, msg);
 }
 
 void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* relative_path, void(__stdcall * onfilechanged)(int)){
 	std::string filename = absolute_path;
-	std::string relative = relative_path; 
-	auto clienthold = _NetworkClient;
+	std::string relative = relative_path;
+	std::shared_ptr<RemoteDesktop::SocketHandler> clienthold(Socket.lock());
 	if (!clienthold) return;
 	if (IsFile(filename)){
 
@@ -175,7 +177,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		strcpy_s(fh.RelativePath, relative_path);
 		std::vector<char> buffer;
 		buffer.reserve(FILECHUNKSIZE);
-	
+
 		size_t total_chunks = total_size / FILECHUNKSIZE;
 		size_t last_chunk_size = total_size % FILECHUNKSIZE;
 		if (last_chunk_size != 0) /* if the above division was uneven */
@@ -188,8 +190,8 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 		}
 
 		std::ifstream infile(absolute_path, std::ifstream::binary);
-		
-		for (size_t chunk = 0; chunk < total_chunks && clienthold->NetworkRunning(); ++chunk)
+
+		for (size_t chunk = 0; chunk < total_chunks && clienthold->State != RemoteDesktop::PEER_STATE_DISCONNECTED; ++chunk)
 		{
 			size_t this_chunk_size =
 				chunk == total_chunks - 1 /* if last chunk */
@@ -201,7 +203,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 			NetworkMsg msg;
 			msg.push_back(fh);
 			msg.data.push_back(DataPackage(buffer.data(), fh.ChunkSize));
-		
+
 			clienthold->Send(NetworkMessages::FILE, msg);
 			fh.ID += 1;
 			onfilechanged(fh.ChunkSize);
@@ -232,7 +234,7 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		data += sizeof(h);
 
 		Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.Height, h.Width));
-		
+
 		_OnDisplaysChanged(h.Index, h.XOffset, h.YOffset, h.Width, h.Height);
 		auto copy = _Display;
 		if (copy) copy->Add(img, h);
@@ -242,7 +244,7 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 		Update_Image_Header h;
 		memcpy(&h, data, sizeof(h));
 		data += sizeof(h);
-		
+
 		Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.rect.height, h.rect.width));
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
 		auto copy = _Display;

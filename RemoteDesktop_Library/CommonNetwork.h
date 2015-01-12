@@ -5,6 +5,10 @@
 
 #define IVSIZE 16
 #define UNAMELEN 256
+/*
+NOTE.. I AM NOT concerned with the size of the buffer structs below. These are sent less than a few times per connection lifetime.
+
+*/
 typedef void(__stdcall *OnConnectCB)();
 namespace RemoteDesktop{
 	//ensure ths is tighly packed
@@ -27,13 +31,27 @@ namespace RemoteDesktop{
 		int YOffset;
 		int Width;
 		int Height;
+	};	
+	struct Elevate_Header{
+		wchar_t Username[UNAMELEN];
+		wchar_t Password[UNAMELEN];
+	};	
+	//follows similiar naming to USER_INFO_3
+	struct User_Info_Header{
+		wchar_t name[UNAMELEN];//username
+
+//USER_PRIV_GUEST     0
+//USER_PRIV_USER      1
+//USER_PRIV_ADMIN     2
+
+		int priv; 
+		wchar_t full_name[UNAMELEN];
+		wchar_t computername[MAX_COMPUTERNAME_LENGTH+1];//computername
+		wchar_t domain[UNAMELEN];//
 	};
 	struct Update_Image_Header{
 		int Index;
 		Rect rect;
-	};
-	struct ConnectionInfo_Header{
-		wchar_t UserName[UNAMELEN + 1];
 	};
 	struct MouseEvent_Header{
 		Point pos;
@@ -75,8 +93,9 @@ namespace RemoteDesktop{
 		CLIPBOARDCHANGED,
 		DISCONNECTANDREMOVE,
 		SETTINGS,
-		CONNECTIONINFO,
-		ELEVATEPROCESS
+		ELEVATEPROCESS,
+		CONNECT_REQUEST,
+		CONNECT_REQUEST_FAILED
 	};
 	enum Network_Return{
 		FAILED,

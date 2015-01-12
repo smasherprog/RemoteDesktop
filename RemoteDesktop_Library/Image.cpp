@@ -21,7 +21,9 @@ void RemoteDesktop::Image::Compress(){
 	if (_jpegCompressor.get() == nullptr) _jpegCompressor = std::unique_ptr<void, decltype(compfree)>(tjInitCompress(), compfree);
 	static std::vector<char> compressBuffer;
 
-	auto maxsize = Width * Height * Pixel_Stride;
+	auto set = Image_Settings::GrazyScale ? TJSAMP_GRAY : TJSAMP_420;
+
+	auto maxsize = tjBufSize(Width, Height, set);
 	long unsigned int _jpegSize = maxsize;
 	
 	if (compressBuffer.capacity() < maxsize) compressBuffer.reserve(maxsize + 16);
@@ -29,7 +31,6 @@ void RemoteDesktop::Image::Compress(){
 	auto t = Timer(true);
 	
 	auto ptr = (unsigned char*)compressBuffer.data();
-	auto set = Image_Settings::GrazyScale ? TJSAMP_GRAY : TJSAMP_420;
 	if (tjCompress2(_jpegCompressor.get(), (unsigned char*)data.data(), Width, 0, Height, TJPF_BGRX, &ptr, &_jpegSize, set, Image_Settings::Quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) {
 		DEBUG_MSG("Err msg %", tjGetErrorStr());
 	}
@@ -50,7 +51,7 @@ void RemoteDesktop::Image::Decompress(){
 	static std::vector<unsigned char> decompressBuffer;
 	if (_jpegDecompressor.get() == nullptr) _jpegDecompressor = std::unique_ptr<void, decltype(compfree)>(tjInitDecompress(), compfree);
 	
-	auto maxsize = Width * Height * Pixel_Stride;
+	size_t maxsize = Width * Height * Pixel_Stride;
 	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize+16);
 
 	int jpegSubsamp = 0;

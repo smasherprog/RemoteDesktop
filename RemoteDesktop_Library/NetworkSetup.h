@@ -15,8 +15,8 @@ namespace RemoteDesktop{
 	void ShutDownNetwork();
 	void AddFirewallException();
 	void RemoveFirewallException();
-	bool TryToElevate(LPWSTR* argv, int argc);
 	SOCKET Connect(std::wstring port, std::wstring host);
+	SOCKET Listen(std::wstring port, std::wstring host, int backlog=10);
 	void StandardSocketSetup(SOCKET socket);
 	std::string GetMAC();
 	RemoteDesktop::Network_Return SendLoop(SocketHandler* sock, char* data, int len);

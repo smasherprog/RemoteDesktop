@@ -64,7 +64,7 @@ namespace RemoteDesktop{
 		return DelegateMaker<T, return_type, params...>();
 	}
 
-#define DELEGATE(foo, thisPrt) (makeDelegate(foo).Bind<foo>(thisPrt))
+#define DELEGATE(foo) (makeDelegate(foo).Bind<foo>(this))
 }
 
 #endif
