@@ -21,7 +21,7 @@ namespace RemoteDesktop_Viewer.Code
         public static string AuthenticationUrl { get { return "http://localhost:3406/Support/Authenticate"; } }
         public static string SignalRHubName { get { return "ProxyHub"; } }
         public static string SignalRHubUrl { get { return "http://localhost:3406"; } }
-        public static int AuthenticationTimeout { get { return 1300; } }//in ms
+        public static int AuthenticationTimeout { get { return 13000; } }//in ms
 
         [StructLayout(LayoutKind.Sequential)]
         public struct Traffic_Stats

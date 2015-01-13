@@ -30,10 +30,11 @@ void RemoteDesktop::Network_Client::Start(std::wstring port, std::wstring host, 
 	Setup(port, host);
 	_BackgroundWorker = std::thread(&RemoteDesktop::Network_Client::_Run_Gateway, this, gatewayurl);
 }
+
 void RemoteDesktop::Network_Client::_Run_Gateway(std::wstring gatewayurl){
 	int counter = 0;
 
-	while (_Running && ++counter < MaxConnectAttempts && !_ShouldDisconnect){
+	while (_Running && ++counter < MaxConnectAttempts){
 		_Connections = 0;
 		int src_id = -1;
 		std::wstring aeskey;
@@ -42,22 +43,26 @@ void RemoteDesktop::Network_Client::_Run_Gateway(std::wstring gatewayurl){
 			DEBUG_MSG("Failed to connect to gateway . . ");
 			continue;
 		}
-		if (OnConnectingAttempt) OnConnectingAttempt(counter, MaxConnectAttempts);
 		DEBUG_MSG("Connected to gateway id server . . . %", src_id);
+
+
+		if (OnConnectingAttempt) OnConnectingAttempt(counter, MaxConnectAttempts);
+
 		auto sock = RemoteDesktop::Connect(_Dst_Port, _Dst_Host);
 		if (sock == INVALID_SOCKET) continue;
 		if (OnGatewayConnected) OnGatewayConnected(src_id);
 		counter = 0;//reset timer
-		MaxConnectAttempts = 15;//set this to a specific value
+		MaxConnectAttempts = DEFAULTMAXCONNECTATTEMPTS;//set this to a specific value
 
 		std::shared_ptr<SocketHandler> socket(std::make_shared<SocketHandler>(sock, true));
 		_Socket = socket;//weak ptr assignment
 		socket->Connected_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleConnect, this, std::placeholders::_1);
 		socket->Receive_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-		socket->Disconnect_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleGatewayDisconnect, this, std::placeholders::_1);
+		socket->Disconnect_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleDisconnect, this, std::placeholders::_1);
 
 		socket->Exchange_Keys(-1, src_id, aeskey);
 		_Run(socket);
+		_ShouldDisconnect = false;
 	}
 	_Running = false;
 	_ShouldDisconnect = true;
@@ -72,9 +77,9 @@ void RemoteDesktop::Network_Client::_HandleConnect(SocketHandler* ptr){
 		if (s && OnConnected) OnConnected(s);
 	}
 }
-void RemoteDesktop::Network_Client::_HandleGatewayDisconnect(SocketHandler* ptr){
-	_HandleDisconnect(ptr);
-	_ShouldDisconnect = false;// dont really disconnect
+void RemoteDesktop::Network_Client::_HandleViewerDisconnect(SocketHandler* ptr){
+	_ShouldDisconnect = true;
+	_Connections = 0;
 }
 void RemoteDesktop::Network_Client::_HandleDisconnect(SocketHandler* ptr){
 	if (_Running){
@@ -82,9 +87,7 @@ void RemoteDesktop::Network_Client::_HandleDisconnect(SocketHandler* ptr){
 		if (s && OnDisconnect) OnDisconnect(s);
 	}
 	_ShouldDisconnect = true;
-	_Running = false;
 	_Connections = 0;
-	DEBUG_MSG("Disconnect Received");
 }
 void RemoteDesktop::Network_Client::_HandleReceive(Packet_Header* p, const char* d, SocketHandler* ptr){
 	if (_Running){
@@ -96,7 +99,7 @@ void RemoteDesktop::Network_Client::_HandleReceive(Packet_Header* p, const char*
 void RemoteDesktop::Network_Client::_Run_Standard(int dst_id, std::wstring aeskey){
 	int counter = 0;
 
-	while (_Running && ++counter < MaxConnectAttempts && !_ShouldDisconnect){
+	while (_Running && ++counter < MaxConnectAttempts){
 		_Connections = 0;
 		if (OnConnectingAttempt) OnConnectingAttempt(counter, MaxConnectAttempts);
 		DEBUG_MSG("Connecting to server . . . %", dst_id);
@@ -104,19 +107,18 @@ void RemoteDesktop::Network_Client::_Run_Standard(int dst_id, std::wstring aeske
 		if (sock == INVALID_SOCKET) continue;
 		counter = 0;//reset timer
 
-		MaxConnectAttempts = 15;//set this to a specific value
-
+		MaxConnectAttempts = DEFAULTMAXCONNECTATTEMPTS;//set this to a specific value
 		std::shared_ptr<SocketHandler> socket(std::make_shared<SocketHandler>(sock, true));
 		_Socket = socket;//weak ptr assignment
 		socket->Connected_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleConnect, this, std::placeholders::_1);
 		socket->Receive_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-		socket->Disconnect_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleDisconnect, this, std::placeholders::_1);
+		socket->Disconnect_CallBack = std::bind(&RemoteDesktop::Network_Client::_HandleViewerDisconnect, this, std::placeholders::_1);
 		socket->Exchange_Keys(dst_id, -1, aeskey);
 		_Run(socket);
-
+		_ShouldDisconnect = false;
 	}
 	std::shared_ptr<SocketHandler> emptysocket;
-	if (counter >= MaxConnectAttempts && OnDisconnect)	OnDisconnect(emptysocket);
+	if (counter >= MaxConnectAttempts && OnDisconnect)	OnDisconnect(emptysocket);//real disconnect here
 	_Running = false;
 	_ShouldDisconnect = true;
 	_Connections = 0;
@@ -147,18 +149,21 @@ void RemoteDesktop::Network_Client::_Run(std::shared_ptr<SocketHandler>& socket)
 				break;// get out of loop and try reconnecting
 			}
 		}
-		if (counter++ > 5 || Index == WSA_WAIT_TIMEOUT){
-			//DEBUG_MSG("Checking Timeouts!");
-			socket->CheckState();
-			counter = 0;
-		}
+
+		//DEBUG_MSG("Checking Timeouts!");
+		if (socket->CheckState() == RemoteDesktop::Network_Return::FAILED) break;// get out of the loop and try reconnecting
+
 	}
 	DEBUG_MSG("Ending Loop");
 }
 
-RemoteDesktop::Network_Return RemoteDesktop::Network_Client::Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg) {
+RemoteDesktop::Network_Return RemoteDesktop::Network_Client::Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg, Auth_Types to_which_type){
 	std::shared_ptr<SocketHandler> s(_Socket.lock());
-	if (s) return s->Send(m, msg);
+	if (s) {
+		if (to_which_type == Auth_Types::ALL) s->Send(m, msg);
+		else if (to_which_type == Auth_Types::AUTHORIZED && s->Authorized) s->Send(m, msg);
+		else if (to_which_type == Auth_Types::NOT_AUTHORIZED && !s->Authorized) s->Send(m, msg);
+	}
 	return RemoteDesktop::Network_Return::FAILED;//indicate failure
 }
 void RemoteDesktop::Network_Client::Stop(bool blocking) {
@@ -166,6 +171,6 @@ void RemoteDesktop::Network_Client::Stop(bool blocking) {
 	_ShouldDisconnect = true;
 	BEGINTRY
 		if (std::this_thread::get_id() != _BackgroundWorker.get_id() && _BackgroundWorker.joinable() && blocking) _BackgroundWorker.join();
-		
+
 	ENDTRY
 }

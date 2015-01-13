@@ -24,7 +24,7 @@ RemoteDesktop::Display::Display(HWND hwnd, void(__stdcall * oncursorchange)(int)
 
 
 void RemoteDesktop::Display::Draw(HDC hdc){
-	DEBUG_MSG("Drawing");
+	//DEBUG_MSG("Drawing");
 	RECT rect;
 	GetClientRect(_HWND, &rect);
 
@@ -44,7 +44,7 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	for (auto a : _Images){
 		if (!a) continue;
 		auto hOldBitmap = (HBITMAP)SelectObject(hMemDC.get(), a->Bitmap);
-		DEBUG_MSG("Draw % % % % %",a->Context.Index, xoffset + a->Context.XOffset, a->Context.YOffset, a->Context.Width, a->Context.Height);
+	//	DEBUG_MSG("Draw % % % % %",a->Context.Index, xoffset + a->Context.XOffset, a->Context.YOffset, a->Context.Width, a->Context.Height);
 		BitBlt(hdc, xoffset + a->Context.XOffset, a->Context.YOffset, a->Context.Width, a->Context.Height, hMemDC.get(), 0, 0, SRCCOPY);
 		xoffset += a->Context.XOffset + a->Context.Width;
 		SelectObject(hMemDC.get(), hOldBitmap);
@@ -116,7 +116,7 @@ void RemoteDesktop::Display::UpdateMouse(MouseEvent_Header& h){
 
 	if (f != _System_Cursors.end()){
 		if (f->ID != HCursor.ID){
-			DEBUG_MSG("Cursor Changed");
+		//	DEBUG_MSG("Cursor Changed");
 			_OnCursorChange(f->ID);
 		}
 		HCursor = *f;

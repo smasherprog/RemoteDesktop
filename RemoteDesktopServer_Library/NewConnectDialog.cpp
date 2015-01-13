@@ -72,7 +72,7 @@ void RemoteDesktop::NewConnect_Dialog::Show(std::wstring name){
 void RemoteDesktop::NewConnect_Dialog::_Run(){
 
 	DesktopMonitor dekstopmonitor;
-	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
+	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::INPUT);//so if the screen is at the login screen this should show over 
 	//below function is blocking until the dialog EndDialog is called which is why a new thread is created
 	DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG3), NULL, reinterpret_cast<DLGPROC>(DlgProc), (LPARAM)this);
 

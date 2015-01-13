@@ -10,7 +10,7 @@ namespace RemoteDesktop{
 	class Network_Client : public INetwork{
 
 		bool _ShouldDisconnect = false;
-		void _Run_Standard(int dst_id, std::wstring aeskey);
+		void _Run_Standard(int dst_id, std::wstring aeskey); 
 		void _Run_Gateway(std::wstring gatewayurl);
 		void _Run(std::shared_ptr<SocketHandler>& socket);
 		std::wstring _Dst_Host, _Dst_Port;
@@ -21,8 +21,8 @@ namespace RemoteDesktop{
 		int _Connections = 0;
 
 		void _HandleConnect(SocketHandler* ptr);
-		void _HandleDisconnect(SocketHandler* ptr); 
-		void _HandleGatewayDisconnect(SocketHandler* ptr);
+		void _HandleDisconnect(SocketHandler* ptr); 	
+		void _HandleViewerDisconnect(SocketHandler* ptr);
 		void _HandleReceive(Packet_Header* p, const char* d, SocketHandler* ptr);
 
 	public:
@@ -36,7 +36,7 @@ namespace RemoteDesktop{
 		virtual void Stop(bool blocking = false)override;
 		virtual void Set_RetryAttempts(int num_of_retry)override { MaxConnectAttempts = num_of_retry; }
 		virtual int Get_RetryAttempts(int num_of_retry) const override { return MaxConnectAttempts; }
-		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg) override;
+		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg, Auth_Types to_which_type) override;
 		virtual int Connection_Count() const override { return _Connections; }
 
 		std::function<void(int)> OnGatewayConnected;

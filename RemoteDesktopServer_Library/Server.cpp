@@ -20,34 +20,13 @@
 #include "..\RemoteDesktop_Library\Network_Server.h"
 #include "..\RemoteDesktop_Library\Network_Client.h"
 #include "Strsafe.h"
+#include "..\RemoteDesktop_Library\Config.h"
 
 #if _DEBUG
 #include "Console.h"
 #endif
 
 #define FRAME_CAPTURE_INTERVAL 100 //ms between checking for screen changes
-#define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 3000 > Nul & Del \"%s\"")
-
-
-void DeleteMe(){
-
-	TCHAR szModuleName[MAX_PATH];
-	TCHAR szCmd[2 * MAX_PATH];
-	STARTUPINFO si = { 0 };
-	PROCESS_INFORMATION pi = { 0 };
-
-	GetModuleFileName(NULL, szModuleName, MAX_PATH);
-
-	StringCbPrintf(szCmd, 2 * MAX_PATH, SELF_REMOVE_STRING, szModuleName);
-
-	CreateProcess(NULL, szCmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
-
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-
-}
-
-
 RemoteDesktop::Server::Server() :
 _CADEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRDCad"))),
 _SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRemoveSelf")))
@@ -75,10 +54,9 @@ _SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\
 RemoteDesktop::Server::~Server(){
 	if (_RemoveOnExit) {
 		if (_SelfRemoveEventHandle.get() != nullptr) {
-			SetEvent(_SelfRemoveEventHandle.get());//signal the self removal process 
+			SetEvent(_SelfRemoveEventHandle.get());//signal the self removal process the service will call the cleanup
 		}
-		else DeleteMe();//try a self removal 
-		RemoteDesktop::RemoveFirewallException();
+		else Cleanup_System_Configuration();
 	}
 }
 void RemoteDesktop::Server::_CreateSystemMenu(){
@@ -122,7 +100,7 @@ void RemoteDesktop::Server::_OnClipboardChanged(const Clipboard_Data& c){
 	msg.push_back(textsize);
 	msg.data.push_back(DataPackage(c.m_pDataText.data(), textsize));
 
-	_NetworkServer->Send(NetworkMessages::CLIPBOARDCHANGED, msg);
+	_NetworkServer->Send(NetworkMessages::CLIPBOARDCHANGED, msg, INetwork::Auth_Types::AUTHORIZED);
 }
 void RemoteDesktop::Server::_Handle_ClipBoard(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	Clipboard_Data clip;
@@ -159,6 +137,8 @@ void RemoteDesktop::Server::_OnAllowConnection(std::wstring name){
 	DEBUG_MSG("Allowing %", ws2s(name));
 	_PendingNewClients.erase(std::remove_if(_PendingNewClients.begin(), _PendingNewClients.end(), [&](std::shared_ptr<SocketHandler>& ptr){
 		if (ptr->Connection_Info.full_name == name){
+			ptr->Authorized = true;
+			SetLast_UserConnectName(name);
 			_NewClients.push_back(ptr);
 			return true;
 		}
@@ -173,6 +153,7 @@ void RemoteDesktop::Server::_OnDenyConnection(std::wstring name){
 		});
 		auto copybeg = begit;
 		while (copybeg != _PendingNewClients.end()){
+			(*copybeg)->Authorized = false;
 			(*copybeg)->Send(CONNECT_REQUEST_FAILED);
 			(*copybeg)->Disconnect();
 			++copybeg;
@@ -268,20 +249,34 @@ void RemoteDesktop::Server::_Handle_Folder(Packet_Header* header, const char* da
 	DEBUG_MSG("% END FOLDER: %", path.size(), path);
 }
 void RemoteDesktop::Server::_Handle_ConnectionRequest(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-
+	sh->Authorized = false;
 	assert(header->PayloadLen == sizeof(sh->Connection_Info));
 	memcpy(&sh->Connection_Info, data, sizeof(sh->Connection_Info));
 	auto uname = std::wstring(sh->Connection_Info.full_name);
 	if (uname.size() > 2){
-
 		DEBUG_MSG("Connect Request from %", ws2s(uname));
 		EventLog::WriteLog(uname + L" is attempted to connect to this machine");
+		std::wstring lastauthuser = GetLast_UserConnectName();
+		//close the gateway dialog in any case
 		auto a = _GatewayConnect_Dialog;
 		if (a) a->Close();
-		_NewConnect_Dialog = std::make_shared<NewConnect_Dialog>();
-		_NewConnect_Dialog->Show(uname);
-		_NewConnect_Dialog->OnAllow = DELEGATE(&RemoteDesktop::Server::_OnAllowConnection);
-		_NewConnect_Dialog->OnDeny = DELEGATE(&RemoteDesktop::Server::_OnDenyConnection);
+
+		if (lastauthuser == uname){//this is the last user that connected, allow through likely a reconnect
+			sh->Authorized = true;
+			_NewClients.push_back(sh);
+		}
+		else {// show pop up asking for permission to connect
+			
+			_NewConnect_Dialog = std::make_shared<NewConnect_Dialog>();
+			_NewConnect_Dialog->Show(uname);
+			_NewConnect_Dialog->OnAllow = DELEGATE(&RemoteDesktop::Server::_OnAllowConnection);
+			_NewConnect_Dialog->OnDeny = DELEGATE(&RemoteDesktop::Server::_OnDenyConnection);
+		}
+
+	}
+	else {
+		DEBUG_MSG("Setting user to disconnected because there was no name sent with the access request.");
+		sh->Disconnect();
 	}
 }
 void RemoteDesktop::Server::_Handle_ElevateProcess(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -292,6 +287,10 @@ void RemoteDesktop::Server::_Handle_ElevateProcess(Packet_Header* header, const 
 }
 
 void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh) {
+	if (!sh->Authorized){//if the user is not authorized yet, only allow connect requests
+		if (header->Packet_Type == NetworkMessages::CONNECT_REQUEST) return _Handle_ConnectionRequest(header, data, sh);
+		return;// dont process
+	}//else let through the other packet receives
 	switch (header->Packet_Type){
 	case NetworkMessages::KEYEVENT:
 		_HandleKeyEvent(header, data, sh);
@@ -317,9 +316,6 @@ void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, s
 	case NetworkMessages::SETTINGS:
 		_Handle_Settings(header, data, sh);
 		break;
-	case NetworkMessages::CONNECT_REQUEST:
-		_Handle_ConnectionRequest(header, data, sh);
-		break;
 	case NetworkMessages::ELEVATEPROCESS:
 		_Handle_ElevateProcess(header, data, sh);
 		break;
@@ -330,6 +326,8 @@ void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, s
 }
 void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHandler>& sh) {
 	if (!sh) return;
+	if (!sh->Authorized) return;//dont care about non authorized disconnects
+	SetLast_UserConnectName(L"");//set this to empty because the user will have to be allowed next connect attempt
 	auto usname = std::wstring(sh->Connection_Info.full_name);
 	if (usname.size() > 2){
 		EventLog::WriteLog(usname + L" has Disconnected from this machine");
@@ -375,7 +373,7 @@ bool RemoteDesktop::Server::_HandleResolutionUpdates(Image& imgg, Image& _lastim
 
 		msg.push_back(h);
 		msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
-		_NetworkServer->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
+		_NetworkServer->Send(NetworkMessages::RESOLUTIONCHANGE, msg, INetwork::Auth_Types::AUTHORIZED);
 		return true;
 	}
 	return false;
@@ -396,7 +394,7 @@ void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, int in
 		msg.data.push_back(DataPackage((char*)imgdif.get_Data(), imgdif.size_in_bytes()));
 
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
-		_NetworkServer->Send(NetworkMessages::UPDATEREGION, msg);
+		_NetworkServer->Send(NetworkMessages::UPDATEREGION, msg, INetwork::Auth_Types::AUTHORIZED);
 	}
 
 }
@@ -417,7 +415,7 @@ void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapt
 		h.pos = mousecapturing->Current_ScreenPos;
 		h.HandleID = mousecapturing->Current_Mouse;
 		msg.push_back(h);
-		_NetworkServer->Send(NetworkMessages::MOUSEEVENT, msg);
+		_NetworkServer->Send(NetworkMessages::MOUSEEVENT, msg, INetwork::Auth_Types::AUTHORIZED);
 		if (mousecapturing->Last_Mouse != mousecapturing->Current_Mouse) DEBUG_MSG("Sending mouse Iconchange %", mousecapturing->Current_Mouse);
 		mousecapturing->Last_ScreenPos = mousecapturing->Current_ScreenPos;
 		mousecapturing->Last_Mouse = mousecapturing->Current_Mouse;
@@ -425,9 +423,10 @@ void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapt
 	}
 }
 void RemoteDesktop::Server::OnConnect(std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
-		std::lock_guard<std::mutex> lock(_ClientLock);
-		_PendingNewClients.push_back(sh);
-		DEBUG_MSG("New Client OnConnect");
+	std::lock_guard<std::mutex> lock(_ClientLock);
+	_PendingNewClients.push_back(sh); 
+	sh->Authorized = false;
+	DEBUG_MSG("New Client OnConnect");
 }
 void RemoteDesktop::Server::_ShowGatewayDialog(int id){
 	_GatewayConnect_Dialog = std::make_shared<GatewayConnect_Dialog>();

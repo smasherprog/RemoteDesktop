@@ -14,14 +14,15 @@ RemoteDesktop::DesktopMonitor::~DesktopMonitor(){
 }
 
 std::string RemoteDesktop::DesktopMonitor::get_ActiveUser(){
+	static std::string CachedName;
+	if (!CachedName.empty()) return CachedName;// dont call below code, it emits an anooying warning to the console when debugging
 	char* ptr = NULL;
 	DWORD size = 0;
 	if (WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTSGetActiveConsoleSessionId(), WTS_INFO_CLASS::WTSUserName, &ptr, &size)){
-		auto name = std::string(ptr);
+		CachedName = std::string(ptr);
 		WTSFreeMemory(ptr);
-		return name;
 	}
-	return "";
+	return CachedName;
 }
 
 HDESK Switch_to_Desktop(int desired_desktop, HDESK currentdesk){

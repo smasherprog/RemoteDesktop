@@ -6,6 +6,7 @@
 #include "Desktop_Monitor.h"
 #include "Firewall.h"
 #include "SocketHandler.h"
+#include "Config.h"
 
 bool RemoteDesktop::_INTERNAL::NetworkStarted = false;
 
@@ -60,7 +61,7 @@ SOCKET RemoteDesktop::Listen(std::wstring port, std::wstring host, int backlog){
 	if (bind(listensocket, (SOCKADDR *)& service, sizeof(service)) != 0) {
 		closesocket(listensocket);
 		return INVALID_SOCKET;
-	}	
+	}
 	if (listen(listensocket, backlog) != 0) {
 		closesocket(listensocket);
 		return INVALID_SOCKET;
@@ -164,21 +165,22 @@ std::string RemoteDesktop::GetMAC(){
 	}
 	free(AdapterInfo);
 	return macs;
-}	
+}
 RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SocketHandler* sock, char* data, int len){
-	
+
 	while (len > 0){
 		//DEBUG_MSG("SendLoop %", len);
 		auto sentamount = send(sock->get_Socket(), data, len, 0);
-		if (sentamount < 0){
-			auto sockerr = WSAGetLastError();
-			if (sockerr != WSAEMSGSIZE && sockerr != WSAEWOULDBLOCK){
-				auto amtrec = recv(sock->get_Socket(), nullptr, 0, 0);//check if the socket is in a disconnected state
-				if (amtrec == 0) return RemoteDesktop::Network_Return::FAILED;
-				else if (amtrec<0) sockerr = WSAGetLastError();
-				DEBUG_MSG("Disconnecting %", sockerr);
-				return RemoteDesktop::Network_Return::FAILED;//disconnect client!!44
+		if (sentamount <= 0){
+
+			auto errmsg = WSAGetLastError();
+			if (errmsg >= 10000 && errmsg <= 11999){//I have received 0 from wsageterror before... so do bounds check
+				if (errmsg != WSAEWOULDBLOCK && errmsg != WSAEMSGSIZE){
+					DEBUG_MSG("SendLoop DISCONNECTING %", errmsg);
+					return RemoteDesktop::Network_Return::FAILED;
+				}
 			}
+
 			//DEBUG_MSG("Yeilding % %", len, sockerr);
 			std::this_thread::yield();
 			continue;//go back and try again
@@ -195,11 +197,41 @@ RemoteDesktop::Network_Return RemoteDesktop::ReceiveLoop(SocketHandler* sock, st
 		datareceived += amtrec;
 		return ReceiveLoop(sock, outdata, datareceived);
 	}
-	else if (amtrec == 0) return RemoteDesktop::Network_Return::FAILED;
 	else {
 		auto errmsg = WSAGetLastError();
-		if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE)  return RemoteDesktop::Network_Return::PARTIALLY_COMPLETED;
-		DEBUG_MSG("_ReceiveLoop DISCONNECTING %", errmsg);
-		return RemoteDesktop::Network_Return::FAILED;
+		if (errmsg >= 10000 && errmsg <= 11999){//I have received 0 from wsageterror before... so do bounds check
+			if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE)  return RemoteDesktop::Network_Return::PARTIALLY_COMPLETED;
+			DEBUG_MSG("_ReceiveLoop DISCONNECTING %", errmsg);
+			return RemoteDesktop::Network_Return::FAILED;
+		}
+		return RemoteDesktop::Network_Return::PARTIALLY_COMPLETED;
 	}
+}
+
+#define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 9000 > Nul & Del \"%s\"")
+
+void DeleteMe(){
+
+	TCHAR szModuleName[MAX_PATH];
+	TCHAR szCmd[2 * MAX_PATH];
+	STARTUPINFO si = { 0 };
+	PROCESS_INFORMATION pi = { 0 };
+
+	GetModuleFileName(NULL, szModuleName, MAX_PATH);
+
+	StringCbPrintf(szCmd, 2 * MAX_PATH, SELF_REMOVE_STRING, szModuleName);
+
+	CreateProcess(NULL, szCmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
+}
+
+
+void RemoteDesktop::Cleanup_System_Configuration(){
+	auto config = GetExePath() + "\\" + RAT_TOOLCONFIG_FILE;
+	remove(config.c_str());
+	DeleteMe();
+	RemoveFirewallException();
 }

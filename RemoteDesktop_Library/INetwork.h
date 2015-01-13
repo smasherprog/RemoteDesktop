@@ -15,7 +15,7 @@ namespace RemoteDesktop{
 		bool _Running = false;
 	
 	public:
-
+		enum Auth_Types{ ALL, AUTHORIZED, NOT_AUTHORIZED };
 		INetwork();
 		virtual ~INetwork();
 
@@ -26,8 +26,8 @@ namespace RemoteDesktop{
 		virtual int Get_RetryAttempts(int num_of_retry) const = 0;
 		virtual int Connection_Count() const = 0;
 
-		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg) = 0;
-		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m) { RemoteDesktop::NetworkMsg msg; return Send(m, msg); }
+		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg, Auth_Types to_which_type) = 0;
+		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m, Auth_Types to_which_type) { RemoteDesktop::NetworkMsg msg; return Send(m, msg, to_which_type); }
 
 		std::function<void(RemoteDesktop::Packet_Header*, const char*, std::shared_ptr<RemoteDesktop::SocketHandler>&)> OnReceived;
 		std::function<void(std::shared_ptr<RemoteDesktop::SocketHandler>&)> OnConnected;

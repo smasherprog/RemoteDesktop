@@ -133,6 +133,9 @@
     <ClInclude Include="Gateway.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NetworkSetup.cpp">
@@ -219,6 +222,9 @@
     </ClCompile>
     <ClCompile Include="Gateway.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -65,7 +65,7 @@ namespace RemoteDesktop{
 		//will not call any disconnect callbacks until the disconnect actually occurs
 		void Disconnect(){ State = PEER_STATE_DISCONNECTED; }
 
-		
+		bool Authorized = false;
 		std::function<void(Packet_Header*, const char*, SocketHandler*)> Receive_CallBack;
 		std::function<void(SocketHandler*)> Connected_CallBack;
 		std::function<void(SocketHandler*)> Disconnect_CallBack;

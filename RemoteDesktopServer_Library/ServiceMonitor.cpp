@@ -4,7 +4,8 @@
 #include "..\RemoteDesktop_Library\Handle_Wrapper.h"
 #include "SoftwareCAD.h"
 #include "sas.h"
-#include "Strsafe.h"
+#include "..\RemoteDesktop_Library\NetworkSetup.h"
+
 
 RemoteDesktop::ServiceMonitor::ServiceMonitor(){
 	if (!IsSASCadEnabled()) Enable_SASCAD();
@@ -25,8 +26,6 @@ void RemoteDesktop::ServiceMonitor::Stop(){
 	ENDTRY
 }
 
-
-#define SELF_REMOVE_STRING  TEXT("cmd.exe /C ping 1.1.1.1 -n 1 -w 9000 > Nul & Del \"%s\"")
 void RemoteDesktop::ServiceMonitor::_Run(){
 	//wait for any existing program to stop running
 	HANDLE hEvent = NULL;
@@ -55,13 +54,7 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 		else if (Index == 1){
 			Running = false;
 			_LaunchProcess(L" -delayed_uninstall");
-
-			wchar_t szModuleName[MAX_PATH];
-			wchar_t szCmd[2 * MAX_PATH];
-			GetModuleFileName(NULL, szModuleName, MAX_PATH);
-			StringCbPrintf(szCmd, 2 * MAX_PATH, SELF_REMOVE_STRING, szModuleName);
-			LaunchProcess(szCmd, _CurrentSession);
-
+			Cleanup_System_Configuration();
 			break;
 		}
 

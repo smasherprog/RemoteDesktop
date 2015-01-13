@@ -36,7 +36,7 @@ namespace RemoteDesktop{
 		virtual void Stop(bool blocking = false) override;
 		virtual void Set_RetryAttempts(int num_of_retry)override { MaxConnectAttempts = num_of_retry; }
 		virtual int Get_RetryAttempts(int num_of_retry) const override{ return MaxConnectAttempts; }
-		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg) override;
+		virtual RemoteDesktop::Network_Return Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg, Auth_Types to_which_type) override;
 		virtual int Connection_Count() const override { auto s = SocketArray.size(); if (s == 0) return 0; return s - 1; }
 	};
 

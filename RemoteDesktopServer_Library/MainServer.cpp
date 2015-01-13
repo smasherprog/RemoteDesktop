@@ -10,7 +10,6 @@
 #include "..\RemoteDesktop_Library\ProcessUtils.h"
 
 void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gateway){
-
 	EventLog::Init(Service_Name());
 #if !_DEBUG
 	if (RemoteDesktop::TryToElevate(argv, argc)) return;//if the app was able to elevate, shut this instance down

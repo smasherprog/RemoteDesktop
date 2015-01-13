@@ -42,7 +42,6 @@
     <ClInclude Include="SystemTray.h">
       <Filter>SysTray</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h" />
     <ClInclude Include="EventLogMessages.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -84,7 +83,6 @@
     <ClCompile Include="SoftwareCAD.cpp">
       <Filter>Service</Filter>
     </ClCompile>
-    <ClCompile Include="Config.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="NewConnectDialog.cpp">
       <Filter>Server\Dialogs</Filter>
@@ -97,13 +95,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="icon1.ico" />
     <Image Include="logo.bmp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="EventLogMessages.mc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
 </Project>

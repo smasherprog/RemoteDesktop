@@ -73,12 +73,13 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int ds
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::CheckState(){
 	if (State == PEER_STATE_DISCONNECTED) return RemoteDesktop::Network_Return::FAILED;
 	auto amtrec = recv(_Socket->socket, nullptr, 0, 0);//check if the socket is in a disconnected state
-	if (amtrec == 0) return Network_Return::PARTIALLY_COMPLETED;
-	else {
+	if (amtrec <= 0){
 		auto errmsg = WSAGetLastError();
-		if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE)  return Network_Return::PARTIALLY_COMPLETED;
-		DEBUG_MSG("2 CheckState DISCONNECTING %", errmsg);
-		return _Disconnect();
+		if (errmsg >= 10000 && errmsg <= 11999){//I have received 0 from wsageterror before... so do bounds check
+			if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE) return Network_Return::PARTIALLY_COMPLETED;
+			DEBUG_MSG("CheckState DISCONNECTING %", errmsg);
+			return _Disconnect();
+		}
 	}
 	return RemoteDesktop::Network_Return::COMPLETED;
 }

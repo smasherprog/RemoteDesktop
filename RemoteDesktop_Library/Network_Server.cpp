@@ -83,10 +83,14 @@ void RemoteDesktop::Network_Server::_Run(){
 	SocketArray.resize(0);
 	DEBUG_MSG("_Listen Exiting");
 }
-RemoteDesktop::Network_Return RemoteDesktop::Network_Server::Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg){
+RemoteDesktop::Network_Return RemoteDesktop::Network_Server::Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg, Auth_Types to_which_type){
 	for (size_t beg = 1; beg < SocketArray.size() && beg < SocketArray.capacity() - 1; beg++){
 		auto s(SocketArray[beg]);//get a copy
-		if (s) s->Send(m, msg);
+		if (s) {
+			if (to_which_type == Auth_Types::ALL) s->Send(m, msg);
+			else if (to_which_type == Auth_Types::AUTHORIZED && s->Authorized) s->Send(m, msg);
+			else if (to_which_type == Auth_Types::NOT_AUTHORIZED && !s->Authorized) s->Send(m, msg);
+		}
 	}
 	return RemoteDesktop::Network_Return::COMPLETED;
 }

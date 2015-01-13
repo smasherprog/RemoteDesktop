@@ -4,32 +4,8 @@
 #include "..\RemoteDesktop_Library\WinHttpClient.h"
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
+#include "Config.h"
 
-int GetFileCreateTime()//used for randomness in session 
-{
-	wchar_t szPath[MAX_PATH];
-	bool ret = false;
-	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath))<0) return 0;
-
-	auto hFile(RAIIHANDLE(CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)));
-
-	if (hFile.get() == INVALID_HANDLE_VALUE) return 0;
-
-	FILETIME ftCreate, ftAccess, ftWrite;
-	SYSTEMTIME stUTC, stLocal;
-
-
-	// Retrieve the file times for the file.
-	if (!GetFileTime(hFile.get(), &ftCreate, &ftAccess, &ftWrite))
-		return 0;
-
-
-	FileTimeToSystemTime(&ftCreate, &stUTC);
-	SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
-
-	return (int)stLocal.wMonth + (int)stLocal.wDay + (int)stLocal.wYear + (int)stLocal.wHour + (int)stLocal.wMinute + (int)stLocal.wSecond + (int)stLocal.wMilliseconds;//this is just some randomness to add into the mix
-
-}
 bool RemoteDesktop::GetGatewayID_and_Key(int& id, std::wstring& aeskey, std::wstring gatewayurl){
 	char comp[MAX_COMPUTERNAME_LENGTH + 1];
 	DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
@@ -39,9 +15,9 @@ bool RemoteDesktop::GetGatewayID_and_Key(int& id, std::wstring& aeskey, std::wst
 	std::string username = RemoteDesktop::DesktopMonitor::get_ActiveUser();
 
 	auto mac = GetMAC();
-	std::wstring uniqueid = std::to_wstring(GetFileCreateTime());//fallback
-	
-	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac + "&session=" + ws2s(uniqueid);
+	std::string uniqueid = ws2s(Unique_ID());
+
+	std::string adddata = "computername=" + computername + "&username=" + username + "&mac=" + mac + "&session=" + uniqueid;
 	DEBUG_MSG("Getting ID: % %", ws2s(gatewayurl), adddata);
 	WinHttpClient cl(gatewayurl);
 	cl.SetAdditionalDataToSend((BYTE*)adddata.c_str(), adddata.size());

@@ -15,6 +15,7 @@
 #include <fstream>
 #include <vector>
 #include <codecvt>
+#include "Shlwapi.h"
 
 inline int roundUp(int numToRound, int multiple)//only for multiples of 2
 {
@@ -268,7 +269,14 @@ inline std::string ws2s(const std::wstring& wstr)
 
 	return converterX.to_bytes(wstr);
 }
-
+//returns current executable path c:\\test\\currexe.exe    - >  c:\\test
+inline std::string GetExePath(){
+	DWORD psize = MAX_PATH;
+	char file[MAX_PATH];
+	GetModuleFileNameA(NULL, file, psize);
+	PathRemoveFileSpecA(file);
+	return std::string(file);
+}
 #define BEGINTRY try{
 #define ENDTRY }catch (std::exception& e){	DEBUG_MSG(e.what()); } catch (...){ DEBUG_MSG("Caught default exception at line: % and file: % ", __LINE__, __FILE__); }
 

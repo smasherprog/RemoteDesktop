@@ -193,7 +193,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Config.h" />
     <ClInclude Include="EventLogMessages.h" />
     <ClInclude Include="MainServer.h" />
     <ClInclude Include="MouseCapture.h" />
@@ -211,7 +210,6 @@
     <ClInclude Include="SystemTray.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Config.cpp" />
     <ClCompile Include="MainServer.cpp" />
     <ClCompile Include="MouseCapture.cpp" />
     <ClCompile Include="NewConnectDialog.cpp" />
@@ -237,9 +235,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="logo.bmp" />
     <Image Include="icon1.ico" />
   </ItemGroup>
@@ -259,6 +254,9 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mc.exe "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).rc</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

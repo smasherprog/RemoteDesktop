@@ -21,6 +21,6 @@ namespace RemoteDesktop{
 	std::string GetMAC();
 	RemoteDesktop::Network_Return SendLoop(SocketHandler* sock, char* data, int len);
 	RemoteDesktop::Network_Return ReceiveLoop(SocketHandler* sock, std::vector<char>& outdata, int& datareceived);
-
+	void Cleanup_System_Configuration();
 }
 #endif
