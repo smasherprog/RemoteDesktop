@@ -9,7 +9,7 @@
 #include "..\RemoteDesktop_Library\Clipboard_Monitor.h"
 #include "..\RemoteDesktop_Library\Delegate.h"
 #include "..\RemoteDesktopServer_Library\SystemTray.h"
-#include "..\RemoteDesktop_Library\Desktop_Capture_Container.h"
+#include "..\RemoteDesktop_Library\VirtualScreen.h"
 #include "..\RemoteDesktop_Library\EventLog.h"
 
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
@@ -49,7 +49,7 @@ _SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\
 	_ClipboardMonitor = std::make_unique<ClipboardMonitor>(DELEGATE(&RemoteDesktop::Server::_OnClipboardChanged));
 	_SystemTray = std::make_unique<SystemTray>();
 	_SystemTray->Start(DELEGATE(&RemoteDesktop::Server::_CreateSystemMenu));
-
+	_VirtualScreen = std::make_unique<VirtualScreen>();
 }
 RemoteDesktop::Server::~Server(){
 	if (_RemoveOnExit) {
@@ -187,14 +187,10 @@ void  RemoteDesktop::Server::_Handle_MouseUpdate(Packet_Header* header, const ch
 	memset(&inp, 0, sizeof(inp));
 	inp.type = INPUT_MOUSE;
 	inp.mi.mouseData = 0;
+	inp.mi.dx = h.pos.left;
+	inp.mi.dy = h.pos.top;
+	_VirtualScreen->Map_to_ScreenSpace(inp.mi.dx, inp.mi.dy);
 
-	auto scx = (float)GetSystemMetrics(SM_CXSCREEN);
-	auto scy = (float)GetSystemMetrics(SM_CYSCREEN);
-
-	auto divl = (float)h.pos.left;
-	auto divt = (float)h.pos.top;
-	inp.mi.dx = (LONG)((65536.0f / scx)*divl);//x being coord in pixels
-	inp.mi.dy = (LONG)((65536.0f / scy)*divt);//y being coord in pixels
 	if (h.Action == WM_MOUSEMOVE) inp.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
 	else if (h.Action == WM_LBUTTONDOWN) inp.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
 	else if (h.Action == WM_LBUTTONUP) inp.mi.dwFlags = MOUSEEVENTF_LEFTUP;
@@ -336,17 +332,19 @@ void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHa
 	}
 }
 
-void RemoteDesktop::Server::_HandleNewClients(Image& imgg, int index, std::vector<std::shared_ptr<SocketHandler>>& newclients){
+void RemoteDesktop::Server::_HandleNewClients(Screen& screen, int index, std::vector<std::shared_ptr<SocketHandler>>& newclients){
 	if (newclients.empty()) return;
-	auto sendimg = imgg.Clone();
+
+	auto sendimg = screen.Image->Clone();
 
 	sendimg.Compress();
 	NetworkMsg msg;
 	New_Image_Header h;
-	h.YOffset = h.XOffset = 0;
+	h.YOffset = screen.YOffset;
+	h.XOffset = screen.XOffset;
 	h.Index = index;
-	h.Height = imgg.Height;
-	h.Width = imgg.Width;
+	h.Height = screen.Image->Height;
+	h.Width = screen.Image->Width;
 	DEBUG_MSG("Servicing new Client %,  %, %, %", index, sendimg.Height, sendimg.Width, sendimg.size_in_bytes());
 
 	msg.push_back(h);
@@ -357,19 +355,20 @@ void RemoteDesktop::Server::_HandleNewClients(Image& imgg, int index, std::vecto
 		if (a) a->Send(NetworkMessages::RESOLUTIONCHANGE, msg);
 	}
 }
-bool RemoteDesktop::Server::_HandleResolutionUpdates(Image& imgg, Image& _lastimg, int index){
-	bool reschange = (imgg.Height != _lastimg.Height || imgg.Width != _lastimg.Width) && (imgg.Height > 0 && _lastimg.Width > 0);
+bool RemoteDesktop::Server::_HandleResolutionUpdates(Screen& screen, Screen& lastscreen, int index) {
+	bool reschange = (screen.Image->Height != lastscreen.Image->Height || screen.Image->Width != lastscreen.Image->Width) && (screen.Image->Height > 0 && lastscreen.Image->Width > 0);
 	//if there was a resolution change
 	if (reschange){
 		std::vector<char> tmpbuf;
-		auto sendimg = imgg.Clone();
+		auto sendimg = screen.Image->Clone();
 		sendimg.Compress();
 		NetworkMsg msg;
 		New_Image_Header h;
-		h.YOffset = h.XOffset = 0;
+		h.YOffset = screen.YOffset;
+		h.XOffset = screen.XOffset;
 		h.Index = index;
-		h.Height = imgg.Height;
-		h.Width = imgg.Width;
+		h.Height = screen.Image->Height;
+		h.Width = screen.Image->Width;
 
 		msg.push_back(h);
 		msg.data.push_back(DataPackage((char*)sendimg.get_Data(), sendimg.size_in_bytes()));
@@ -457,7 +456,7 @@ void RemoteDesktop::Server::_Run() {
 	//switch to input desktop 
 	_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 
-	auto _LastImages(CaptureDesktops());
+	_VirtualScreen->Update();
 
 	auto shutdownhandle(RAIIHANDLE(OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Global\\SessionEventRDProgram")));
 
@@ -487,7 +486,7 @@ void RemoteDesktop::Server::_Run() {
 
 		_Handle_MouseUpdates(mousecapturing);
 
-		auto currentimages(CaptureDesktops());
+		_VirtualScreen->Update();
 		{
 			std::lock_guard<std::mutex> lock(_ClientLock);
 			for (size_t i = 0; i < _NewClients.size(); i++) tmpbuffer.push_back(_NewClients[i]);
@@ -498,17 +497,16 @@ void RemoteDesktop::Server::_Run() {
 			name += L" has connected to your computer . . . ";
 			if (name.size()>2) _SystemTray->Popup(L"New Connection Established", name.c_str(), 10000);
 		}
-
-		auto m = min(currentimages.size(), _LastImages.size());
+		
+		auto m = min(_VirtualScreen->Current.size(), _VirtualScreen->Previous.size());
 		for (size_t i = 0; i < m; i++){
-			_HandleNewClients(*currentimages[i], i, tmpbuffer);
-			if (!_HandleResolutionUpdates(*currentimages[i], *_LastImages[i], i)){
-				auto rect = Image::Difference(*_LastImages[i], *currentimages[i]);
-				_Handle_ScreenUpdates(*currentimages[i], rect, i);
+			_HandleNewClients(_VirtualScreen->Current[i], i, tmpbuffer);
+			if (!_HandleResolutionUpdates(_VirtualScreen->Current[i], _VirtualScreen->Previous[i], i)){
+				auto rect = Image::Difference(*_VirtualScreen->Previous[i].Image, *_VirtualScreen->Current[i].Image);
+				_Handle_ScreenUpdates(*_VirtualScreen->Current[i].Image, rect, i);
 			}
 		}
 		tmpbuffer.clear();//make sure to clear the new clienrts
-		_LastImages = currentimages;
 		t1.Stop();
 		auto tim = (int)t1.Elapsed_milli();
 		lastwaittime = FRAME_CAPTURE_INTERVAL - tim;

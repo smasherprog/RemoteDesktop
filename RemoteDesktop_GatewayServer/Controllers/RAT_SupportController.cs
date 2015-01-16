@@ -68,23 +68,13 @@ namespace RemoteDesktop_GatewayServer.Controllers
             string path = ConfigurationManager.AppSettings["RAT_P2P_File"];
             if (string.IsNullOrWhiteSpace(path))
                 throw new Exception("Missing RAT P2P File");
+            if (Request.Browser.Browser.ToLower() == "ie") Response.AppendHeader("cache-control", "private");
+            else Response.AppendHeader("cache-control", "no-cache");
+
             var realpath = "";
             if (path.StartsWith("~")) realpath = HttpContext.Server.MapPath(path);
             else realpath = path;
-
-            var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
-            SetSettings(res);
-            if (Request.Browser.Browser.ToLower() == "ie")
-            {
-                Response.AppendHeader("cache-control", "private");
-            }
-            else
-            {
-                Response.AppendHeader("cache-control", "no-cache");
-            }
-
-            return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
-
+            return File(realpath, "application/octet-stream", Path.GetFileName(realpath));
         }
         protected ActionResult GetGateway_File()
         {       
@@ -99,11 +89,11 @@ namespace RemoteDesktop_GatewayServer.Controllers
             else realpath = path;
             return File(realpath, "application/octet-stream", Path.GetFileName(realpath));
 
-            var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
-            SetSettings(res);
+            //var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
+            //SetSettings(res);
     
-            return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
-            //zip code below
+            //return File(RemoteDesktop_GatewayServer.Code.UpdateEXE.Update(realpath, res), "application/octet-stream", Path.GetFileName(realpath));
+            ////zip code below
  
         }
         //protected ActionResult GetLog()

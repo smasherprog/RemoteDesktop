@@ -21,6 +21,9 @@ namespace RemoteDesktop{
 	class GatewayConnect_Dialog;
 	class NewConnect_Dialog;
 	class INetwork;
+	class VirtualScreen;
+	class Screen;
+
 
 #if _DEBUG
 	class CConsole;
@@ -40,10 +43,10 @@ namespace RemoteDesktop{
 		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
 		std::unique_ptr<SystemTray> _SystemTray;
 
-		
+		std::unique_ptr<VirtualScreen> _VirtualScreen;
 
-		void _HandleNewClients(Image& img, int index, std::vector<std::shared_ptr<SocketHandler>>& newclients);
-		bool _HandleResolutionUpdates(Image& img, Image& _lastimg, int index);
+		void _HandleNewClients(Screen& screen, int index, std::vector<std::shared_ptr<SocketHandler>>& newclients);
+		bool _HandleResolutionUpdates(Screen& screen, Screen& lastscreen, int index);
 		void _Handle_ScreenUpdates(Image& img, Rect& rect, int index);
 		void _Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing);
 

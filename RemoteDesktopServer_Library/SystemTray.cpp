@@ -103,7 +103,6 @@ void RemoteDesktop::SystemTray::_CreateIcon(HWND hWnd){
 			AddMenuItem(L"About", DELEGATE(&RemoteDesktop::SystemTray::_ShowAboutDialog));
 		}
 	}
-
 }
 
 

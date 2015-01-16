@@ -180,20 +180,17 @@ namespace RemoteDesktop_Viewer
         {
             int BorderWidth = (Width - ClientSize.Width) / 2;
             int TitlebarHeight = Height - ClientSize.Height - 2 * BorderWidth;
-            int maxwidth = Screen.PrimaryScreen.Bounds.Width - 40;
-            int maxheight = Screen.PrimaryScreen.Bounds.Height - 50;
-            int viewportwidth = 0;
-            int viewportheight = 0;
+            int maxwidth = Screen.PrimaryScreen.Bounds.Width - BorderWidth * 2;
+            int maxheight = Screen.PrimaryScreen.Bounds.Height - TitlebarHeight - BorderWidth * 2;
+  
             _Displays[index] = new Rectangle(xoffset, yoffset, width, height);
-            for(var i = 0; i < _Displays.Length; i++)
-            {
-                viewportheight = Math.Max(viewportheight, _Displays[i].Height + _Displays[i].Top);
-                viewportwidth += _Displays[i].Width + _Displays[i].Left;
-            }
+            int viewportwidth = _Displays.Sum(a => a.Width);
+            int viewportheight = _Displays.Max(a=>a.Height);
+     
             this.UIThread(() =>
             {
                 viewPort1.Size = new Size(viewportwidth, viewportheight);
-                this.Size = new Size(Math.Min(maxwidth, viewportwidth), Math.Min(maxheight, viewportheight));
+                this.Size = new Size(Math.Min(maxwidth, viewportwidth + System.Windows.Forms.SystemInformation.VerticalScrollBarWidth + BorderWidth * 2), Math.Min(maxheight, viewportheight + TitlebarHeight + System.Windows.Forms.SystemInformation.HorizontalScrollBarHeight + (BorderWidth * 2)));
 
             });
         }

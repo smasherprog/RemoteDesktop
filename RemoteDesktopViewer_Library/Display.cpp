@@ -39,15 +39,14 @@ void RemoteDesktop::Display::Draw(HDC hdc){
 	std::lock_guard<std::mutex> lock(_DrawLock);
 	
 	auto hMemDC(RAIIHDC(CreateCompatibleDC(hdc)));
-	int xoffset = 0;
-
+	auto xoffset = 0;
 	for (auto a : _Images){
 		if (!a) continue;
 		auto hOldBitmap = (HBITMAP)SelectObject(hMemDC.get(), a->Bitmap);
 	//	DEBUG_MSG("Draw % % % % %",a->Context.Index, xoffset + a->Context.XOffset, a->Context.YOffset, a->Context.Width, a->Context.Height);
-		BitBlt(hdc, xoffset + a->Context.XOffset, a->Context.YOffset, a->Context.Width, a->Context.Height, hMemDC.get(), 0, 0, SRCCOPY);
-		xoffset += a->Context.XOffset + a->Context.Width;
+		BitBlt(hdc, xoffset, a->Context.YOffset, a->Context.Width, a->Context.Height, hMemDC.get(), 0, 0, SRCCOPY);
 		SelectObject(hMemDC.get(), hOldBitmap);
+		xoffset += a->Context.Width;
 	}
 
 	if (GetFocus() != _HWND) {

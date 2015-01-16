@@ -190,7 +190,6 @@ RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SocketHandler* sock, char*
 	return RemoteDesktop::Network_Return::COMPLETED;
 }
 RemoteDesktop::Network_Return RemoteDesktop::ReceiveLoop(SocketHandler* sock, std::vector<char>& outdata, int& datareceived){
-
 	if (datareceived - outdata.size() < STARTBUFFERSIZE) outdata.resize(outdata.size() + STARTBUFFERSIZE);//grow ahead by chunks
 	auto amtrec = recv(sock->get_Socket(), outdata.data() + datareceived, outdata.size() - datareceived, 0);//read as much as possible
 	if (amtrec > 0){
