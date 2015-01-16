@@ -36,9 +36,14 @@ void RemoteDesktop::VirtualScreen::Update(){
 	std::sort(Current.begin(), Current.end(), [](const Screen& i, const Screen& j){
 		return i.XOffset < j.XOffset;
 	});
+	YOffset_to_Zero = 0;
+	for (auto& a : Current){
+		YOffset_to_Zero = std::min(Current[0].YOffset, YOffset_to_Zero);
+	}
 	XOffset_to_Zero = Current[0].XOffset;
-	YOffset_to_Zero = Current[0].YOffset;
-
+	for (auto& a : Current){
+		a.YOffset += -YOffset_to_Zero;
+	}
 }
 void RemoteDesktop::VirtualScreen::Map_to_ScreenSpace(long& x, long& y){
 	//auto left = GetSystemMetrics(SM_XVIRTUALSCREEN) + XOffset_to_Zero;
