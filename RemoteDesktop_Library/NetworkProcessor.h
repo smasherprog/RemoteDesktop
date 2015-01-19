@@ -2,40 +2,30 @@
 #define NETWORKPROCESSOR123_H
 #include <thread>
 #include <memory>
-#include <vector>
-#include <mutex>
-#include <condition_variable>
+#include "Concurrent_Queue.h"
 #include "Delegate.h"
-#include <atomic>
 
 namespace RemoteDesktop{
-	class DesktopMonitor;
 	class SocketHandler;
+	struct Packet_Header;
 
 	class NetworkProcessor{
 
 		std::thread _Worker;
-		std::mutex _Lock, _ContainerLock;
-		std::condition_variable _CV;
-		std::atomic<bool> _Running;
+		Concurrent_Queue<std::shared_ptr<SocketHandler>> _Queue;
 
-		int _Count = 0;
-		std::vector<char> _ReceiveBuffer_In;
-		std::vector<char> _ReceiveBuffer_Out;
-
-		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
-
-		Delegate<void, std::vector<char>&, int> _Receive_CallBack;
-
+		bool _Running;
 		void _Run();
 
+		Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&> _Receive_callback;
+		Delegate<void, std::shared_ptr<SocketHandler>&> _Onconnect_callback;
+
 	public:
-		NetworkProcessor(Delegate<void, std::vector<char>&, int> d);
+		NetworkProcessor(Delegate<void, Packet_Header*, const char*, std::shared_ptr<SocketHandler>&>& receive_callback, Delegate<void, std::shared_ptr<SocketHandler>&>& onconnect_callback);
 		~NetworkProcessor();
 
-		bool Add(std::vector<char>& buffer, int counter);
+		void Receive(std::shared_ptr<SocketHandler>& h);
 
-		void Stop(bool blocking);
 	};
 
 }

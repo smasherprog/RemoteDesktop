@@ -61,6 +61,7 @@ namespace RemoteDesktop{
 			Height = std::move(other.Height);
 			Width = std::move(other.Width);
 			Compressed = std::move(other.Compressed);
+			return *this;
 		}
 		~Image(){
 			if (data.size() > 100 || INTERNAL::BufferCache.size()<15){

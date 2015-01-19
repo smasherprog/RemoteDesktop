@@ -39,7 +39,7 @@ void RemoteDesktop::SystemTray::_ShowAboutDialog(){
 RemoteDesktop::SystemTray::SystemTray() :
 _SystemTrayIcon(RAIIHICON((HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0))),
 Hmenu(RAIIHMENU(CreatePopupMenu())) {
-
+	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 }
 RemoteDesktop::SystemTray::~SystemTray(){
 	Stop();
@@ -50,6 +50,7 @@ void RemoteDesktop::SystemTray::_Cleanup(){
 		Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 		notifyIconData.hWnd = 0;
 	}
+	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 	Hmenu = nullptr;
 	_SystemTrayIcon = nullptr;
 	_TrayIconCreated = false;
@@ -149,7 +150,6 @@ LRESULT RemoteDesktop::SystemTray::WindowProc(HWND hWnd, UINT msg, WPARAM wParam
 void RemoteDesktop::SystemTray::_Run(){
 	_Running = true;
 	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
-	memset(&notifyIconData, 0, sizeof(NOTIFYICONDATA));
 
 	auto myclass = L"systrayclass";
 	WNDCLASSEX wndclass = {};

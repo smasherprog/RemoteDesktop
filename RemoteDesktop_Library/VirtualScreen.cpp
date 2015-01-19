@@ -48,16 +48,13 @@ void RemoteDesktop::VirtualScreen::Update(){
 void RemoteDesktop::VirtualScreen::Map_to_ScreenSpace(long& x, long& y){
 	//auto left = GetSystemMetrics(SM_XVIRTUALSCREEN) + XOffset_to_Zero;
 	//auto top = GetSystemMetrics(SM_YVIRTUALSCREEN) + YOffset_to_Zero;
-	//std::cout << left << "  " << top << std::endl;
 	auto xx = (float)(x + XOffset_to_Zero);
 	auto yy = (float)(y + YOffset_to_Zero);
 	auto vx = (float)(GetSystemMetrics(SM_CXSCREEN));
 	auto vy = (float)(GetSystemMetrics(SM_CYSCREEN));
-	std::cout << vx << "  " << vy << std::endl;
 	x = (xx * 65535.0f) / (vx - 1.0f);
 	y = (yy * 65535.0f) / (vy - 1.0f);
-	std::cout << x << "  " << y << std::endl;
-	std::cout <<std::endl;
+
 }
 
 std::shared_ptr<RemoteDesktop::Image> CaptureDesktop(const RemoteDesktop::RAIIHDC_TYPE &desktopGuard, int left, int top)

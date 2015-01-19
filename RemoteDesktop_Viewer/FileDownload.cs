@@ -19,7 +19,7 @@ namespace RemoteDesktop_Viewer
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate void _OnFileTransferChanged(int bytes_sent_so_far);
 
-        [DllImport(RemoteDesktop_Viewer.Code.Settings.DLL_Name, CharSet = CharSet.Ansi)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name, CharSet = CharSet.Ansi)]
         static extern void SendFile(IntPtr client, string absolute_path, string relative_path, _OnFileTransferChanged onfilechanged);
 
         private string[] _Files = null;

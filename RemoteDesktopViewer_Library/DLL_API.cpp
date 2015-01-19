@@ -11,10 +11,10 @@ void __stdcall Destroy_Client(void* client){
 		delete c;
 	}
 }
-void __stdcall Connect(void* client, wchar_t* ip_or_host, wchar_t* port, int id, wchar_t* aeskey){
+void __stdcall Connect(void* client,  wchar_t* port, wchar_t* ip_or_host,int id, wchar_t* aeskey){
 	if (client == NULL)return;
 	auto c = (RemoteDesktop::Client*)client;
-	c->Connect(ip_or_host, port, id, aeskey);
+	c->Connect( port, ip_or_host,id, aeskey);
 }
 void __stdcall Draw(void* client, HDC hdc){
 	if (client == NULL)return;
@@ -74,3 +74,20 @@ RemoteDesktop::Traffic_Stats __stdcall get_TrafficStats(void* client){
 	auto s= c->get_TrafficStats();
 	return s;
 }
+
+BOOL APIENTRY DllMain(HMODULE hModule,
+	DWORD  ul_reason_for_call,
+	LPVOID lpReserved
+	)
+{
+	switch (ul_reason_for_call)
+	{
+	case DLL_PROCESS_ATTACH:
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+	case DLL_PROCESS_DETACH:
+		break;
+	}
+	return TRUE;
+}
+

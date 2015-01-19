@@ -7,8 +7,16 @@ namespace RemoteDesktop{
 	{
 		typedef return_type(*Type)(void* callee, params...);
 	public:
+
 		Delegate() : fpCallee(nullptr)
 			, fpCallbackFunction(nullptr){}
+		Delegate(const Delegate& other) : fpCallee(other.fpCallee), fpCallbackFunction(other.fpCallbackFunction){}
+
+		Delegate& operator=(const Delegate& other){
+			fpCallee = other.fpCallee;
+			fpCallbackFunction = other.fpCallbackFunction;
+			return *this;
+		}
 
 		Delegate(void* callee, Type function)
 			: fpCallee(callee)

@@ -21,7 +21,7 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 		{
 			Sleep(3000);//give enough time for the previous programs to shut down
 			UninstallService(Service_Name());
-		}
+		} 
 		else if (_wcsicmp(L"service_mon", argv[1] + 1) == 0)
 		{
 			ServerService service(Service_Name());

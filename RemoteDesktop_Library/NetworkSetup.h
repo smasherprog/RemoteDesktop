@@ -19,8 +19,10 @@ namespace RemoteDesktop{
 	SOCKET Listen(std::wstring port, std::wstring host, int backlog=10);
 	void StandardSocketSetup(SOCKET socket);
 	std::string GetMAC();
-	RemoteDesktop::Network_Return SendLoop(SocketHandler* sock, char* data, int len);
-	RemoteDesktop::Network_Return ReceiveLoop(SocketHandler* sock, std::vector<char>& outdata, int& datareceived);
+	RemoteDesktop::Network_Return SendLoop(SOCKET sock, char* data, int len);
+	RemoteDesktop::Network_Return ReceiveLoop(SOCKET sock, std::vector<char>& outdata, int& datareceived);
+	RemoteDesktop::Network_Return CheckState(SOCKET sock);
+
 	void Cleanup_System_Configuration();
 }
 #endif

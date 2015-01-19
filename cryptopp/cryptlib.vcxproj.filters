@@ -137,9 +137,6 @@
     <ClCompile Include="fips140.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fipstest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gcm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

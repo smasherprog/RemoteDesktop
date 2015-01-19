@@ -31,12 +31,12 @@ namespace RemoteDesktop_Viewer.Code
             {
 
 
-                using (var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.SignalRHubUrl))
+                using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(RemoteDesktop_CSLibrary.Config.SignalRHubUrl))
                 {
                     connection.TransportConnectTimeout = new TimeSpan(0, 0, 4);
-                    IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
+                    IHubProxy stockTickerHubProxy = connection.CreateHubProxy(RemoteDesktop_CSLibrary.Config.SignalRHubName);
                 }
-                var request = WebRequest.Create(Settings.AuthenticationUrl) as HttpWebRequest;
+                var request = WebRequest.Create(RemoteDesktop_CSLibrary.Config.AuthenticationUrl) as HttpWebRequest;
 
                 request.Method = "POST";
             }
@@ -52,14 +52,14 @@ namespace RemoteDesktop_Viewer.Code
             {
                 try
                 {
-                    using (var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.SignalRHubUrl))
+                    using(var connection = new Microsoft.AspNet.SignalR.Client.HubConnection(RemoteDesktop_CSLibrary.Config.SignalRHubUrl))
                     {
                         connection.TransportConnectTimeout = new TimeSpan(0, 0, 4);
-                        Settings.SignalRHubUrl.Split('/').LastOrDefault();
-                        IHubProxy stockTickerHubProxy = connection.CreateHubProxy(Settings.SignalRHubName);
+                        RemoteDesktop_CSLibrary.Config.SignalRHubUrl.Split('/').LastOrDefault();
+                        IHubProxy stockTickerHubProxy = connection.CreateHubProxy(RemoteDesktop_CSLibrary.Config.SignalRHubName);
                         connection.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
                         connection.Error += connection_Error;
-                        connection.Start().Wait(Settings.AuthenticationTimeout);
+                        connection.Start().Wait(RemoteDesktop_CSLibrary.Config.AuthenticationTimeout);
                          _Authenticated = true;
                         return _Authenticated;
                     }
@@ -72,12 +72,12 @@ namespace RemoteDesktop_Viewer.Code
             else
             {
 
-                var request = WebRequest.Create(Settings.AuthenticationUrl) as HttpWebRequest;
+                var request = WebRequest.Create(RemoteDesktop_CSLibrary.Config.AuthenticationUrl) as HttpWebRequest;
                 
                 request.Method = "POST";
                 request.ContentType = "application/x-www-form-urlencoded";
                 request.CookieContainer = new CookieContainer();
-                request.Timeout = Settings.AuthenticationTimeout;
+                request.Timeout = RemoteDesktop_CSLibrary.Config.AuthenticationTimeout;
                 var authCredentials = "UserName=" + user + "&Password=" + password;
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(authCredentials);
                 request.ContentLength = bytes.Length;

@@ -28,6 +28,9 @@ void Send(std::weak_ptr<RemoteDesktop::SocketHandler>& ptr, RemoteDesktop::Netwo
 
 RemoteDesktop::Client::~Client(){
 	DEBUG_MSG("~Client()");
+	_NetworkClient = nullptr;
+	_ClipboardMonitor = nullptr;
+	_Display = nullptr;
 }
 void RemoteDesktop::Client::OnDisconnect(){
 	_OnDisconnect();
@@ -191,7 +194,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 
 		std::ifstream infile(absolute_path, std::ifstream::binary);
 
-		for (size_t chunk = 0; chunk < total_chunks && clienthold->State != RemoteDesktop::PEER_STATE_DISCONNECTED; ++chunk)
+		for (size_t chunk = 0; chunk < total_chunks && clienthold->get_State() != RemoteDesktop::PEER_STATE_DISCONNECTED; ++chunk)
 		{
 			size_t this_chunk_size =
 				chunk == total_chunks - 1 /* if last chunk */

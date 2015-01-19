@@ -94,17 +94,17 @@ int find_substr(const T& str1, const T& str2, const std::locale& loc = std::loca
 inline std::wstring FormatBytes(long long bytes)
 {
 	const auto scale = 1024.0;
-	static std::wstring orders[] =  { L"GB/s", L"MB/s", L"KB/s", L"Bytes/s" };
+	static std::wstring orders[] = { L"GB/s", L"MB/s", L"KB/s", L"Bytes/s" };
 
 	auto max = (long long)pow(scale, 3.0);
-	for(auto& order : orders)
+	for (auto& order : orders)
 	{
 		if (bytes > max){
 			std::wstringstream str;
 			str << std::fixed << std::setprecision(2) << ((float)bytes / (float)max);
 			return str.str() + order;
 		}
-			
+
 		//	return string.Format("{0:##.##} {1}", Decimal.Divide(bytes, max), order);
 		max /= scale;
 	}
@@ -274,8 +274,7 @@ inline std::string GetExePath(){
 	DWORD psize = MAX_PATH;
 	char file[MAX_PATH];
 	GetModuleFileNameA(NULL, file, psize);
-	PathRemoveFileSpecA(file);
-	return std::string(file);
+	return GetPath(std::string(file));
 }
 #define BEGINTRY try{
 #define ENDTRY }catch (std::exception& e){	DEBUG_MSG(e.what()); } catch (...){ DEBUG_MSG("Caught default exception at line: % and file: % ", __LINE__, __FILE__); }

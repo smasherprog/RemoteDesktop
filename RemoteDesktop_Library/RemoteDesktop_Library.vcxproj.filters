@@ -1,0 +1,245 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Compression">
+      <UniqueIdentifier>{3177129f-fe86-4bfe-a122-49e2daa513af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Desktop_Capture">
+      <UniqueIdentifier>{1fb5394a-8ab5-4b65-a6aa-d40df2042c49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{7cc09a20-7661-414c-83a1-04285a73e6a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\HTTP">
+      <UniqueIdentifier>{75827cc7-ad96-4453-9516-38500b410181}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{d77c6cde-7c11-4748-8539-52f88d62f5fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Wrappers">
+      <UniqueIdentifier>{bdf5458b-1f73-4da9-b2fa-23f732fe4723}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Interface">
+      <UniqueIdentifier>{d23ca4f4-a3a1-428f-8943-aacd136a881d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Concrete">
+      <UniqueIdentifier>{77ee62b7-5ac3-45e0-a308-43bc04b9a2ec}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Compression_Handler.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="lz4.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="lz4frame.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="lz4hc.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="xxhash.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonNetwork.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkSetup.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Ping.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketHandler.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic_Monitor.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="atlrx.h">
+      <Filter>Network\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="RegExp.h">
+      <Filter>Network\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="StringProcess.h">
+      <Filter>Network\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="WinHttpClient.h">
+      <Filter>Network\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="Console.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Delegate.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Encryption.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Image.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Rect.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Clipboard_Wrapper.h">
+      <Filter>Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="Handle_Wrapper.h">
+      <Filter>Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="Clipboard.h" />
+    <ClInclude Include="Clipboard_Monitor.h" />
+    <ClInclude Include="Desktop_Monitor.h" />
+    <ClInclude Include="MouseCommon.h" />
+    <ClInclude Include="INetwork.h">
+      <Filter>Network\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="Network_Client.h">
+      <Filter>Network\Concrete</Filter>
+    </ClInclude>
+    <ClInclude Include="Firewall.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkProcessor.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketBufferPool.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="EventLog.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="UserInfo.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessUtils.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Network_Server.h">
+      <Filter>Network\Concrete</Filter>
+    </ClInclude>
+    <ClInclude Include="Gateway.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualScreen.h">
+      <Filter>Desktop_Capture</Filter>
+    </ClInclude>
+    <ClInclude Include="Concurrent_Queue.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Network_GatewayServer.h">
+      <Filter>Network\Concrete</Filter>
+    </ClInclude>
+    <ClInclude Include="Gateway_Socket.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="NetworkSetup.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketHandler.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic_Monitor.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Ping.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="lz4.c">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="lz4frame.c">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="lz4hc.c">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="xxhash.c">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression_Handler.cpp">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Console.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Encryption.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Image.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Clipboard_Wrapper.cpp">
+      <Filter>Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="StringProcess.cpp">
+      <Filter>Network\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="WinHttpClient.cpp">
+      <Filter>Network\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="Handle_Wrapper.cpp">
+      <Filter>Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="Clipboard.cpp" />
+    <ClCompile Include="Clipboard_Monitor.cpp" />
+    <ClCompile Include="Desktop_Monitor.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="Network_Client.cpp">
+      <Filter>Network\Concrete</Filter>
+    </ClCompile>
+    <ClCompile Include="INetwork.cpp">
+      <Filter>Network\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="Firewall.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkProcessor.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="EventLog.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="UserInfo.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessUtils.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Network_Server.cpp">
+      <Filter>Network\Concrete</Filter>
+    </ClCompile>
+    <ClCompile Include="Gateway.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualScreen.cpp">
+      <Filter>Desktop_Capture</Filter>
+    </ClCompile>
+    <ClCompile Include="Network_GatewayServer.cpp">
+      <Filter>Network\Concrete</Filter>
+    </ClCompile>
+    <ClCompile Include="Gateway_Socket.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

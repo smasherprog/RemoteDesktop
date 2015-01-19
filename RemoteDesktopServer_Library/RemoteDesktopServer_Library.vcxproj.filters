@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Server">
+      <UniqueIdentifier>{08388162-7190-4f84-a024-b46101efd16b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Service">
+      <UniqueIdentifier>{bd207d27-58d6-4a86-b0a7-30943bea89ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SysTray">
+      <UniqueIdentifier>{28c569a5-24bc-4956-a7be-f3524e2450da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Server\Dialogs">
+      <UniqueIdentifier>{6a0eab8e-e403-48f4-a45b-e6dbd1f39c6c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MainServer.h">
+      <Filter>Server</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseCapture.h">
+      <Filter>Server</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftwareCAD.h">
+      <Filter>Server</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerService.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceBase.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceHelpers.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceInstaller.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceMonitor.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemTray.h">
+      <Filter>SysTray</Filter>
+    </ClInclude>
+    <ClInclude Include="EventLogMessages.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="NewConnectDialog.h">
+      <Filter>Server\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="GatewayConnectDialog.h">
+      <Filter>Server\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Server</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ServiceInstaller.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceBase.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerService.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceMonitor.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="MouseCapture.cpp">
+      <Filter>Server</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceHelpers.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemTray.cpp">
+      <Filter>SysTray</Filter>
+    </ClCompile>
+    <ClCompile Include="MainServer.cpp">
+      <Filter>Server</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftwareCAD.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="NewConnectDialog.cpp">
+      <Filter>Server\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="GatewayConnectDialog.cpp">
+      <Filter>Server\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Server</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
+    <Image Include="logo.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="EventLogMessages.mc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
+  </ItemGroup>
+</Project>

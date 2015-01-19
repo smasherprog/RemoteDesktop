@@ -13,11 +13,12 @@ namespace RemoteDesktop_Viewer
 {
     public partial class SettingsDialog : Form
     {
-        public delegate void OnSettingsChangedHandler(RemoteDesktop_Viewer.Code.Settings.Settings_Header h);
+      
+        public delegate void OnSettingsChangedHandler(RemoteDesktop_CSLibrary.Settings_Header h);
 
         public event OnSettingsChangedHandler OnSettingsChangedEvent;
 
-        static RemoteDesktop_Viewer.Code.Settings.Settings_Header Settings = new Code.Settings.Settings_Header
+        static RemoteDesktop_CSLibrary.Settings_Header Settings = new RemoteDesktop_CSLibrary.Settings_Header
         {
             GrayScale = false,
             Image_Quality = 75,
@@ -34,7 +35,7 @@ namespace RemoteDesktop_Viewer
             checkBox1.CheckedChanged += checkBox1_CheckedChanged;
             checkBox2.CheckedChanged += checkBox1_CheckedChanged;
             trackBar1.ValueChanged += trackBar1_ValueChanged;
-    
+ 
         }
 
         void trackBar1_ValueChanged(object sender, EventArgs e)

@@ -77,6 +77,14 @@ namespace RemoteDesktop{
 #define MAXMESSAGESIZE (1024*1024*50)  //50 MB is the largest single message that is allowed. This is to prevent crashing either the client or server by sending fake packet lengths
 #define STARTBUFFERSIZE (1024 *1024)
 
+	enum PeerState{
+		PEER_STATE_DISCONNECTED,
+		PEER_STATE_CONNECTING,
+		PEER_STATE_CONNECTED,
+		PEER_STATE_EXCHANGING_KEYS,
+		PEER_STATE_EXCHANGING_KEYS_USE_PRE_AES
+	};
+
 	enum NetworkMessages{
 		INVALID,
 		RESOLUTIONCHANGE,

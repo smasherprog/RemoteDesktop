@@ -7,15 +7,18 @@ RemoteDesktop::ClipboardMonitor::ClipboardMonitor(Delegate<void, const Clipboard
 	_Running = true;
 	_BackGroundWorker = std::thread(&RemoteDesktop::ClipboardMonitor::_Run, this);
 }
+
 RemoteDesktop::ClipboardMonitor::~ClipboardMonitor(){
 	_Running = false;
 	BEGINTRY
 		if (std::this_thread::get_id() != _BackGroundWorker.get_id() && _BackGroundWorker.joinable()) _BackGroundWorker.join();
 	ENDTRY
 }
+
 void RemoteDesktop::ClipboardMonitor::set_ShareClipBoard(bool s){
 	_ShareClipboard = s;
 }
+
 void RemoteDesktop::ClipboardMonitor::Restore(const Clipboard_Data& c){
 	if (_ShareClipboard){
 		DEBUG_MSG("Clipboard Restore");
@@ -25,6 +28,7 @@ void RemoteDesktop::ClipboardMonitor::Restore(const Clipboard_Data& c){
 		_IgnoreClipUpdateNotice = true;
 	}
 }
+
 void RemoteDesktop::ClipboardMonitor::_Run(){
 	DesktopMonitor dekstopmonitor;
 	if (!dekstopmonitor.Is_InputDesktopSelected()) dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
@@ -42,6 +46,7 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 	else {
 		DEBUG_MSG("Error %", GetLastError());
 	}
+
 	auto clipboardlistener(RAIICLIPBOARDLISTENER(_Hwnd));
 	auto timer(RAIIHWNDTIMER(_Hwnd, 1001, 500)); //every 500 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
 
@@ -69,7 +74,6 @@ void RemoteDesktop::ClipboardMonitor::_Run(){
 					}
 					_IgnoreClipUpdateNotice = false;
 				}
-
 			}
 			else
 			{

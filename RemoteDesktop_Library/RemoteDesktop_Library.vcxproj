@@ -185,12 +185,14 @@
     <ClInclude Include="Clipboard_Wrapper.h" />
     <ClInclude Include="CommonNetwork.h" />
     <ClInclude Include="Compression_Handler.h" />
+    <ClInclude Include="Concurrent_Queue.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Desktop_Monitor.h" />
     <ClInclude Include="EventLog.h" />
     <ClInclude Include="Gateway.h" />
+    <ClInclude Include="Gateway_Socket.h" />
     <ClInclude Include="Handle_Wrapper.h" />
     <ClInclude Include="Encryption.h" />
     <ClInclude Include="Firewall.h" />
@@ -202,6 +204,7 @@
     <ClInclude Include="MouseCommon.h" />
     <ClInclude Include="NetworkProcessor.h" />
     <ClInclude Include="Network_Client.h" />
+    <ClInclude Include="Network_GatewayServer.h" />
     <ClInclude Include="Network_Server.h" />
     <ClInclude Include="PacketBufferPool.h" />
     <ClInclude Include="Ping.h" />
@@ -231,6 +234,7 @@
     <ClCompile Include="EventLog.cpp" />
     <ClCompile Include="Firewall.cpp" />
     <ClCompile Include="Gateway.cpp" />
+    <ClCompile Include="Gateway_Socket.cpp" />
     <ClCompile Include="Handle_Wrapper.cpp" />
     <ClCompile Include="Image.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NoListing</AssemblerOutput>
@@ -260,6 +264,7 @@
     <ClCompile Include="NetworkProcessor.cpp" />
     <ClCompile Include="NetworkSetup.cpp" />
     <ClCompile Include="Network_Client.cpp" />
+    <ClCompile Include="Network_GatewayServer.cpp" />
     <ClCompile Include="Network_Server.cpp" />
     <ClCompile Include="Ping.cpp" />
     <ClCompile Include="ProcessUtils.cpp" />

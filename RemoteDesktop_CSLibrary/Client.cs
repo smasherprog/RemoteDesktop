@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 namespace RemoteDesktop_CSLibrary
 {
-
-
     public class Client
     {
         public enum Host_Type { Unknown, Viewer, Server };

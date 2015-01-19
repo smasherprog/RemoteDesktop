@@ -58,6 +58,14 @@ RemoteDesktop::Server::~Server(){
 		}
 		else Cleanup_System_Configuration();
 	}
+	//i need to make sure these shut down before cointinuing
+	_NetworkServer = nullptr;
+	mousecapturing = nullptr;
+	_DesktopMonitor = nullptr;
+	_ClipboardMonitor = nullptr;
+	_SystemTray = nullptr;
+	_VirtualScreen = nullptr;
+
 }
 void RemoteDesktop::Server::_CreateSystemMenu(){
 	_SystemTray->AddMenuItem(L"Exit", DELEGATE(&RemoteDesktop::Server::_TriggerShutDown));
@@ -262,13 +270,11 @@ void RemoteDesktop::Server::_Handle_ConnectionRequest(Packet_Header* header, con
 			_NewClients.push_back(sh);
 		}
 		else {// show pop up asking for permission to connect
-			
 			_NewConnect_Dialog = std::make_shared<NewConnect_Dialog>();
 			_NewConnect_Dialog->Show(uname);
 			_NewConnect_Dialog->OnAllow = DELEGATE(&RemoteDesktop::Server::_OnAllowConnection);
 			_NewConnect_Dialog->OnDeny = DELEGATE(&RemoteDesktop::Server::_OnDenyConnection);
 		}
-
 	}
 	else {
 		DEBUG_MSG("Setting user to disconnected because there was no name sent with the access request.");
@@ -334,9 +340,7 @@ void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHa
 
 void RemoteDesktop::Server::_HandleNewClients(Screen& screen, int index, std::vector<std::shared_ptr<SocketHandler>>& newclients){
 	if (newclients.empty()) return;
-
 	auto sendimg = screen.Image->Clone();
-
 	sendimg.Compress();
 	NetworkMsg msg;
 	New_Image_Header h;
@@ -397,17 +401,13 @@ void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, int in
 	}
 
 }
-
-
 void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing){
 	static auto begintimer = std::chrono::high_resolution_clock::now();
 
 	mousecapturing->Update();
-	if (mousecapturing->Last_ScreenPos != mousecapturing->Current_ScreenPos){//mouse pos is different
-		if (mousecapturing->Last_Mouse == mousecapturing->Current_Mouse){//mouse icon is the same... only send on interval
-			if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begintimer).count() < 50) return;
-		}
-		begintimer = std::chrono::high_resolution_clock::now();
+	if (mousecapturing->Last_ScreenPos != mousecapturing->Current_ScreenPos || mousecapturing->Last_Mouse != mousecapturing->Current_Mouse){//mouse pos is different
+		//if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begintimer).count() < 50) return;
+	//	begintimer = std::chrono::high_resolution_clock::now();
 
 		NetworkMsg msg;
 		MouseEvent_Header h;
@@ -423,7 +423,7 @@ void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapt
 }
 void RemoteDesktop::Server::OnConnect(std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	std::lock_guard<std::mutex> lock(_ClientLock);
-	_PendingNewClients.push_back(sh); 
+	_PendingNewClients.push_back(sh);
 	sh->Authorized = false;
 	DEBUG_MSG("New Client OnConnect");
 }
@@ -497,7 +497,7 @@ void RemoteDesktop::Server::_Run() {
 			name += L" has connected to your computer . . . ";
 			if (name.size()>2) _SystemTray->Popup(L"New Connection Established", name.c_str(), 10000);
 		}
-		
+
 		auto m = min(_VirtualScreen->Current.size(), _VirtualScreen->Previous.size());
 		for (size_t i = 0; i < m; i++){
 			_HandleNewClients(_VirtualScreen->Current[i], i, tmpbuffer);

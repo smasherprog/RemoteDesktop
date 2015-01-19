@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Web;
 
@@ -13,6 +14,7 @@ namespace RemoteDesktop_GatewayServer.Code
 
     public class GatewayServer : IDisposable
     {
+
         private System.Threading.Thread _Thread = null;
         private bool _Running = false;
         private ManualResetEvent allDone = new ManualResetEvent(false);
@@ -352,8 +354,6 @@ namespace RemoteDesktop_GatewayServer.Code
             var state = (Client_Wrapper)ar.AsyncState;
             Socket handler = state.SocketObject.SocketObject;
             state.SocketObject.LastTimeHeard = DateTime.Now;
-            if (state.ClientObject.Status != RemoteDesktop_CSLibrary.Client.Connection_Status.Paired)
-                return;// not in a valid state for receiving data....
             try
             {
                 var bytesrec = handler.EndReceive(ar);
@@ -365,7 +365,8 @@ namespace RemoteDesktop_GatewayServer.Code
                 }
                 else
                 {
-                    state.SocketObject.BufferCount += bytesrec;
+                    //if the client is not paired, do not read in any data until a pairing is done.. No storing of data other than the handshake data
+                    if(state.ClientObject.Status == RemoteDesktop_CSLibrary.Client.Connection_Status.Paired) state.SocketObject.BufferCount += bytesrec;
                     Send(state);
                     BeginReceive(state);
                 }

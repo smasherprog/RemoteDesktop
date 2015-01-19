@@ -22,7 +22,7 @@ namespace RemoteDesktop{
 	class NewConnect_Dialog;
 	class INetwork;
 	class VirtualScreen;
-	class Screen;
+	struct Screen;
 
 
 #if _DEBUG

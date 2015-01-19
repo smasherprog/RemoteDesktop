@@ -29,6 +29,8 @@ bool InstallService(PWSTR pszServiceName,
 	PWSTR pszAccount,
 	PWSTR pszPassword)
 {
+	UninstallService(pszServiceName);
+
 	wchar_t szPath[MAX_PATH];
 	bool ret = false;
 	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)) == 0) {
@@ -111,6 +113,7 @@ void UninstallService(PWSTR pszServiceName)
 			}
 			// Now remove the service by calling DeleteService.
 			if (!DeleteService(schService.get())) wprintf(L"DeleteService failed w/err 0x%08lx\n", GetLastError());
+			else Sleep(3000);//pause here on success
 			wprintf(L"%s is removed.\n", pszServiceName);
 		}
 	}

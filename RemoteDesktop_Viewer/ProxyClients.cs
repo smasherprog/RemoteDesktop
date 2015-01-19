@@ -68,8 +68,8 @@ namespace RemoteDesktop_Viewer
                 {
                     if (_ProxyAuth.Authenticated)
                     {
-                        _Hub = new Microsoft.AspNet.SignalR.Client.HubConnection(Settings.SignalRHubUrl);
-                        _ProxyHub = _Hub.CreateHubProxy(Settings.SignalRHubName);
+                        _Hub = new Microsoft.AspNet.SignalR.Client.HubConnection(RemoteDesktop_CSLibrary.Config.SignalRHubUrl);
+                        _ProxyHub = _Hub.CreateHubProxy(RemoteDesktop_CSLibrary.Config.SignalRHubName);
                         _Hub.TransportConnectTimeout = new TimeSpan(0, 0, 4);
                         _ProxyHub.On<List<Client>>("AvailableClients", ReceivedClients);
                         _Hub.Error += _Hub_Error;
@@ -183,10 +183,10 @@ namespace RemoteDesktop_Viewer
                     }
                     else
                     {
-                        Debug.WriteLine("Attempting connect to " + Settings.Gateway + " id: " + c.Src_ID);
+                        Debug.WriteLine("Attempting connect to " + RemoteDesktop_CSLibrary.Config.Gateway + " id: " + c.Src_ID);
                         if (OnConnectAttemptEvent != null)
                         {
-                            var splits = Settings.Gateway.Split(':');
+                            var splits = RemoteDesktop_CSLibrary.Config.Gateway.Split(':');
                             OnConnectAttemptEvent(splits.FirstOrDefault(), c);
                         }
                     }

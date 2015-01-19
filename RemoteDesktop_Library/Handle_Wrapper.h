@@ -23,6 +23,7 @@ namespace RemoteDesktop{
 		void dialogboxcleanup(HWND h);
 		void hwndtimercleanup(HWNDTimer* h); 
 		void socketcleanup(SOCKETWrapper* s);
+		inline HWND addclipboardlistener(HWND h){ AddClipboardFormatListener(h); return h; }
 	}
 	typedef std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::CloseHandle)> RAIIHANDLE_TYPE;
 #define RAIIHANDLE(handle) std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::CloseHandle)>(handle, &::CloseHandle)
@@ -61,10 +62,10 @@ namespace RemoteDesktop{
 #define RAIIHWNDTIMER(handle, id, time) std::unique_ptr<HWNDTimer, decltype(&RemoteDesktop::INTERNAL::hwndtimercleanup)>(new HWNDTimer(handle, id, time), &RemoteDesktop::INTERNAL::hwndtimercleanup)	
 
 	typedef std::unique_ptr<std::remove_pointer<HWND>::type, decltype(&::RemoveClipboardFormatListener)> RAIICLIPBOARDLISTENER_TYPE;
-#define RAIICLIPBOARDLISTENER(handle) std::unique_ptr<std::remove_pointer<HWND>::type, decltype(&::RemoveClipboardFormatListener)>(handle, &::RemoveClipboardFormatListener)	
+#define RAIICLIPBOARDLISTENER(handle) std::unique_ptr<std::remove_pointer<HWND>::type, decltype(&::RemoveClipboardFormatListener)>(RemoteDesktop::INTERNAL::addclipboardlistener(handle), &::RemoveClipboardFormatListener)	
 
-	typedef std::unique_ptr<SOCKETWrapper, decltype(&RemoteDesktop::INTERNAL::socketcleanup)> RAIISOCKET_TYPE;
-#define RAIISOCKET(handle) std::unique_ptr<SOCKETWrapper, decltype(&RemoteDesktop::INTERNAL::socketcleanup)>(new SOCKETWrapper(handle), &RemoteDesktop::INTERNAL::socketcleanup)	
+	typedef std::shared_ptr<SOCKETWrapper> RAIISOCKET_TYPE;
+#define RAIISOCKET(handle) std::shared_ptr<SOCKETWrapper>(new SOCKETWrapper(handle), &RemoteDesktop::INTERNAL::socketcleanup)	
 
 }
 

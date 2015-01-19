@@ -166,11 +166,11 @@ std::string RemoteDesktop::GetMAC(){
 	free(AdapterInfo);
 	return macs;
 }
-RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SocketHandler* sock, char* data, int len){
-
+RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SOCKET sock, char* data, int len){
+	assert(sock != INVALID_SOCKET);
 	while (len > 0){
 		//DEBUG_MSG("SendLoop %", len);
-		auto sentamount = send(sock->get_Socket(), data, len, 0);
+		auto sentamount = send(sock, data, len, 0);
 		if (sentamount <= 0){
 
 			auto errmsg = WSAGetLastError();
@@ -189,9 +189,25 @@ RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SocketHandler* sock, char*
 	}
 	return RemoteDesktop::Network_Return::COMPLETED;
 }
-RemoteDesktop::Network_Return RemoteDesktop::ReceiveLoop(SocketHandler* sock, std::vector<char>& outdata, int& datareceived){
+RemoteDesktop::Network_Return RemoteDesktop::CheckState(SOCKET sock){
+	if (sock == INVALID_SOCKET) return RemoteDesktop::Network_Return::FAILED;
+	int r = recv(sock, NULL, 0, 0);
+	if (r < 0){
+		auto errmsg = WSAGetLastError();
+		if (errmsg >= 10000 && errmsg <= 11999){//I have received 0 from wsageterror before... so do bounds check
+			if (errmsg == WSAEWOULDBLOCK || errmsg == WSAEMSGSIZE)  return RemoteDesktop::Network_Return::PARTIALLY_COMPLETED;
+			DEBUG_MSG("_ReceiveLoop DISCONNECTING %", errmsg);
+			return RemoteDesktop::Network_Return::FAILED;
+		}
+	}
+	return RemoteDesktop::Network_Return::COMPLETED;
+}
+
+
+RemoteDesktop::Network_Return RemoteDesktop::ReceiveLoop(SOCKET sock, std::vector<char>& outdata, int& datareceived){
+	assert(sock != INVALID_SOCKET);
 	if (datareceived - outdata.size() < STARTBUFFERSIZE) outdata.resize(outdata.size() + STARTBUFFERSIZE);//grow ahead by chunks
-	auto amtrec = recv(sock->get_Socket(), outdata.data() + datareceived, outdata.size() - datareceived, 0);//read as much as possible
+	auto amtrec = recv(sock, outdata.data() + datareceived, outdata.size() - datareceived, 0);//read as much as possible
 	if (amtrec > 0){
 		datareceived += amtrec;
 		return ReceiveLoop(sock, outdata, datareceived);

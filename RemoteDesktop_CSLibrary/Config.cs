@@ -5,10 +5,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RemoteDesktop_Viewer.Code
+namespace RemoteDesktop_CSLibrary
 {
-
-    public static class Settings
+    public static class Config
     {
 #if WIN64
          public const string DLL_Name = "RemoteDesktopViewer_Library_64.dll";
@@ -23,27 +22,27 @@ namespace RemoteDesktop_Viewer.Code
         public static string SignalRHubUrl { get { return "http://localhost:3406"; } }
         public static int AuthenticationTimeout { get { return 13000; } }//in ms
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct Traffic_Stats
-        {
-            public long CompressedSendBytes;
-            public long CompressedRecvBytes;//overall lifetime totals 
-            public long UncompressedSendBytes;
 
-            public long UncompressedRecvBytes;//overall lifetime totals 
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Traffic_Stats
+    {
+        public long CompressedSendBytes;
+        public long CompressedRecvBytes;//overall lifetime totals 
+        public long UncompressedSendBytes;
 
-            public long CompressedSendBPS;
-            public long CompressedRecvBPS;
-            public long UncompressedSendBPS;
-            public long UncompressedRecvBPS;
-        }
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct Settings_Header
-        {
+        public long UncompressedRecvBytes;//overall lifetime totals 
 
-            public int Image_Quality;
-            public bool GrayScale;
-            public bool ShareClip;
-        }
+        public long CompressedSendBPS;
+        public long CompressedRecvBPS;
+        public long UncompressedSendBPS;
+        public long UncompressedRecvBPS;
+    }
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct Settings_Header
+    {
+        public int Image_Quality;
+        public bool GrayScale;
+        public bool ShareClip;
     }
 }

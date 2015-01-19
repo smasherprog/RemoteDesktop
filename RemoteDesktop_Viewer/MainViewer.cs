@@ -31,29 +31,29 @@ namespace RemoteDesktop_Viewer
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate void _OnConnectingAttempt(int attempt, int maxattempts);
 
-        [DllImport(Settings.DLL_Name, CallingConvention = CallingConvention.StdCall)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name, CallingConvention = CallingConvention.StdCall)]
         static extern IntPtr Create_Client(IntPtr hwnd, _OnConnect onconnect, _OnDisconnect ondisconnect, _OnCursorChanged oncursorchange, _OnDisplayChanged ondisplaychanged, _OnConnectingAttempt onconnectingattempt);
-        [DllImport(Settings.DLL_Name)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
         static extern void Destroy_Client(IntPtr client);
-        [DllImport(Settings.DLL_Name, CharSet = CharSet.Unicode)]
-        static extern void Connect(IntPtr client, string port, string ip_or_host, int id, string aeskey);
-        [DllImport(Settings.DLL_Name)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name, CharSet = CharSet.Unicode)]
+        static extern void Connect(IntPtr client,  string port,string ip_or_host, int id, string aeskey);
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
         static extern void Draw(IntPtr client, IntPtr hdc);
-        [DllImport(Settings.DLL_Name)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
         static extern void KeyEvent(IntPtr client, int VK, bool down);
-        [DllImport(Settings.DLL_Name)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
         static extern void MouseEvent(IntPtr client, int action, int x, int y, int wheel);
-        [DllImport(Settings.DLL_Name)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
         static extern void SendCAD(IntPtr client);
-        [DllImport(Settings.DLL_Name)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
         static extern void SendRemoveService(IntPtr client);
-        [DllImport(Settings.DLL_Name, CharSet = CharSet.Unicode)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name, CharSet = CharSet.Unicode)]
         static extern void ElevateProcess(IntPtr client, string username, string password);
-        
-        [DllImport(Settings.DLL_Name)]
-        static extern RemoteDesktop_Viewer.Code.Settings.Traffic_Stats get_TrafficStats(IntPtr client);
 
-        [DllImport(Settings.DLL_Name)]
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
+        static extern RemoteDesktop_CSLibrary.Traffic_Stats get_TrafficStats(IntPtr client);
+
+        [DllImport(RemoteDesktop_CSLibrary.Config.DLL_Name)]
         static extern void SendSettings(IntPtr client, int img_quality, bool gray, bool shareclip);
 
         public delegate void OnConnectHandler();
@@ -226,9 +226,9 @@ namespace RemoteDesktop_Viewer
             _Host_Address = proxy_host;
             _Proxyd_Client = c;
             if(c == null)
-                Connect(_Client, Settings.Port, proxy_host, -1, "");
+                Connect(_Client, RemoteDesktop_CSLibrary.Config.Port, proxy_host, -1, "");
             else
-                Connect(_Client,  Settings.Port, proxy_host, c.Src_ID, c.AES_Session_Key);
+                Connect(_Client, RemoteDesktop_CSLibrary.Config.Port,  proxy_host, c.Src_ID, c.AES_Session_Key);
         }
         static int counter = 0;
         static DateTime timer = DateTime.Now;
@@ -334,7 +334,7 @@ namespace RemoteDesktop_Viewer
             f.OnSettingsChangedEvent += OnSettingsChanged;
             f.ShowDialog(this);
         }
-        private void OnSettingsChanged(RemoteDesktop_Viewer.Code.Settings.Settings_Header h)
+        private void OnSettingsChanged(RemoteDesktop_CSLibrary.Settings_Header h)
         {
             SendSettings(_Client, h.Image_Quality, h.GrayScale, h.ShareClip);
         }

@@ -3,10 +3,10 @@
 #include "NetworkSetup.h"
 #include "SocketHandler.h"
 #include <string>
+#include "NetworkProcessor.h"
+#include <chrono>
 
 RemoteDesktop::Network_Server::Network_Server(){
-	EventArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
-	SocketArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
 	DEBUG_MSG("Starting Server");
 }
 RemoteDesktop::Network_Server::~Network_Server(){
@@ -24,16 +24,16 @@ void RemoteDesktop::Network_Server::Start(std::wstring port, std::wstring host){
 void RemoteDesktop::Network_Server::Stop(bool blocking) {
 	_Running = false;
 	BEGINTRY
-		if (std::this_thread::get_id() != _BackgroundWorker.get_id() &&  _BackgroundWorker.joinable() && blocking)_BackgroundWorker.join();
-
+		if (std::this_thread::get_id() != _BackgroundWorker.get_id() && _BackgroundWorker.joinable() && blocking)_BackgroundWorker.join();
 	ENDTRY
-		for (auto x : EventArray) {
-			if (x != NULL) WSACloseEvent(x);
-		}
-	EventArray.resize(0);
-	SocketArray.resize(0);
 }
 void RemoteDesktop::Network_Server::_Run(){
+
+	std::vector<WSAEVENT> EventArray;
+	auto sharedrockarray = std::make_shared<std::vector<std::shared_ptr<SocketHandler>>>();
+	_Sockets = sharedrockarray;
+	EventArray.reserve(WSA_MAXIMUM_WAIT_EVENTS);
+	sharedrockarray->reserve(WSA_MAXIMUM_WAIT_EVENTS);
 
 	SOCKET listensocket = RemoteDesktop::Listen(_Port, _Host);
 	if (listensocket == INVALID_SOCKET) return;
@@ -42,24 +42,24 @@ void RemoteDesktop::Network_Server::_Run(){
 	WSAEventSelect(listensocket, newevent, FD_ACCEPT | FD_CLOSE);
 
 	EventArray.push_back(newevent);
-	SocketArray.push_back(std::make_shared<SocketHandler>(listensocket, false));
+	sharedrockarray->push_back(std::make_shared<SocketHandler>(listensocket, false));
 
+	NetworkProcessor processor(DELEGATE(&RemoteDesktop::Network_Server::_HandleReceive), DELEGATE(&RemoteDesktop::Network_Server::_HandleConnect));
 	WSANETWORKEVENTS NetworkEvents;
-	int counter = 0;
-	//NetworkProcessor processor;
+	auto timer = std::chrono::high_resolution_clock::now();
 	while (_Running && !EventArray.empty()) {
 
 		auto Index = WSAWaitForMultipleEvents(EventArray.size(), EventArray.data(), FALSE, 1000, FALSE);
 
-		if ((Index != WSA_WAIT_FAILED) && (Index != WSA_WAIT_TIMEOUT) && Index < SocketArray.size()) {
+		if ((Index != WSA_WAIT_FAILED) && (Index != WSA_WAIT_TIMEOUT) && _Running) {
 
-			WSAEnumNetworkEvents(SocketArray[Index]->get_Socket(), EventArray[Index], &NetworkEvents);
+			WSAEnumNetworkEvents(sharedrockarray->at(Index)->get_Socket(), EventArray[Index], &NetworkEvents);
 			if (((NetworkEvents.lNetworkEvents & FD_ACCEPT) == FD_ACCEPT) && NetworkEvents.iErrorCode[FD_ACCEPT_BIT] == ERROR_SUCCESS){
 				if (EventArray.size() >= WSA_MAXIMUM_WAIT_EVENTS - 1) continue;// ignore this event too many connections
-				_HandleNewConnect(listensocket);
+				_HandleNewConnect(listensocket, EventArray, *sharedrockarray);
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_READ) == FD_READ) && NetworkEvents.iErrorCode[FD_READ_BIT] == ERROR_SUCCESS){
-				SocketArray[Index]->Receive();
+				processor.Receive(sharedrockarray->at(Index));
 			}
 			else if (((NetworkEvents.lNetworkEvents & FD_CLOSE) == FD_CLOSE) && NetworkEvents.iErrorCode[FD_CLOSE_BIT] == ERROR_SUCCESS){
 				if (Index == 0) {//stop all processing, set running to false and next loop will fail and cleanup
@@ -68,64 +68,46 @@ void RemoteDesktop::Network_Server::_Run(){
 				}
 			}
 		}
-		if (counter++ > 5 || Index == WSA_WAIT_TIMEOUT){
-			_CheckForDisconnects();
-			counter = 0;
+		//once every second send a keep alive. this will trigger disconnects 
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - timer).count() > 1000){
+			_CheckForDisconnects(EventArray, *sharedrockarray);
+			timer = std::chrono::high_resolution_clock::now();
 		}
 	}
-
-	for (size_t beg = 1; beg < SocketArray.size(); beg++){
-		OnDisconnect(SocketArray[beg]);//let all callers know about the disconnect, skip slot 0 which is the listen socket
+	for (size_t beg = 1; beg < sharedrockarray->size(); beg++){
+		OnDisconnect(sharedrockarray->at(beg));//let all callers know about the disconnect, skip slot 0 which is the listen socket
 	}
 	//cleanup code here
 	for (auto x : EventArray) WSACloseEvent(x);
-	EventArray.resize(0);
-	SocketArray.resize(0);
 	DEBUG_MSG("_Listen Exiting");
 }
 RemoteDesktop::Network_Return RemoteDesktop::Network_Server::Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg, Auth_Types to_which_type){
-	for (size_t beg = 1; beg < SocketArray.size() && beg < SocketArray.capacity() - 1; beg++){
-		auto s(SocketArray[beg]);//get a copy
-		if (s) {
-			if (to_which_type == Auth_Types::ALL) s->Send(m, msg);
-			else if (to_which_type == Auth_Types::AUTHORIZED && s->Authorized) s->Send(m, msg);
-			else if (to_which_type == Auth_Types::NOT_AUTHORIZED && !s->Authorized) s->Send(m, msg);
+	auto sockarr(_Sockets.lock());
+	if (sockarr){
+	
+		for (size_t beg = 1; beg < sockarr->size() && beg < sockarr->capacity() - 1; beg++){
+			auto s(sockarr->at(beg));//get a copy
+			if (s) {
+				if (to_which_type == Auth_Types::ALL) s->Send(m, msg);
+				else if (to_which_type == Auth_Types::AUTHORIZED && s->Authorized) s->Send(m, msg);
+				else if (to_which_type == Auth_Types::NOT_AUTHORIZED && !s->Authorized) s->Send(m, msg);
+			}
 		}
 	}
+
 	return RemoteDesktop::Network_Return::COMPLETED;
 }
-void RemoteDesktop::Network_Server::_HandleConnect(SocketHandler* ptr){
-	if (_Running) {
-		for (size_t beg = 1; beg < SocketArray.size() && beg < SocketArray.capacity() - 1; beg++){
-			if (ptr == SocketArray[beg].get()){
-				auto s(SocketArray[beg]);//get a copy
-				if (s && OnConnected)  OnConnected(s);
-			}
-		}
-	}
+void RemoteDesktop::Network_Server::_HandleConnect(std::shared_ptr<SocketHandler>& s){
+	if (_Running && OnConnected)  OnConnected(s);
 }
-void RemoteDesktop::Network_Server::_HandleDisconnect(SocketHandler* ptr){
-	if (_Running) {
-		for (size_t beg = 1; beg < SocketArray.size() && beg < SocketArray.capacity() - 1; beg++){
-			if (ptr == SocketArray[beg].get()){
-				auto s(SocketArray[beg]);//get a copy
-				if (s && OnDisconnect) OnDisconnect(s);
-			}
-		}
-	}
+void RemoteDesktop::Network_Server::_HandleDisconnect(std::shared_ptr<SocketHandler>& s){
+	if (_Running && OnDisconnect) OnDisconnect(s);
 }
-void RemoteDesktop::Network_Server::_HandleReceive(Packet_Header* p, const char* d, SocketHandler* ptr){
-	if (_Running) {
-		for (size_t beg = 1; beg < SocketArray.size() && beg < SocketArray.capacity() - 1; beg++){
-			if (ptr == SocketArray[beg].get()){
-				auto s(SocketArray[beg]);//get a copy
-				if (s && OnReceived) OnReceived(p, d, s);
-			}
-		}
-	}
+void RemoteDesktop::Network_Server::_HandleReceive(Packet_Header* p, const char* d, std::shared_ptr<SocketHandler>& s){
+	if (_Running && OnReceived) OnReceived(p, d, s);
 }
 
-void RemoteDesktop::Network_Server::_HandleNewConnect(SOCKET sock){
+void RemoteDesktop::Network_Server::_HandleNewConnect(SOCKET sock, std::vector<WSAEVENT>& eventarray, std::vector<std::shared_ptr<SocketHandler>>& socketarray){
 	DEBUG_MSG("BaseServer OnConnect Called");
 	int sockaddrlen = sizeof(sockaddr_in);
 	sockaddr_in addr;
@@ -143,28 +125,24 @@ void RemoteDesktop::Network_Server::_HandleNewConnect(SOCKET sock){
 
 	auto newsocket = std::make_shared<SocketHandler>(connectsocket, false);
 
-	newsocket->Connected_CallBack = std::bind(&RemoteDesktop::Network_Server::_HandleConnect, this, std::placeholders::_1);
-	newsocket->Receive_CallBack = std::bind(&RemoteDesktop::Network_Server::_HandleReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	newsocket->Disconnect_CallBack = std::bind(&RemoteDesktop::Network_Server::_HandleDisconnect, this, std::placeholders::_1);
-
-	SocketArray.push_back(newsocket);
-	EventArray.push_back(newevent);
+	socketarray.push_back(newsocket);
+	eventarray.push_back(newevent);
 	newsocket->Exchange_Keys(-1, -1, L"");
 	DEBUG_MSG("BaseServer OnConnect End");
 }
-void RemoteDesktop::Network_Server::_CheckForDisconnects(){
-	if (SocketArray.size()<=1) return;
-	auto beg = SocketArray.begin() + 1;
-	if (beg >= SocketArray.end()) return;
-	while (beg != SocketArray.end()){
-		//checkstate will block if a disconnect occurs until processing stops, which means no receives can occur if the socket is in a disconnect state.
-		//it will also do the disconnect call back to notify anyone before the socket is destoryed in the following lines of code
-		if ((*beg)->CheckState() == RemoteDesktop::Network_Return::FAILED){
+void RemoteDesktop::Network_Server::_CheckForDisconnects(std::vector<WSAEVENT>& eventarray, std::vector<std::shared_ptr<SocketHandler>>& socketarray){
+
+	if (socketarray.size() <= 1) return;
+	auto beg = socketarray.begin() + 1;
+	if (beg >= socketarray.end()) return;
+	while (beg != socketarray.end()){
+		if (RemoteDesktop::SocketHandler::CheckState(*beg) == RemoteDesktop::Network_Return::FAILED){
+			_HandleDisconnect(*beg);
 			//get the index before deletion
-			int index = beg - SocketArray.begin();
-			beg = SocketArray.erase(beg);
-			WSACloseEvent(EventArray[index]);
-			EventArray.erase(EventArray.begin() + index);
+			int index = beg - socketarray.begin();
+			beg = socketarray.erase(beg);
+			WSACloseEvent(eventarray[index]);
+			eventarray.erase(eventarray.begin() + index);
 			continue;
 		}
 		++beg;
