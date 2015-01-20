@@ -70,6 +70,7 @@ namespace RemoteDesktop{
 		char RelativePath[MAX_PATH];
 		int ID = 0;
 		int ChunkSize = 0;//in bytes
+		bool Last = false;
 	};
 #pragma pack(pop)
 #define FILECHUNKSIZE (1024*100) // 100 KB

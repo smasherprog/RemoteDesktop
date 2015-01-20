@@ -32,12 +32,16 @@ namespace RemoteDesktop{
 		Network_Return _Encrypt_And_Send(NetworkMessages m, const NetworkMsg& msg); 
 		RAIISOCKET_TYPE _Socket;
 		PeerState State = PEER_STATE_DISCONNECTED;
-		
+		std::unique_ptr<std::ofstream> _File;
+		std::string _FileName;
 
 	public:
 		explicit SocketHandler(SOCKET socket, bool client);
 		~SocketHandler();
 
+		//used to keep a file open for writing
+		void WriteToFile(std::string filename, const char* data, int len_bytes, bool lastwrite=false);
+	
 		Network_Return Exchange_Keys(int dst_id, int src_id, std::wstring aeskey);
 
 		void Receive();

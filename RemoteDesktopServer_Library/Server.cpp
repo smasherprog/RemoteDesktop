@@ -227,13 +227,14 @@ void RemoteDesktop::Server::_Handle_File(RemoteDesktop::Packet_Header* header, c
 	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
 
 	DEBUG_MSG("% BEG FILE: %", path.size(), path);
-	int openoptions = std::ios::binary;
-	if (fh.ID == 0) openoptions |= std::ios::trunc;// erase everything in the file 
-	else openoptions |= std::ios::app;// append data 
-	std::ofstream f(path, openoptions);
-	f.write(data, fh.ChunkSize);
-	DEBUG_MSG("% END FILE: %", path.size(), path);
+	sh->WriteToFile(path, data, fh.ChunkSize, fh.Last);
+	//int openoptions = std::ios::binary;
+	//if (fh.ID == 0) openoptions |= std::ios::trunc;// erase everything in the file 
+	//else openoptions |= std::ios::app;// append data 
+	//std::ofstream f(path, openoptions);
+	//f.write();
 
+	DEBUG_MSG("% END FILE: %", path.size(), path);
 }
 
 void RemoteDesktop::Server::_Handle_Folder(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
@@ -307,7 +308,7 @@ void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, s
 		break;
 	case NetworkMessages::FILE:
 		_Handle_File(header, data, sh);
-		break;
+		break;	
 	case NetworkMessages::FOLDER:
 		_Handle_Folder(header, data, sh);
 		break;

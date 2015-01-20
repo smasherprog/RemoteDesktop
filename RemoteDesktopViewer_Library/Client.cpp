@@ -198,7 +198,7 @@ void RemoteDesktop::Client::SendFile(const char* absolute_path, const char* rela
 				: FILECHUNKSIZE; /* else fill entire chunk */
 			infile.read(buffer.data(), this_chunk_size); /* this many bytes is to be read */
 			fh.ChunkSize = this_chunk_size;
-
+			fh.Last = chunk == total_chunks - 1;
 			NetworkMsg msg;
 			msg.push_back(fh);
 			msg.data.push_back(DataPackage(buffer.data(), fh.ChunkSize));

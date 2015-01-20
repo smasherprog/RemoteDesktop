@@ -29,9 +29,26 @@ void RemoteDesktop::SocketHandler::Receive(){
 		ret = ReceiveLoop(_Socket->socket, _In_ReceivedBuffer, _In_ReceivedBufferCounter);
 	}
 	if (ret == RemoteDesktop::Network_Return::FAILED) Disconnect();
-//	DEBUG_MSG("_Receive %", _In_ReceivedBufferCounter);
+	//	DEBUG_MSG("_Receive %", _In_ReceivedBufferCounter);
 }
 
+//used to keep a file open for writing
+void RemoteDesktop::SocketHandler::WriteToFile(std::string filename, const char* data, int len_bytes, bool lastwrite){
+
+	if (_FileName != filename || !_File){
+		_File = std::make_unique<std::ofstream>(filename.c_str(), std::ios::trunc | std::ios::binary);
+		_FileName = filename;
+	}
+	if (_File){
+		if (_File->is_open()){
+			_File->write(data, len_bytes);
+		}
+	}
+	if (lastwrite){
+		_File = nullptr;
+		_FileName = "";
+	}
+}
 
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::Exchange_Keys(int dst_id, int src_id, std::wstring aeskey){
 
