@@ -55,7 +55,9 @@ HDESK Switch_to_Desktop(int desired_desktop, HDESK currentdesk){
 
 int RemoteDesktop::DesktopMonitor::get_InputDesktop() const{
 	auto inputdesktop = RAIIHDESKTOP(OpenInputDesktop(0, FALSE, GENERIC_READ));
-	if (inputdesktop.get() == NULL) return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
+	if (inputdesktop.get() == NULL) {
+		return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
+	}
 
 	DWORD dummy;
 	char inputname[256];
@@ -66,7 +68,11 @@ int RemoteDesktop::DesktopMonitor::get_InputDesktop() const{
 	return (RemoteDesktop::DesktopMonitor::Desktops::SCREENSAVER | RemoteDesktop::DesktopMonitor::Desktops::INPUT);
 }
 bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected() const{
-	return ((get_InputDesktop() & ~RemoteDesktop::DesktopMonitor::Desktops::INPUT) & get_ThreadDesktop()) != 0;
+	auto inp = get_InputDesktop();
+	if ((inp&RemoteDesktop::DesktopMonitor::Desktops::INPUT) == 0) {
+		return false;
+	}
+	return (inp & get_ThreadDesktop()) != 0;
 }
 int RemoteDesktop::DesktopMonitor::get_ThreadDesktop() const{
 	HDESK threaddesktop = GetThreadDesktop(GetCurrentThreadId());

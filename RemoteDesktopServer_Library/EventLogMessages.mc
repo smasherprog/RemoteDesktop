@@ -53,47 +53,24 @@ The command is not valid.
 
 
 MessageId=0x101
-Severity=Error
+Severity=Informational
 Facility=System
-SymbolicName=MSG_BAD_FILE_CONTENTS
+SymbolicName=SERVICE_MSG
 Language=English
-File %1 contains content that is not valid.
-.
-
-MessageId=0x102
-Severity=Warning
-Facility=System
-SymbolicName=MSG_RETRIES
-Language=English
-There have been %1 retries with %2 success! Disconnect from
-the server and try again later.
+%1
 .
 
 MessageId=0x103
 Severity=Informational
 Facility=System
-SymbolicName=MSG_COMPUTE_CONVERSION
+SymbolicName=CONNECT_MSG
 Language=English
-%1 %%4096 = %2 %%4097. 
+%1 
 .
-
-
-; // The following are the parameter strings */
-
-
-MessageId=0x1000
-Severity=Success
+MessageId=0x104
+Severity=Informational
 Facility=System
-SymbolicName=QUARTS_UNITS
+SymbolicName=DISCONNECT_MSG
 Language=English
-quarts%0
+%1 
 .
-
-MessageId=0x1001
-Severity=Success
-Facility=System
-SymbolicName=GALLONS_UNITS
-Language=English
-gallons%0
-.
-

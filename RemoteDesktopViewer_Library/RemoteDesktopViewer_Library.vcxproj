@@ -175,6 +175,7 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="DLL_API.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
@@ -192,6 +193,9 @@
     <ProjectReference Include="..\RemoteDesktop_Library\RemoteDesktop_Library.vcxproj">
       <Project>{d75e5ad6-ee2a-46ce-8eaf-9bd3d5777b37}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RemoteDesktopViewer_Library.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

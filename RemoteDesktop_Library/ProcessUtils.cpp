@@ -22,17 +22,7 @@ bool RemoteDesktop::IsElevated() {
 }
 
 bool RemoteDesktop::IsUserAdmin(){
-
-
-	int found;
-	DWORD i, l;
 	HANDLE hTok = nullptr;
-	PSID pAdminSid = nullptr;
-	SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
-
-	BYTE rawGroupList[4096];
-	TOKEN_GROUPS& groupList = *((TOKEN_GROUPS *)rawGroupList);
-
 	if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hTok))
 	{
 		DEBUG_MSG("Cannot open thread token, trying process token [%].", GetLastError());
@@ -43,6 +33,35 @@ bool RemoteDesktop::IsUserAdmin(){
 		}
 	}
 	auto threadtok(RAIIHANDLE(hTok));//make sure its destoryed properly
+
+	auto found = IsUserAdmin(hTok);
+	if (!found){//search domain groups as well
+		DWORD rc;
+		wchar_t user_name[256];
+		USER_INFO_1 *info;
+		DWORD size = sizeof(user_name);
+
+		GetUserNameW(user_name, &size);
+
+		rc = NetUserGetInfo(NULL, user_name, 1, (LPBYTE *)&info);
+		if (rc != NERR_Success)
+			return false;
+
+		found = info->usri1_priv == USER_PRIV_ADMIN;
+		NetApiBufferFree(info);
+	}
+	return found;
+}
+
+bool RemoteDesktop::IsUserAdmin(HANDLE hTok){
+
+	bool found;
+	DWORD i, l;
+	PSID pAdminSid = nullptr;
+	SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
+
+	BYTE rawGroupList[4096];
+	TOKEN_GROUPS& groupList = *((TOKEN_GROUPS *)rawGroupList);
 
 	// normally, I should get the size of the group list first, but ...
 	l = sizeof(rawGroupList);
@@ -66,31 +85,14 @@ bool RemoteDesktop::IsUserAdmin(){
 	{
 		if (EqualSid(pAdminSid, groupList.Groups[i].Sid))
 		{
-			found = 1;
+			found = true;
 			break;
 		}
 	}
 
 	FreeSid(pAdminSid);
-
-	if (!found){//search domain groups as well
-		DWORD rc;
-		wchar_t user_name[256];
-		USER_INFO_1 *info;
-		DWORD size = sizeof(user_name);
-
-		GetUserNameW(user_name, &size);
-
-		rc = NetUserGetInfo(NULL, user_name, 1, (LPBYTE *)&info);
-		if (rc != NERR_Success)
-			return false;
-
-		found = info->usri1_priv == USER_PRIV_ADMIN;
-		NetApiBufferFree(info);
-	}
-	return found>0;
+	return found;
 }
-
 bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
 	if (IsElevated()) return false;//allready elevated
 	if (!IsUserAdmin()) return false;// cannot elevate process anyway

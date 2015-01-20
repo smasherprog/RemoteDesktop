@@ -18,7 +18,7 @@ ServerService::~ServerService(void)
 void ServerService::OnStart(DWORD dwArgc, LPWSTR *lpszArgv)
 {
 	// Log a service start message to the Application log.
-	RemoteDesktop::EventLog::WriteLog(L"CppWindowsService in OnStart", EVENTLOG_INFORMATION_TYPE);
+	RemoteDesktop::EventLog::WriteLog(L"CppWindowsService in OnStart", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
 
 	_ServiceMonitor = std::make_unique<RemoteDesktop::ServiceMonitor>();
 	_ServiceMonitor->Start();
@@ -26,7 +26,9 @@ void ServerService::OnStart(DWORD dwArgc, LPWSTR *lpszArgv)
 void ServerService::OnStop()
 {
 	// Log a service stop message to the Application log.
-	RemoteDesktop::EventLog::WriteLog(L"CppWindowsService in OnStop", EVENTLOG_INFORMATION_TYPE);
+
+	RemoteDesktop::EventLog::WriteLog(L"CppWindowsService in OnStop", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+
 	_ServiceMonitor->Stop();
 	_ServiceMonitor = nullptr;
 }

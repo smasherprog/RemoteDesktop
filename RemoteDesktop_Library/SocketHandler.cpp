@@ -29,7 +29,7 @@ void RemoteDesktop::SocketHandler::Receive(){
 		ret = ReceiveLoop(_Socket->socket, _In_ReceivedBuffer, _In_ReceivedBufferCounter);
 	}
 	if (ret == RemoteDesktop::Network_Return::FAILED) Disconnect();
-	DEBUG_MSG("_Receive %", _In_ReceivedBufferCounter);
+//	DEBUG_MSG("_Receive %", _In_ReceivedBufferCounter);
 }
 
 
@@ -128,7 +128,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::ProcessReceived(std:
 			socket->_ReceivedBuffer.resize(socket->_ReceivedBufferCounter + socket->_In_ReceivedBufferCounter);
 			memcpy(socket->_ReceivedBuffer.data() + socket->_ReceivedBufferCounter, socket->_In_ReceivedBuffer.data(), socket->_In_ReceivedBufferCounter);
 			socket->_In_ReceivedBuffer.resize(0);
-			DEBUG_MSG("Copied % bytes into received", socket->_In_ReceivedBufferCounter);
+			//DEBUG_MSG("Copied % bytes into received", socket->_In_ReceivedBufferCounter);
 			socket->_ReceivedBufferCounter += socket->_In_ReceivedBufferCounter;
 			socket->_In_ReceivedBufferCounter = 0;
 		}
@@ -207,7 +207,5 @@ RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::ProcessReceived(std:
 
 
 RemoteDesktop::Network_Return RemoteDesktop::SocketHandler::CheckState(std::shared_ptr<SocketHandler>& socket){
-	DEBUG_MSG("CHECKSTATE");
-	return RemoteDesktop::Network_Return::COMPLETED;
 	return socket->Send(RemoteDesktop::NetworkMessages::KEEPALIVE);
 }

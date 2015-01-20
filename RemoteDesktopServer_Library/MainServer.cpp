@@ -8,8 +8,16 @@
 #include "..\RemoteDesktop_Library\EventLog.h"
 #include "..\RemoteDesktop_Library\UserInfo.h"
 #include "..\RemoteDesktop_Library\ProcessUtils.h"
+#if _DEBUG
+#include "Console.h"
+#endif
 
 void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gateway){
+#if _DEBUG
+	std::unique_ptr<CConsole> _DebugConsole = std::make_unique<CConsole>();
+#endif
+
+	GetUserInfo();
 	EventLog::Init(Service_Name());
 #if !_DEBUG
 	if (RemoteDesktop::TryToElevate(argv, argc)) return;//if the app was able to elevate, shut this instance down

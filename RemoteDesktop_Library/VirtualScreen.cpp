@@ -32,7 +32,7 @@ void RemoteDesktop::VirtualScreen::Update(){
 	Previous = std::move(Current);
 	auto hDesktopDC(RAIIHDC(GetDC(NULL)));
 	EnumDisplayMonitors(hDesktopDC.get(), NULL, MonitorEnumProc, reinterpret_cast<LPARAM>(&Current));
-
+	if (Current.empty()) return;//could not capture monitors.. get out
 	std::sort(Current.begin(), Current.end(), [](const Screen& i, const Screen& j){
 		return i.XOffset < j.XOffset;
 	});

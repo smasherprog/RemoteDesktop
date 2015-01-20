@@ -31,7 +31,7 @@ void RemoteDesktop::ClipboardMonitor::Restore(const Clipboard_Data& c){
 
 void RemoteDesktop::ClipboardMonitor::_Run(){
 	DesktopMonitor dekstopmonitor;
-	if (!dekstopmonitor.Is_InputDesktopSelected()) dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
+	dekstopmonitor.Switch_to_Desktop(DesktopMonitor::DEFAULT);
 
 	auto myclass = L"myclass";
 	WNDCLASSEX wndclass = {};

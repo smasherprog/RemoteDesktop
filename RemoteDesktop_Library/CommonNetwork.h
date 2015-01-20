@@ -45,6 +45,7 @@ namespace RemoteDesktop{
 		wchar_t full_name[UNAMELEN];
 		wchar_t computername[MAX_COMPUTERNAME_LENGTH+1];//computername
 		wchar_t domain[UNAMELEN];//
+		wchar_t ip_addr[MAX_COMPUTERNAME_LENGTH +1];//
 	};
 	struct Update_Image_Header{
 		int Index;
@@ -101,7 +102,8 @@ namespace RemoteDesktop{
 		ELEVATEPROCESS,
 		CONNECT_REQUEST,
 		CONNECT_REQUEST_FAILED,
-		KEEPALIVE
+		KEEPALIVE,
+		UAC_BLOCKED
 	};
 	enum Network_Return{
 		FAILED,

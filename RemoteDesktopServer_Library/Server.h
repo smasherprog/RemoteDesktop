@@ -25,13 +25,8 @@ namespace RemoteDesktop{
 	struct Screen;
 
 
-#if _DEBUG
-	class CConsole;
-#endif
 	class Server{
-#if _DEBUG
-		std::unique_ptr<CConsole> _DebugConsole;
-#endif
+
 		std::mutex _ClientLock;
 		std::vector<std::shared_ptr<SocketHandler>> _PendingNewClients; 
 		std::vector<std::shared_ptr<SocketHandler>> _NewClients;
@@ -49,6 +44,7 @@ namespace RemoteDesktop{
 		bool _HandleResolutionUpdates(Screen& screen, Screen& lastscreen, int index);
 		void _Handle_ScreenUpdates(Image& img, Rect& rect, int index);
 		void _Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing);
+		void _Handle_UAC_Permission();
 
 		void _Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);
 		void _Handle_File(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh); 

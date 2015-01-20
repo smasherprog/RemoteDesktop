@@ -140,14 +140,10 @@ void RemoteDesktop::Client::SendRemoveService(){
 }
 void RemoteDesktop::Client::ElevateProcess(wchar_t* username, wchar_t* password){
 	NetworkMsg msg;
-	std::wstring user(username);
-	int len = user.size();
-	msg.data.push_back(DataPackage((char*)&len, len));
-	msg.data.push_back(DataPackage((char*)username, len));
-	std::wstring pass(password);
-	int otherlen = pass.size();
-	msg.data.push_back(DataPackage((char*)&otherlen, otherlen));
-	msg.data.push_back(DataPackage((char*)password, otherlen));
+	Elevate_Header h = { 0 };
+	wcscpy_s(h.Username, username);
+	wcscpy_s(h.Password, password);
+	msg.push_back(h);
 	Send(Socket, NetworkMessages::ELEVATEPROCESS, msg);
 }
 
@@ -264,9 +260,13 @@ void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, s
 	else if (header->Packet_Type == NetworkMessages::CLIPBOARDCHANGED){
 		_Handle_ClipBoard(header, data, sh);
 	}
-
+	else if (header->Packet_Type == NetworkMessages::UAC_BLOCKED){
+		auto copy = _Display;
+		if (copy) copy->SetUAC_Block();
+	}
 
 	t.Stop();
 	//DEBUG_MSG("took: %", t.Elapsed());
 }
+
 

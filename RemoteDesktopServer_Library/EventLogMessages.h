@@ -81,49 +81,29 @@
 #define MSG_INVALID_COMMAND              ((DWORD)0xC0020100L)
 
 //
-// MessageId: MSG_BAD_FILE_CONTENTS
+// MessageId: SERVICE_MSG
 //
 // MessageText:
 //
-// File %1 contains content that is not valid.
+// %1
 //
-#define MSG_BAD_FILE_CONTENTS            ((DWORD)0xC0000101L)
+#define SERVICE_MSG                      ((DWORD)0x40000101L)
 
 //
-// MessageId: MSG_RETRIES
+// MessageId: CONNECT_MSG
 //
 // MessageText:
 //
-// There have been %1 retries with %2 success! Disconnect from
-// the server and try again later.
+// %1 
 //
-#define MSG_RETRIES                      ((DWORD)0x80000102L)
+#define CONNECT_MSG                      ((DWORD)0x40000103L)
 
 //
-// MessageId: MSG_COMPUTE_CONVERSION
+// MessageId: DISCONNECT_MSG
 //
 // MessageText:
 //
-// %1 %%4096 = %2 %%4097. 
+// %1 
 //
-#define MSG_COMPUTE_CONVERSION           ((DWORD)0x40000103L)
-
- // The following are the parameter strings */
-//
-// MessageId: QUARTS_UNITS
-//
-// MessageText:
-//
-// quarts%0
-//
-#define QUARTS_UNITS                     ((DWORD)0x00001000L)
-
-//
-// MessageId: GALLONS_UNITS
-//
-// MessageText:
-//
-// gallons%0
-//
-#define GALLONS_UNITS                    ((DWORD)0x00001001L)
+#define DISCONNECT_MSG                   ((DWORD)0x40000104L)
 

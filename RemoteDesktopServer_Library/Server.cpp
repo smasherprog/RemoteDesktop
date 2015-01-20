@@ -22,9 +22,6 @@
 #include "Strsafe.h"
 #include "..\RemoteDesktop_Library\Config.h"
 
-#if _DEBUG
-#include "Console.h"
-#endif
 
 #define FRAME_CAPTURE_INTERVAL 100 //ms between checking for screen changes
 RemoteDesktop::Server::Server() :
@@ -32,9 +29,6 @@ _CADEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\Sessio
 _SelfRemoveEventHandle(RAIIHANDLE(OpenEvent(EVENT_MODIFY_STATE, FALSE, L"Global\\SessionEventRemoveSelf")))
 {
 
-#if _DEBUG
-	_DebugConsole = std::make_unique<CConsole>();
-#endif
 	RemoteDesktop::AddFirewallException();
 
 	DWORD bufsize = (UNLEN + 1);
@@ -259,7 +253,8 @@ void RemoteDesktop::Server::_Handle_ConnectionRequest(Packet_Header* header, con
 	auto uname = std::wstring(sh->Connection_Info.full_name);
 	if (uname.size() > 2){
 		DEBUG_MSG("Connect Request from %", ws2s(uname));
-		EventLog::WriteLog(uname + L" is attempted to connect to this machine");
+		//EventLog::WriteLog(msgs, EventLog::EventType::INFORMATIONAL, EventLog::EventCategory::NETWORK_CATEGORY, EventLog::EventID::DISCONNECT);
+		//EventLog::WriteLog(uname + L" is attempted to connect to this machine");
 		std::wstring lastauthuser = GetLast_UserConnectName();
 		//close the gateway dialog in any case
 		auto a = _GatewayConnect_Dialog;
@@ -281,10 +276,17 @@ void RemoteDesktop::Server::_Handle_ConnectionRequest(Packet_Header* header, con
 		sh->Disconnect();
 	}
 }
+#include "..\RemoteDesktop_Library\ProcessUtils.h"
+
 void RemoteDesktop::Server::_Handle_ElevateProcess(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
 	Elevate_Header h;
 	assert(header->PayloadLen == sizeof(h));
 	memcpy(&h, data, sizeof(h));
+	HANDLE token = NULL;
+	if (LogonUser(h.Username, NULL, h.Password, LOGON32_LOGON_NEW_CREDENTIALS, LOGON32_PROVIDER_WINNT50, &token)){
+		auto isadmin = IsUserAdmin(token);
+		CloseHandle(token);
+	}
 	DEBUG_MSG("Got here");
 }
 
@@ -332,7 +334,13 @@ void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHa
 	SetLast_UserConnectName(L"");//set this to empty because the user will have to be allowed next connect attempt
 	auto usname = std::wstring(sh->Connection_Info.full_name);
 	if (usname.size() > 2){
-		EventLog::WriteLog(usname + L" has Disconnected from this machine");
+		std::vector<std::wstring> msgs;
+		msgs.push_back(usname + L" has Disconnected from this machine. Details Below:");
+		msgs.push_back(std::wstring(L"Computer: ") + std::wstring(sh->Connection_Info.computername));
+		msgs.push_back(std::wstring(L"Domain: ") + std::wstring(sh->Connection_Info.domain));
+		msgs.push_back(std::wstring(L"Full Name: ") + std::wstring(sh->Connection_Info.full_name));
+		msgs.push_back(std::wstring(L"IP Address: ") + std::wstring(sh->Connection_Info.ip_addr));
+		EventLog::WriteLog(msgs, EventLog::EventType::INFORMATIONAL, EventLog::EventCategory::NETWORK_CATEGORY, EventLog::EventID::DISCONNECT);
 		auto con = usname + L" has Disconnected from your machine . . .";
 		_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
 	}
@@ -399,7 +407,9 @@ void RemoteDesktop::Server::_Handle_ScreenUpdates(Image& img, Rect& rect, int in
 		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, imgdif.size_in_bytes);
 		_NetworkServer->Send(NetworkMessages::UPDATEREGION, msg, INetwork::Auth_Types::AUTHORIZED);
 	}
-
+}
+void RemoteDesktop::Server::_Handle_UAC_Permission(){
+	_NetworkServer->Send(NetworkMessages::UAC_BLOCKED, INetwork::Auth_Types::AUTHORIZED);
 }
 void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing){
 	static auto begintimer = std::chrono::high_resolution_clock::now();
@@ -482,7 +492,11 @@ void RemoteDesktop::Server::_Run() {
 			continue;
 		}
 
-		if (!_DesktopMonitor->Is_InputDesktopSelected()) _DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
+		if (!_DesktopMonitor->Is_InputDesktopSelected()) {
+			if (!_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT)){
+				_Handle_UAC_Permission();
+			}		
+		}
 
 		_Handle_MouseUpdates(mousecapturing);
 
@@ -494,6 +508,13 @@ void RemoteDesktop::Server::_Run() {
 		}
 		for (auto& a : tmpbuffer){
 			std::wstring name = a->Connection_Info.full_name;
+			std::vector<std::wstring> msgs;
+			msgs.push_back(name + L" has Connected to this machine. Details Below:");
+			msgs.push_back(std::wstring(L"Computer: ") + std::wstring(a->Connection_Info.computername));
+			msgs.push_back(std::wstring(L"Domain: ") + std::wstring(a->Connection_Info.domain));
+			msgs.push_back(std::wstring(L"Full Name: ") + std::wstring(a->Connection_Info.full_name));
+			msgs.push_back(std::wstring(L"IP Address: ") + std::wstring(a->Connection_Info.ip_addr));
+			EventLog::WriteLog(msgs, EventLog::EventType::INFORMATIONAL, EventLog::EventCategory::NETWORK_CATEGORY, EventLog::EventID::CONNECT);
 			name += L" has connected to your computer . . . ";
 			if (name.size()>2) _SystemTray->Popup(L"New Connection Established", name.c_str(), 10000);
 		}

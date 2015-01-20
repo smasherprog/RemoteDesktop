@@ -166,6 +166,56 @@ std::string RemoteDesktop::GetMAC(){
 	free(AdapterInfo);
 	return macs;
 }
+std::string RemoteDesktop::GetIP(){
+
+	PIP_ADAPTER_INFO pAdapterInfo = NULL;
+	PIP_ADAPTER_INFO pOriginalPtr;
+	ULONG ulSizeAdapterInfo = 0;
+	DWORD dwStatus = 0;
+	DWORD dwLanIndex = 0;
+
+	// Find out how big our buffer needs to be to hold the data
+	dwStatus = GetAdaptersInfo(pAdapterInfo, &ulSizeAdapterInfo);
+	if (dwStatus == ERROR_BUFFER_OVERFLOW)
+	{
+		if (!(pAdapterInfo = (PIP_ADAPTER_INFO)malloc(ulSizeAdapterInfo)))	return std::string("");
+		dwStatus = GetAdaptersInfo(pAdapterInfo, &ulSizeAdapterInfo);
+	}
+	if (dwStatus != ERROR_SUCCESS)
+	{
+		if (pAdapterInfo)
+			free(pAdapterInfo);
+		return std::string("");
+	}
+
+	pOriginalPtr = pAdapterInfo;
+
+	if (pOriginalPtr == NULL)
+	{
+		//printf("\n No Interfaces Present.\n");
+		if (pAdapterInfo)
+			free(pAdapterInfo);
+		return std::string("");
+	}
+	std::string ipaddr = "";
+	// Step through the adapter list
+	while (pOriginalPtr != NULL)
+	{
+		// Print the Ip Addresses
+		PIP_ADDR_STRING pAddressList = &(pOriginalPtr->IpAddressList); 
+		PIP_ADDR_STRING gatewaystr = &(pOriginalPtr->GatewayList);
+		auto gateway = std::string(gatewaystr->IpAddress.String);
+		if (gateway.size() > 5){
+			ipaddr = pAddressList->IpAddress.String;
+			break;
+		}
+		pOriginalPtr = pOriginalPtr->Next;
+	} 
+
+	if (pAdapterInfo)
+		free(pAdapterInfo);
+	return ipaddr;
+}
 RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SOCKET sock, char* data, int len){
 	assert(sock != INVALID_SOCKET);
 	while (len > 0){

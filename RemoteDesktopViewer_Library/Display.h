@@ -28,7 +28,9 @@ namespace RemoteDesktop{
 	class Display{
 
 		std::shared_ptr<HBITMAP_wrapper> _Images[MAX_DISPLAYS];
+		std::shared_ptr<HBITMAP_wrapper> _GreyedImages[MAX_DISPLAYS];
 
+		RAIIHFONT_TYPE _Font;
 		HWND _HWND;
 		std::mutex _DrawLock;
 	
@@ -37,6 +39,8 @@ namespace RemoteDesktop{
 		Point _MousePos;
 		Cursor_Type HCursor;
 		void(__stdcall * _OnCursorChange)(int c_type);
+		void _CreateGreyedImages();
+		bool _UAC_Block = false;
 
 	public:
 		Display(HWND hwnd, void(__stdcall * oncursorchange)(int));
@@ -45,7 +49,10 @@ namespace RemoteDesktop{
 		void Update(Image& img, Update_Image_Header& h);
 		void UpdateMouse(MouseEvent_Header& h);
 		void Draw(HDC hdc);
-		//bool SetCursor();
+		
+		void SetUAC_Block();
+
+		
 
 		
 	};
