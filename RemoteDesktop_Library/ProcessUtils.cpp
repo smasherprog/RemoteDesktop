@@ -4,6 +4,7 @@
 #include "Shellapi.h"
 #include <lm.h>
 #include "Handle_Wrapper.h"
+#include "Userenv.h"
 
 bool RemoteDesktop::IsElevated() {
 	BOOL fRet = FALSE;
@@ -36,23 +37,27 @@ bool RemoteDesktop::IsUserAdmin(){
 
 	auto found = IsUserAdmin(hTok);
 	if (!found){//search domain groups as well
-		DWORD rc;
+
 		wchar_t user_name[256];
-		USER_INFO_1 *info;
 		DWORD size = sizeof(user_name);
-
 		GetUserNameW(user_name, &size);
-
-		rc = NetUserGetInfo(NULL, user_name, 1, (LPBYTE *)&info);
-		if (rc != NERR_Success)
-			return false;
-
-		found = info->usri1_priv == USER_PRIV_ADMIN;
-		NetApiBufferFree(info);
+		found = IsUserAdmin(user_name);
 	}
 	return found;
 }
+bool RemoteDesktop::IsUserAdmin(std::wstring username){
+	DWORD rc;
+	USER_INFO_1 *info;
+	auto splits = split(username, L'\\');
+	if (splits.size() == 2) rc = NetUserGetInfo(splits[0].c_str(), splits[1].c_str(), 1, (LPBYTE *)&info);
+	else rc = NetUserGetInfo(NULL, username.c_str(), 1, (LPBYTE *)&info);
+	if (rc != NERR_Success)
+		return false;
 
+	auto found = info->usri1_priv == USER_PRIV_ADMIN;
+	NetApiBufferFree(info);
+	return found;
+}
 bool RemoteDesktop::IsUserAdmin(HANDLE hTok){
 
 	bool found;
@@ -105,6 +110,7 @@ bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
 		args += L" ";
 		args += argv[i];
 	}
+	
 	sei.lpVerb = L"runas";
 	sei.lpFile = argv[0];//first arg is the full path to the exe
 	sei.lpParameters = args.c_str();
@@ -112,4 +118,47 @@ bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
 	sei.nShow = SW_NORMAL;
 	ShellExecuteEx(&sei);
 	return true;//
+}
+
+std::shared_ptr<PROCESS_INFORMATION> RemoteDesktop::LaunchProcess(wchar_t* commandline, HANDLE token){
+	auto ProcessInfo = std::shared_ptr<PROCESS_INFORMATION>(new PROCESS_INFORMATION(), [=](PROCESS_INFORMATION* p){
+		CloseHandle(p->hThread);
+		CloseHandle(p->hProcess);
+		delete p;
+	});
+	STARTUPINFO StartUPInfo;
+	memset(&StartUPInfo, 0, sizeof(STARTUPINFO));
+	memset(ProcessInfo.get(), 0, sizeof(PROCESS_INFORMATION));
+
+	StartUPInfo.lpDesktop = L"Winsta0\\Winlogon";
+	StartUPInfo.cb = sizeof(STARTUPINFO);
+	PVOID	lpEnvironment = NULL;
+
+	if (CreateEnvironmentBlock(&lpEnvironment, token, FALSE) == FALSE) lpEnvironment = NULL;
+	if (!CreateProcessAsUserW(token, NULL, (wchar_t*)commandline, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | DETACHED_PROCESS, lpEnvironment, NULL, &StartUPInfo, ProcessInfo.get())){
+		DEBUG_MSG("Failed to created process %", GetLastError());
+	}
+	if (lpEnvironment) DestroyEnvironmentBlock(lpEnvironment);
+	return ProcessInfo;
+}
+
+bool RemoteDesktop::LaunchProcess(wchar_t* exepath, wchar_t* commandargs, const wchar_t* user, const wchar_t* domain, const wchar_t* pass, HANDLE token){
+	auto ProcessInfo = std::shared_ptr<PROCESS_INFORMATION>(new PROCESS_INFORMATION(), [=](PROCESS_INFORMATION* p){
+		CloseHandle(p->hThread);
+		CloseHandle(p->hProcess);
+		delete p;
+	});
+	STARTUPINFO StartUPInfo = { 0 };
+	memset(ProcessInfo.get(), 0, sizeof(PROCESS_INFORMATION));
+	StartUPInfo.cb = sizeof(STARTUPINFO);
+
+	PVOID	lpEnvironment = NULL;
+	if (CreateEnvironmentBlock(&lpEnvironment, token, FALSE) == FALSE) lpEnvironment = NULL;
+	bool success = true;
+	if (!CreateProcessWithLogonW(user, domain, pass, 0, exepath, commandargs, CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, lpEnvironment, NULL, &StartUPInfo, ProcessInfo.get())){
+		DEBUG_MSG("Failed to created process %", GetLastError());
+		success = false;
+	}
+	if (lpEnvironment) DestroyEnvironmentBlock(lpEnvironment);
+	return success;
 }

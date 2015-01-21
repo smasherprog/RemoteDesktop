@@ -16,14 +16,16 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 #if _DEBUG
 	std::unique_ptr<CConsole> _DebugConsole = std::make_unique<CConsole>();
 #endif
-
-	GetUserInfo();
+	for (auto i = 0; i < argc; i++){
+		std::wcout << argv[i] << std::endl;
+	}
 	EventLog::Init(Service_Name());
 #if !_DEBUG
 	if (RemoteDesktop::TryToElevate(argv, argc)) return;//if the app was able to elevate, shut this instance down
 #endif
 	if ((argc > 1) && ((*argv[1] == L'-' || (*argv[1] == L'/'))))
 	{
+		
 		if (_wcsicmp(L"uninstall", argv[1] + 1) == 0) UninstallService(Service_Name());
 		else if (_wcsicmp(L"delayed_uninstall", argv[1] + 1) == 0)
 		{
@@ -40,6 +42,22 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 			auto _Server = std::make_unique<RemoteDesktop::Server>();
 			if (reverseconnect_to_gateway) _Server->ReverseConnect(DefaultPort(), DefaultGateway(), DefaultProxyGetSessionURL());
 			else _Server->Listen(DefaultPort());
+		}
+		else if (_wcsicmp(L"delayed_run", argv[1] + 1) == 0)
+		{
+			Sleep(3000);
+			if (!InstallService(
+				Service_Name(),               // Name of service
+				Service_Display_Name(),       // Name to display
+				SERVICE_AUTO_START,
+				L"",
+				NULL,
+				NULL
+				)){
+				auto _Server = std::make_unique<RemoteDesktop::Server>();
+				if (reverseconnect_to_gateway) _Server->ReverseConnect(DefaultPort(), DefaultGateway(), DefaultProxyGetSessionURL());
+				else _Server->Listen(DefaultPort());
+			}
 		}
 	}
 	else

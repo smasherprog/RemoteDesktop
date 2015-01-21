@@ -284,10 +284,35 @@ void RemoteDesktop::Server::_Handle_ElevateProcess(Packet_Header* header, const 
 	assert(header->PayloadLen == sizeof(h));
 	memcpy(&h, data, sizeof(h));
 	HANDLE token = NULL;
-	if (LogonUser(h.Username, NULL, h.Password, LOGON32_LOGON_NEW_CREDENTIALS, LOGON32_PROVIDER_WINNT50, &token)){
-		auto isadmin = IsUserAdmin(token);
-		CloseHandle(token);
+	std::wstring user(h.Username);
+	std::wstring pass(h.Password);
+	if (user.size() < 2 || pass.size() < 2) return;
+	auto splits = split(user, L'\\');
+	bool authenticated = false;
+	if (splits.size() == 2){
+		authenticated = LogonUser(splits[1].c_str(), splits[0].c_str(), h.Password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token);
 	}
+	else {
+		authenticated = LogonUser(h.Username, NULL, h.Password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token);
+	}
+
+	auto isadmin = IsUserAdmin(token);
+	if (!isadmin && splits.size() == 2){//check domain controller for admin group
+		isadmin = IsUserAdmin(user);
+	}	
+
+	if (isadmin && !IsElevated()) {
+		wchar_t szPath[MAX_PATH];
+		GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+		wchar_t cmndargs[] = L" -delayed_run";
+		if (splits.size() == 2){
+			if (LaunchProcess(szPath, cmndargs, splits[1].c_str(), splits[0].c_str(), h.Password, token)) _TriggerShutDown();//this will cause this process to shut down 
+		}
+		else {
+			if (LaunchProcess(szPath, cmndargs, h.Username, NULL, h.Password, token)) _TriggerShutDown();//this will cause this process to shut down 
+		}
+	}
+	if (token != nullptr) CloseHandle(token);
 	DEBUG_MSG("Got here");
 }
 
@@ -308,7 +333,7 @@ void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, s
 		break;
 	case NetworkMessages::FILE:
 		_Handle_File(header, data, sh);
-		break;	
+		break;
 	case NetworkMessages::FOLDER:
 		_Handle_Folder(header, data, sh);
 		break;
@@ -418,7 +443,7 @@ void RemoteDesktop::Server::_Handle_MouseUpdates(const std::unique_ptr<MouseCapt
 	mousecapturing->Update();
 	if (mousecapturing->Last_ScreenPos != mousecapturing->Current_ScreenPos || mousecapturing->Last_Mouse != mousecapturing->Current_Mouse){//mouse pos is different
 		//if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begintimer).count() < 50) return;
-	//	begintimer = std::chrono::high_resolution_clock::now();
+		//	begintimer = std::chrono::high_resolution_clock::now();
 
 		NetworkMsg msg;
 		MouseEvent_Header h;
@@ -496,7 +521,7 @@ void RemoteDesktop::Server::_Run() {
 		if (!_DesktopMonitor->Is_InputDesktopSelected()) {
 			if (!_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT)){
 				_Handle_UAC_Permission();
-			}		
+			}
 		}
 
 		_Handle_MouseUpdates(mousecapturing);
