@@ -21,7 +21,7 @@
 #include "..\RemoteDesktop_Library\Network_Client.h"
 #include "Strsafe.h"
 #include "..\RemoteDesktop_Library\Config.h"
-
+#include "..\RemoteDesktop_Library\UserInfo.h"
 
 #define FRAME_CAPTURE_INTERVAL 100 //ms between checking for screen changes
 RemoteDesktop::Server::Server() :
@@ -224,15 +224,10 @@ void RemoteDesktop::Server::_Handle_File(RemoteDesktop::Packet_Header* header, c
 	memcpy(&fh, data, sizeof(fh));
 	data += sizeof(fh);
 	std::string fname(fh.RelativePath);
-	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
+	std::string path = "c:\\users\\" + get_ActiveUser() + "\\desktop\\" + fname;
 
 	DEBUG_MSG("% BEG FILE: %", path.size(), path);
 	sh->WriteToFile(path, data, fh.ChunkSize, fh.Last);
-	//int openoptions = std::ios::binary;
-	//if (fh.ID == 0) openoptions |= std::ios::trunc;// erase everything in the file 
-	//else openoptions |= std::ios::app;// append data 
-	//std::ofstream f(path, openoptions);
-	//f.write();
 
 	DEBUG_MSG("% END FILE: %", path.size(), path);
 }
@@ -242,7 +237,7 @@ void RemoteDesktop::Server::_Handle_Folder(Packet_Header* header, const char* da
 	data++;
 	std::string fname(data, size);
 	data += size;
-	std::string path = "c:\\users\\" + _DesktopMonitor->get_ActiveUser() + "\\desktop\\" + fname;
+	std::string path = "c:\\users\\" + get_ActiveUser() + "\\desktop\\" + fname;
 	DEBUG_MSG("% BEG FOLDER: %", path.size(), path);
 	CreateDirectoryA(path.c_str(), NULL);
 	DEBUG_MSG("% END FOLDER: %", path.size(), path);
@@ -295,23 +290,31 @@ void RemoteDesktop::Server::_Handle_ElevateProcess(Packet_Header* header, const 
 	else {
 		authenticated = LogonUser(h.Username, NULL, h.Password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token);
 	}
+	if (authenticated){
 
-	auto isadmin = IsUserAdmin(token);
-	if (!isadmin && splits.size() == 2){//check domain controller for admin group
-		isadmin = IsUserAdmin(user);
-	}	
-
-	if (isadmin && !IsElevated()) {
-		wchar_t szPath[MAX_PATH];
-		GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
-		wchar_t cmndargs[] = L" -delayed_run";
-		if (splits.size() == 2){
-			if (LaunchProcess(szPath, cmndargs, splits[1].c_str(), splits[0].c_str(), h.Password, token)) _TriggerShutDown();//this will cause this process to shut down 
+		auto isadmin = IsUserAdmin(token);
+		if (!isadmin && splits.size() == 2){//check domain controller for admin group
+			isadmin = IsUserAdmin(user);
 		}
-		else {
-			if (LaunchProcess(szPath, cmndargs, h.Username, NULL, h.Password, token)) _TriggerShutDown();//this will cause this process to shut down 
+		if (isadmin && !IsElevated()) {
+			wchar_t szPath[MAX_PATH];
+			GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+			std::wstring tmp(szPath);
+			tmp = L"\"" + tmp + L"\"";
+			wcsncpy_s(szPath, tmp.c_str(), tmp.size());
+			wchar_t cmndargs[] = L" -delayed_run";
+			wcscat_s(szPath, cmndargs);
+
+			if (splits.size() == 2){
+
+				if (LaunchProcess(szPath, splits[1].c_str(), splits[0].c_str(), h.Password, token)) _TriggerShutDown();//this will cause this process to shut down 
+			}
+			else {
+				if (LaunchProcess(szPath, h.Username, NULL, h.Password, token)) _TriggerShutDown();//this will cause this process to shut down 
+			}
 		}
 	}
+
 	if (token != nullptr) CloseHandle(token);
 	DEBUG_MSG("Got here");
 }
@@ -356,7 +359,10 @@ void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, s
 }
 void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHandler>& sh) {
 	if (!sh) return;
-	if (!sh->Authorized) return;//dont care about non authorized disconnects
+	if (!sh->Authorized) {
+		_NewConnect_Dialog = nullptr;
+		return _OnDenyConnection(std::wstring(sh->Connection_Info.full_name));
+	}
 	SetLast_UserConnectName(L"");//set this to empty because the user will have to be allowed next connect attempt
 	auto usname = std::wstring(sh->Connection_Info.full_name);
 	if (usname.size() > 2){

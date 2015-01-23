@@ -12,7 +12,10 @@ bool RemoteDesktop::Clipboard::Load(void* hwnd, RemoteDesktop::Clipboard_Data& d
 	DEBUG_MSG("BEGIN Loading Clipboard");
 
 	Clipboard_Wrapper clipwrap(hwnd);
-	if (!clipwrap.IsValid()) return false;
+	if (!clipwrap.IsValid()){
+		DEBUG_MSG("!clipwrap.IsValid()");
+		return false;
+	}
 
 	HANDLE hText = NULL;
 	if (IsClipboardFormatAvailable(formatUnicodeText)) {
@@ -37,11 +40,12 @@ bool RemoteDesktop::Clipboard::Load(void* hwnd, RemoteDesktop::Clipboard_Data& d
 			GlobalUnlock(hText);
 		}
 	}
-
 	_INTERNAL::LoadClip(data.m_pDataRTF, ::GetClipboardData, formatRTF);
 	_INTERNAL::LoadClip(data.m_pDataHTML, ::GetClipboardData, formatHTML);
 	_INTERNAL::LoadClip(data.m_pDataDIB, ::GetClipboardData, formatDIB);
-	if (data == LastClipboard) return false;//dont update clipboard, its the same as the last update.. could be we are connected to ourselves in a loop
+	if (data == LastClipboard) {
+		return false;//dont update clipboard, its the same as the last update.. could be we are connected to ourselves in a loop
+	}
 	LastClipboard = data;
 	DEBUG_MSG("END Loading Clipboard");
 	return true;

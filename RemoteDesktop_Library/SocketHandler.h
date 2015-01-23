@@ -51,9 +51,12 @@ namespace RemoteDesktop{
 		SOCKET get_Socket() const { return _Socket ? _Socket->socket : INVALID_SOCKET; }
 		SOCKET get_State() const { return State; }
 
-		//this is a graceful disconnect and will disconnect on the next loop iteration
-		//will not call any disconnect callbacks until the disconnect actually occurs
-		Network_Return Disconnect(){ State = PEER_STATE_DISCONNECTED; return Network_Return::FAILED; }
+		Network_Return Disconnect(){ 
+			State = PEER_STATE_DISCONNECTED; 
+			auto a = _Socket;
+			if (a) a->Close();
+			return Network_Return::FAILED; 
+		}
 
 		bool Authorized = false;
 		Traffic_Monitor Traffic;

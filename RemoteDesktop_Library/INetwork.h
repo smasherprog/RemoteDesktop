@@ -10,7 +10,7 @@
 namespace RemoteDesktop{
 	class SocketHandler;
 	class INetwork{
-#define DEFAULTMAXCONNECTATTEMPTS 15
+#define DEFAULTMAXCONNECTATTEMPTS 6
 	protected:
 		bool _Running = false;
 	

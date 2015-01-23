@@ -4,6 +4,7 @@
 
 namespace RemoteDesktop{
 	User_Info_Header GetUserInfo();
+	std::string get_ActiveUser();
 }
 
 #endif

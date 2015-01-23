@@ -61,6 +61,9 @@ void RemoteDesktop::Network_Client::_Run_Gateway(std::wstring gatewayurl){
 		_HandleDisconnect(socket);
 		_ShouldDisconnect = false;
 	}
+	if (MaxConnectAttempts >= DEFAULTMAXCONNECTATTEMPTS){
+		//MessageBoxA(NULL, "Could not contact to gateway server. This could be due to your firewall blocking, or the server could be down.\n\nThe Program will exit now.", "Remote Access Tool Gateway Server Down", MB_OK);
+	}
 	_Running = false;
 	_ShouldDisconnect = true;
 }
@@ -134,6 +137,7 @@ void RemoteDesktop::Network_Client::_Run(std::shared_ptr<SocketHandler>& socket)
 		}
 
 	}
+	socket->Disconnect();
 	DEBUG_MSG("Ending Loop");
 }
 

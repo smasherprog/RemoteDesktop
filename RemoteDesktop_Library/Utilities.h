@@ -28,8 +28,9 @@ void DEBUG_MSG(const char *s, Args... args)
 #if _DEBUG
 	std::string result = "";
 	_INTERNAL::xsprintf(result, s, args...);
-	OutputDebugStringA(result.c_str());
-	OutputDebugStringA("\n");
+	//OutputDebugStringA(result.c_str());
+	//OutputDebugStringA("\n");	
+	std::cout << result << std::endl;
 #endif
 }
 
@@ -37,7 +38,7 @@ namespace _INTERNAL{
 
 	inline void xsprintf(std::string& result, const char *s)
 	{
-		while (*s) {
+		while (s != nullptr && *s) {
 			if (*s == '%') {
 				if (*(s + 1) == '%') {
 					++s;
@@ -53,7 +54,8 @@ namespace _INTERNAL{
 	template<typename T, typename... Args>
 	void xsprintf(std::string& result, const char *s, T value, Args... args)
 	{
-		while (*s) {
+		
+		while (s!=nullptr && *s) {
 			if (*s == '%') {
 				if (*(s + 1) == '%') {
 					++s;

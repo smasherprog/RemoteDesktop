@@ -8,6 +8,7 @@
 #include "..\RemoteDesktop_Library\EventLog.h"
 #include "..\RemoteDesktop_Library\UserInfo.h"
 #include "..\RemoteDesktop_Library\ProcessUtils.h"
+
 #if _DEBUG
 #include "Console.h"
 #endif
@@ -16,16 +17,13 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 #if _DEBUG
 	std::unique_ptr<CConsole> _DebugConsole = std::make_unique<CConsole>();
 #endif
-	for (auto i = 0; i < argc; i++){
-		std::wcout << argv[i] << std::endl;
-	}
+
 	EventLog::Init(Service_Name());
 #if !_DEBUG
 	if (RemoteDesktop::TryToElevate(argv, argc)) return;//if the app was able to elevate, shut this instance down
 #endif
 	if ((argc > 1) && ((*argv[1] == L'-' || (*argv[1] == L'/'))))
 	{
-		
 		if (_wcsicmp(L"uninstall", argv[1] + 1) == 0) UninstallService(Service_Name());
 		else if (_wcsicmp(L"delayed_uninstall", argv[1] + 1) == 0)
 		{
@@ -64,14 +62,15 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 	{
 		
 		auto ret = IDYES;
-		if (reverseconnect_to_gateway){
-			ret = MessageBox(
-				NULL,
-				DisclaimerMessage(),
-				(LPCWSTR)L"Disclaimer",
-				MB_ICONQUESTION | MB_YESNO
-				);
-		}
+		//if (reverseconnect_to_gateway){
+		//	ret = MessageBox(
+		//		NULL,
+		//		DisclaimerMessage(),
+		//		(LPCWSTR)L"Disclaimer",
+		//		MB_ICONQUESTION | MB_YESNO | MB_SYSTEMMODAL
+		//		);
+		//}
+
 		//try to install the service if launched normally. If the service cannot be installed it is because its already installed, or the progrm was not launched with correct permissions.
 		//in which case, try to launch the program normally.
 		if (ret == IDYES){

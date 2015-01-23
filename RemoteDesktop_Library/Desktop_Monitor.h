@@ -16,8 +16,6 @@ namespace RemoteDesktop{
 		int get_ThreadDesktop() const;
 		bool Is_InputDesktopSelected() const;
 
-		std::string static get_ActiveUser();
-
 	};
 };
 

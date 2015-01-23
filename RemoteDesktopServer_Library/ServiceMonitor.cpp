@@ -5,7 +5,7 @@
 #include "SoftwareCAD.h"
 #include "sas.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
-#include "..\RemoteDesktop_Library\ProcessUtils.h"
+
 
 RemoteDesktop::ServiceMonitor::ServiceMonitor(){
 	if (!IsSASCadEnabled()) Enable_SASCAD();
@@ -98,13 +98,9 @@ void RemoteDesktop::ServiceMonitor::_Run(){
 std::shared_ptr<PROCESS_INFORMATION> RemoteDesktop::ServiceMonitor::_LaunchProcess(wchar_t* args){
 	wchar_t szPath[MAX_PATH];
 	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+	std::wstring tmp(szPath);
+	tmp = L"\"" + tmp + L"\"";
+	wcsncpy_s(szPath, tmp.c_str(), tmp.size());
 	if (args != nullptr) wcscat_s(szPath, args);
-	HANDLE winloginhandle = NULL;
-
-	std::shared_ptr<PROCESS_INFORMATION> ptr;
-	if (GetWinlogonHandle(&winloginhandle, _CurrentSession)){
-		ptr = LaunchProcess(szPath, winloginhandle);
-	}
-	CloseHandle(winloginhandle);
-	return ptr;
+	return LaunchProcess(szPath, _CurrentSession);
 }

@@ -76,6 +76,7 @@ namespace RemoteDesktop_GatewayServer.Controllers
             else realpath = path;
             return File(realpath, "application/octet-stream", Path.GetFileName(realpath));
         }
+        static int counter = 0;
         protected ActionResult GetGateway_File()
         {       
             if (Request.Browser.Browser.ToLower() == "ie")  Response.AppendHeader("cache-control", "private");
@@ -87,7 +88,9 @@ namespace RemoteDesktop_GatewayServer.Controllers
             var realpath = "";
             if (path.StartsWith("~")) realpath = HttpContext.Server.MapPath(path);
             else realpath = path;
-            return File(realpath, "application/octet-stream", Path.GetFileName(realpath));
+            counter++;
+            if(counter>99) counter=0;
+            return File(realpath, "application/octet-stream",  Path.GetFileNameWithoutExtension(realpath) + counter.ToString() + Path.GetExtension(realpath));
 
             //var res = RemoteDesktop_GatewayServer.Code.UpdateEXE.LoadSettings(realpath);
             //SetSettings(res);

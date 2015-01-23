@@ -18,12 +18,30 @@ namespace RemoteDesktop_Viewer
         public AdminLogin()
         {
             InitializeComponent();
+            Password.KeyUp += Password_KeyUp;
+        }
+
+        void Password_KeyUp(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode == Keys.Enter)
+            {
+                button1.PerformClick();
+                e.Handled = true;
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             if(OnLoginEvent != null)
+            {
+                if(string.IsNullOrWhiteSpace(Username.Text) || string.IsNullOrWhiteSpace(Password.Text))
+                    return;
+                if(Username.Text.Length < 3 || Password.Text.Length < 3)
+                    return;
                 OnLoginEvent(Username.Text, Password.Text);
+            }
+
         }
+
     }
 }

@@ -5,6 +5,7 @@
 #include "..\RemoteDesktop_Library\Desktop_Monitor.h"
 #include "..\RemoteDesktop_Library\NetworkSetup.h"
 #include "Config.h"
+#include "UserInfo.h"
 
 bool RemoteDesktop::GetGatewayID_and_Key(int& id, std::wstring& aeskey, std::wstring gatewayurl){
 	char comp[MAX_COMPUTERNAME_LENGTH + 1];
@@ -12,7 +13,7 @@ bool RemoteDesktop::GetGatewayID_and_Key(int& id, std::wstring& aeskey, std::wst
 	GetComputerNameA(comp, &len);
 	std::string computername(comp);
 
-	std::string username = RemoteDesktop::DesktopMonitor::get_ActiveUser();
+	std::string username = get_ActiveUser();
 
 	auto mac = GetMAC();
 	std::string uniqueid = ws2s(Unique_ID());

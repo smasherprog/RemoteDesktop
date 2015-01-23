@@ -10,8 +10,8 @@ namespace RemoteDesktop{
 		std::vector<char> m_pDataDIB;
 	};
 	inline bool operator==(const Clipboard_Data& left, const Clipboard_Data& right){
-		if (left.m_pDataDIB.size() != right.m_pDataDIB.size()) return false;
-		if (memcmp(left.m_pDataDIB.data(), right.m_pDataDIB.data(), left.m_pDataDIB.size()) != 0) return false;
+		if (left.m_pDataText.size() != right.m_pDataText.size()) return false;
+		if (memcmp(left.m_pDataText.data(), right.m_pDataText.data(), left.m_pDataText.size()) != 0) return false;
 
 		if (left.m_pDataRTF.size() != right.m_pDataRTF.size()) return false;
 		if (memcmp(left.m_pDataRTF.data(), right.m_pDataRTF.data(), left.m_pDataRTF.size()) != 0) return false;

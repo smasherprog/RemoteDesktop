@@ -109,7 +109,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib;Userenv.lib</AdditionalDependencies>
+      <AdditionalDependencies>Userenv.lib;cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -127,7 +127,7 @@
       <AdditionalDependencies>turbojpeg-static_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib;Userenv.lib</AdditionalDependencies>
+      <AdditionalDependencies>Userenv.lib;cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -151,7 +151,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib;Userenv.lib</AdditionalDependencies>
+      <AdditionalDependencies>Userenv.lib;cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -175,7 +175,7 @@
       <AdditionalDependencies>turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib;Userenv.lib</AdditionalDependencies>
+      <AdditionalDependencies>Userenv.lib;cryptlib.lib;turbojpeg-static.lib;Winhttp.lib;comsuppw.lib;Iphlpapi.lib;ole32.lib;oleaut32.lib;netapi32.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>

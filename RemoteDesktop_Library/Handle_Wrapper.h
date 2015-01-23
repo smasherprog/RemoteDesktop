@@ -10,21 +10,34 @@
 
 namespace RemoteDesktop{
 	struct HWNDTimer{
-		HWND h; UINT_PTR id; 
+		HWND h; UINT_PTR id;
 		HWNDTimer(HWND hwnd, UINT_PTR i, UINT time) : h(hwnd), id(i) {
 			SetTimer(h, id, time, nullptr); //every 500 ms windows will send a timer notice to the msg proc below. This allows the destructor to set _Running to false and the message proc to break
 		}
-	}; 
-	struct SOCKETWrapper{
-		SOCKET socket = INVALID_SOCKET;
-		SOCKETWrapper(SOCKET s) : socket(s) {}
 	};
+	struct SOCKETWrapper;
 	namespace INTERNAL{
 		void dialogboxcleanup(HWND h);
-		void hwndtimercleanup(HWNDTimer* h); 
+		void hwndtimercleanup(HWNDTimer* h);
 		void socketcleanup(SOCKETWrapper* s);
-		inline HWND addclipboardlistener(HWND h){ AddClipboardFormatListener(h); return h; }
+		inline HWND addclipboardlistener(HWND h){
+			if (!AddClipboardFormatListener(h))
+				DEBUG_MSG("AddClipboardFormatListener Failed");
+			return h;
+		}
 	}
+	struct SOCKETWrapper{
+
+		SOCKET socket = INVALID_SOCKET;
+		void Close(){
+			if (socket != INVALID_SOCKET){
+				shutdown(socket, SD_SEND);//allow sends to go out.. stop receiving
+				closesocket(socket);
+			}
+		}
+		SOCKETWrapper(SOCKET s) : socket(s) {}
+	};
+
 	typedef std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::CloseHandle)> RAIIHANDLE_TYPE;
 #define RAIIHANDLE(handle) std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::CloseHandle)>(handle, &::CloseHandle)
 

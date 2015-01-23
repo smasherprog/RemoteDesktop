@@ -64,23 +64,27 @@ namespace RemoteDesktop_Viewer
 
         void ConnectDialog_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if (_ProxyClients != null)
+            if(_ProxyClients != null)
                 _ProxyClients.Dispose();
-            if (_Login != null)
+            if(_Login != null)
                 _Login.Dispose();
         }
 
         void textBox1_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            if(e.KeyCode == Keys.Enter)
+            {
                 button1.PerformClick();
+                e.Handled = true;
+            }
+
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(textBox1.Text))
+            if(string.IsNullOrWhiteSpace(textBox1.Text))
                 return;
-            if (textBox1.Text.Length < 4)
+            if(textBox1.Text.Length < 4)
                 return;
 
             Connect(textBox1.Text, null);
@@ -94,11 +98,10 @@ namespace RemoteDesktop_Viewer
             _LastMainViewer.OnConnectEvent += OnConnect;
             _LastMainViewer.OnDisconnectEvent += OnDisconnect;
             _LastMainViewer.OnConnectingAttemptEvent += _LastMainViewer_OnConnectingAttemptEvent;
-            _LastMainViewer.Connect(iporhost, c);
-            _Connecting.Show();
-            _Connecting.Hide();
+
             _Connecting.FormClosing += _Connecting_FormClosing;
             this.Hide();
+            _LastMainViewer.Connect(iporhost, c);
         }
 
         void _Connecting_FormClosing(object sender, FormClosingEventArgs e)
@@ -109,34 +112,49 @@ namespace RemoteDesktop_Viewer
         private void _LastMainViewer_OnConnectingAttemptEvent(int attempt, int maxattempts)
         {
             Debug.WriteLine("Connecting " + attempt + "  " + maxattempts);
-            _Connecting.MaxAttempts = maxattempts;
-            _Connecting.ConnectAttempt = attempt;
-
-            _Connecting.UIThread(() => { _Connecting.Show(); });
-            this.UIThread(() => { this.Hide(); });
-            _LastMainViewer.UIThread(() => { _LastMainViewer.Hide(); });
+            this.UIThread(() =>
+            {
+                _Connecting.MaxAttempts = maxattempts;
+                _Connecting.ConnectAttempt = attempt;
+                if(this.Visible)
+                    this.Hide();
+                if(!_Connecting.Visible)
+                    _Connecting.Show();
+                var tmp = _LastMainViewer;
+                if(tmp != null && tmp.Visible)
+                    tmp.Hide();
+            });
 
         }
         private void OnConnect()
         {
-            _Connecting.UIThread(() => { _Connecting.Hide(); });
-            this.UIThread(() => { this.Hide(); });
-            _LastMainViewer.UIThread(() => { _LastMainViewer.Show(); });
+            this.UIThread(() =>
+            {
+                if(this.Visible)
+                    this.Hide();
+                if(_Connecting.Visible)
+                    _Connecting.Hide();
+                var tmp = _LastMainViewer;
+                if(tmp != null && !tmp.Visible)
+                    tmp.Show();
+            });
 
         }
         private void OnDisconnect()
         {
-            _Connecting.UIThread(() => { _Connecting.Hide(); });
-            this.UIThread(() => { this.Show(); });
-            var last = _LastMainViewer;
-            if (last != null)
+            this.UIThread(() =>
             {
-                last.UIThread(() =>
+                if(!this.Visible)
+                    this.Show();
+                if(_Connecting.Visible)
+                    _Connecting.Hide();
+                var tmp = _LastMainViewer;
+                if(tmp != null)
                 {
-                    last.Close();
+                    tmp.Close();
                     _LastMainViewer = null;
-                });
-            }
+                }
+            });
 
         }
         void _ProxyClients_OnDisconnectEvent()
@@ -159,14 +177,13 @@ namespace RemoteDesktop_Viewer
         void tabControl1_SelectedIndexChanged(object sender, System.EventArgs e)
         {
             var selected = (sender as TabControl).SelectedIndex;
-            if (selected == 0)
+            if(selected == 0)
             {
                 this.Size = new Size(325, 100);
-            }
-            else
+            } else
             {
                 this.Size = new Size(600, 220);
-                if (_ProxyClients.ProxyAuth == null)
+                if(_ProxyClients.ProxyAuth == null)
                 {
                     tabPage2.Controls.Clear();
                     tabPage2.Controls.Add(_Login);

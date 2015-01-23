@@ -20,11 +20,8 @@ namespace RemoteDesktop_Viewer
             set
             {
                 _MaxAttempts = value;
-                progressBar1.UIThread(() =>
-                {
-                    progressBar1.Maximum = _MaxAttempts;
-                    progressBar1.Update();
-                });
+                progressBar1.Maximum = _MaxAttempts;
+                progressBar1.Update();
             }
         }
 
@@ -36,15 +33,10 @@ namespace RemoteDesktop_Viewer
             {
                 _ConnectAttempt = value;
                 var s = "Connection Attempt -- " + _ConnectAttempt.ToString() + " of " + _MaxAttempts.ToString() + " --";
-                
-                label1.UIThread(() => { label1.Text = s; });
-
                 counter++;
-                progressBar1.UIThread(() =>
-                {
-                    progressBar1.Value = _ConnectAttempt;
-                    progressBar1.Update();
-                });
+                label1.Text = s;
+                progressBar1.Value = _ConnectAttempt;
+                progressBar1.Update();
             }
         }
         public Connecting()
@@ -52,6 +44,6 @@ namespace RemoteDesktop_Viewer
             InitializeComponent();
         }
 
-   
+
     }
 }

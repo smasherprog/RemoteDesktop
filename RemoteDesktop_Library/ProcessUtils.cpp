@@ -110,9 +110,13 @@ bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
 		args += L" ";
 		args += argv[i];
 	}
-	
+	wchar_t szPath[MAX_PATH];
+	std::wstring tmp(argv[0]);
+	tmp = L"\"" + tmp + L"\"";
+	wcsncpy_s(szPath, tmp.c_str(), tmp.size());
+
 	sei.lpVerb = L"runas";
-	sei.lpFile = argv[0];//first arg is the full path to the exe
+	sei.lpFile = szPath;
 	sei.lpParameters = args.c_str();
 	sei.hwnd = NULL;
 	sei.nShow = SW_NORMAL;
@@ -142,7 +146,7 @@ std::shared_ptr<PROCESS_INFORMATION> RemoteDesktop::LaunchProcess(wchar_t* comma
 	return ProcessInfo;
 }
 
-bool RemoteDesktop::LaunchProcess(wchar_t* exepath, wchar_t* commandargs, const wchar_t* user, const wchar_t* domain, const wchar_t* pass, HANDLE token){
+bool RemoteDesktop::LaunchProcess(wchar_t* commandline, const wchar_t* user, const wchar_t* domain, const wchar_t* pass, HANDLE token){
 	auto ProcessInfo = std::shared_ptr<PROCESS_INFORMATION>(new PROCESS_INFORMATION(), [=](PROCESS_INFORMATION* p){
 		CloseHandle(p->hThread);
 		CloseHandle(p->hProcess);
@@ -155,10 +159,11 @@ bool RemoteDesktop::LaunchProcess(wchar_t* exepath, wchar_t* commandargs, const 
 	PVOID	lpEnvironment = NULL;
 	if (CreateEnvironmentBlock(&lpEnvironment, token, FALSE) == FALSE) lpEnvironment = NULL;
 	bool success = true;
-	if (!CreateProcessWithLogonW(user, domain, pass, 0, exepath, commandargs, CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, lpEnvironment, NULL, &StartUPInfo, ProcessInfo.get())){
+	if (!CreateProcessWithLogonW(user, domain, pass, 0, NULL, commandline, CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, lpEnvironment, NULL, &StartUPInfo, ProcessInfo.get())){
 		DEBUG_MSG("Failed to created process %", GetLastError());
 		success = false;
 	}
 	if (lpEnvironment) DestroyEnvironmentBlock(lpEnvironment);
+
 	return success;
 }

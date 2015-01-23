@@ -93,7 +93,6 @@ void RemoteDesktop::Client::_Handle_ClipBoard(Packet_Header* header, const char*
 	_ClipboardMonitor->Restore(clip);
 }
 
-
 void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	Socket = sh;
 	DEBUG_MSG("Connection Successful");
@@ -102,6 +101,7 @@ void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 	Send(Socket, NetworkMessages::CONNECT_REQUEST, msg);
 	_OnConnect();
 }
+
 
 void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 

@@ -217,6 +217,8 @@ std::string RemoteDesktop::GetIP(){
 	return ipaddr;
 }
 RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SOCKET sock, char* data, int len){
+	auto timer = std::chrono::high_resolution_clock::now();
+	int startlen = len;
 	assert(sock != INVALID_SOCKET);
 	while (len > 0){
 		//DEBUG_MSG("SendLoop %", len);
@@ -229,6 +231,7 @@ RemoteDesktop::Network_Return RemoteDesktop::SendLoop(SOCKET sock, char* data, i
 					DEBUG_MSG("SendLoop DISCONNECTING %", errmsg);
 					return RemoteDesktop::Network_Return::FAILED;
 				}
+				if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - timer).count() > 30000) return RemoteDesktop::Network_Return::FAILED;
 			}
 
 			//DEBUG_MSG("Yeilding % %", len, sockerr);

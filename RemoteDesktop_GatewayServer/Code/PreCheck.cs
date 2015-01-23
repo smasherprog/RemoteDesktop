@@ -14,18 +14,13 @@ namespace RemoteDesktop_GatewayServer.Code
                 throw new Exception("Missing web.config AppSettings Key for'RAT_Gateway_File'");
             if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_P2P_File"]))
                 throw new Exception("Missing web.config AppSettings Key for'RAT_P2P_File'");
-            if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_ServiceName"]))
-                throw new Exception("Missing web.config AppSettings Key for'RAT_ServiceName'");
-            if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_Serive_Display_Name"]))
-                throw new Exception("Missing web.config AppSettings Key for'RAT_Serive_Display_Name'");
             if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_Gateway_Listen_Port"]))
                 throw new Exception("Missing web.config AppSettings Key for'RAT_Gateway_Listen_Port'");
             if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_Gateway_External_Connect_Port"]))
                 throw new Exception("Missing web.config AppSettings Key for'RAT_Gateway_External_Connect_Port'");
             if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_GatewayHostName"]))
                 throw new Exception("Missing web.config AppSettings Key for'RAT_GatewayHostName'");
-            if(string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["RAT_Disclaimer"]))
-                throw new Exception("Missing web.config AppSettings Key for'RAT_Disclaimer'");
+     
 
         }
     }

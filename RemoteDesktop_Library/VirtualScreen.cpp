@@ -16,6 +16,7 @@ BOOL CALLBACK RemoteDesktop::VirtualScreen::MonitorEnumProc(
 	LPARAM dwData         // data
 	)
 {
+
 	auto hdcPool = reinterpret_cast<std::vector<RemoteDesktop::Screen>*>(dwData);
 	auto desktopGuard(RAIIHDC(hdcMonitor));
 	RECT rect = *lprcMonitor;

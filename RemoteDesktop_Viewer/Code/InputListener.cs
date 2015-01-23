@@ -50,14 +50,14 @@ namespace RemoteDesktop_Viewer.Code
 
         private const int InputPerSec = 20;
         private List<int> Keys_Down;
-        private int _LastMsg, _LastX, _LastY, _Lastwheel;
+        private int _LastMsg, _LastX, _LastY;
 
         private IntPtr Handle;
         public InputListener(IntPtr handle)
         {
             Handle = handle;
             Keys_Down = new List<int>();
-            _LastMsg = _LastX = _LastY = _Lastwheel = 0;
+            _LastMsg = _LastX = _LastY  = 0;
         }
 
         public bool PreFilterMessage(ref System.Windows.Forms.Message m)
@@ -105,13 +105,12 @@ namespace RemoteDesktop_Viewer.Code
                         uint xy = unchecked(IntPtr.Size == 8 ? (uint)m.WParam.ToInt64() : (uint)m.WParam.ToInt32());
                         wheel = unchecked((short)(xy >> 16));
                     }
-                    if(_LastMsg != m.Msg || p.X != _LastX || p.Y != _LastY || _Lastwheel != wheel)
+                    if(_LastMsg != m.Msg || p.X != _LastX || p.Y != _LastY || wheel!= 0)
                     {
                         InputMouseEvent(m.Msg, p.X, p.Y, wheel);
                         _LastMsg = m.Msg;
                         _LastX = p.X;
                         _LastY = p.Y;
-                        _Lastwheel = wheel;
                     }
 
                 }

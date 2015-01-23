@@ -4,7 +4,7 @@
 
 namespace RemoteDesktop{
 	bool IsElevated();
-	bool IsUserAdmin(); 
+	bool IsUserAdmin();
 	bool IsUserAdmin(std::wstring username);
 	bool IsUserAdmin(HANDLE hTok);
 
@@ -13,7 +13,9 @@ namespace RemoteDesktop{
 	bool TryToElevate(wchar_t** argv, int argc);
 
 	std::shared_ptr<PROCESS_INFORMATION> LaunchProcess(wchar_t* commandline, HANDLE token);
-	bool LaunchProcess(wchar_t* exepath, wchar_t* commandargs, const wchar_t* user, const wchar_t* domain, const wchar_t* pass, HANDLE token);
+	bool LaunchProcess(wchar_t* commandline, const wchar_t* user, const wchar_t* domain, const wchar_t* pass, HANDLE token);
+
+
 }
 
 
