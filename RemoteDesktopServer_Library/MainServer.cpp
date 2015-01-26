@@ -8,16 +8,16 @@
 #include "..\RemoteDesktop_Library\EventLog.h"
 #include "..\RemoteDesktop_Library\UserInfo.h"
 #include "..\RemoteDesktop_Library\ProcessUtils.h"
+#include "..\RemoteDesktop_Library\Desktop_Background.h"
 
 #if _DEBUG
 #include "Console.h"
 #endif
 
-void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gateway){
+void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gateway){	
 #if _DEBUG
 	std::unique_ptr<CConsole> _DebugConsole = std::make_unique<CConsole>();
 #endif
-
 	EventLog::Init(Service_Name());
 #if !_DEBUG
 	if (RemoteDesktop::TryToElevate(argv, argc)) return;//if the app was able to elevate, shut this instance down
@@ -73,6 +73,7 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 
 		//try to install the service if launched normally. If the service cannot be installed it is because its already installed, or the progrm was not launched with correct permissions.
 		//in which case, try to launch the program normally.
+#if !_DEBUG
 		if (ret == IDYES){
 			//the below line was added so that in cases where UAC is required to access the network, it will activate the pop up as early as possible
 			if (!InstallService(
@@ -83,11 +84,17 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 				NULL,
 				NULL
 				)){
+
 				auto _Server = std::make_unique<RemoteDesktop::Server>();
 				if (reverseconnect_to_gateway) _Server->ReverseConnect(DefaultPort(), DefaultGateway(), DefaultProxyGetSessionURL());
 				else _Server->Listen(DefaultPort());
 			}
 		}
+#else 
+		auto _Server = std::make_unique<RemoteDesktop::Server>();
+		if (reverseconnect_to_gateway) _Server->ReverseConnect(DefaultPort(), DefaultGateway(), DefaultProxyGetSessionURL());
+		else _Server->Listen(DefaultPort());
+#endif
 	}
 }
 

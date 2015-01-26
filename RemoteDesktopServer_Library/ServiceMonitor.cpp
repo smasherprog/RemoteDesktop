@@ -100,7 +100,7 @@ std::shared_ptr<PROCESS_INFORMATION> RemoteDesktop::ServiceMonitor::_LaunchProce
 	GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
 	std::wstring tmp(szPath);
 	tmp = L"\"" + tmp + L"\"";
-	wcsncpy_s(szPath, tmp.c_str(), tmp.size());
+	wcsncpy_s(szPath, tmp.c_str(), tmp.size()+1);
 	if (args != nullptr) wcscat_s(szPath, args);
 	return LaunchProcess(szPath, _CurrentSession);
 }

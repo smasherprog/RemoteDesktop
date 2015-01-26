@@ -10,7 +10,7 @@ RemoteDesktop::Global_Settings::Global_Settings(){
 	wcsncpy_s(Service_Display_Name, L"Remote Access Tool", ARRAYSIZE(Service_Display_Name));
 	wcsncpy_s(DefaultPort, L"443", ARRAYSIZE(DefaultPort));
 	wcsncpy_s(DefaultGateway, L"localhost", ARRAYSIZE(DefaultGateway));
-	wcsncpy_s(DefaultProxyGetSessionURL, L"http://localhost:3406/Support/GetID", ARRAYSIZE(DefaultProxyGetSessionURL));
+	wcsncpy_s(DefaultProxyGetSessionURL, L"http://localhost/Support/GetID", ARRAYSIZE(DefaultProxyGetSessionURL));
 	wcsncpy_s(DisclaimerMessage, L"Do you agree to allow a support technician to connection to your computer?", ARRAYSIZE(DisclaimerMessage));
 	wcsncpy_s(Unique_ID, L"", ARRAYSIZE(Unique_ID));
 	wcsncpy_s(Last_UserConnectName, L"", ARRAYSIZE(Last_UserConnectName));
@@ -56,7 +56,7 @@ wchar_t* Unique_ID(){
 		int randint = (int)dist(mt);
 		auto uniqueid = std::to_wstring(randint);
 		//update file and settings
-		wcsncpy_s(RemoteDesktop::INTERNAL::_Global_Settings.Unique_ID, uniqueid.c_str(), ARRAYSIZE(RemoteDesktop::INTERNAL::_Global_Settings.Unique_ID));
+		wcsncpy_s(RemoteDesktop::INTERNAL::_Global_Settings.Unique_ID, uniqueid.c_str(), uniqueid.size()+1);
 		RemoteDesktop::INTERNAL::_Global_Settings.FlushToDisk();
 	}
 	return RemoteDesktop::INTERNAL::_Global_Settings.Unique_ID;
@@ -65,6 +65,6 @@ wchar_t* GetLast_UserConnectName(){
 	return RemoteDesktop::INTERNAL::_Global_Settings.Last_UserConnectName;
 }
 void SetLast_UserConnectName(std::wstring name){
-	wcsncpy_s(RemoteDesktop::INTERNAL::_Global_Settings.Last_UserConnectName, name.c_str(), ARRAYSIZE(RemoteDesktop::INTERNAL::_Global_Settings.Last_UserConnectName));
+	wcsncpy_s(RemoteDesktop::INTERNAL::_Global_Settings.Last_UserConnectName, name.c_str(), name.size()+1);
 	RemoteDesktop::INTERNAL::_Global_Settings.FlushToDisk();
 }

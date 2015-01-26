@@ -9,12 +9,22 @@ std::mutex RemoteDesktop::INTERNAL::BufferCacheLock;
 
 int RemoteDesktop::Image_Settings::Quality = 70;
 bool RemoteDesktop::Image_Settings::GrazyScale = false;
+void RemoteDesktop::Image::GetNewBuffer(){
+	if (!INTERNAL::BufferCache.empty()){
+		std::lock_guard<std::mutex> lock(INTERNAL::BufferCacheLock);
+		if (!INTERNAL::BufferCache.empty()){
+			data = std::move(INTERNAL::BufferCache.back());
+			INTERNAL::BufferCache.pop_back();
+		}
+	}
+}
+
 
 void RemoteDesktop::Image::Compress(){
 	if (Compressed) return;//already done
-	
+
 	//I Kind of cheat below by using static variables. . .  This means the compress and decompress functions are NOT THREAD SAFE, but this isnt a problem yet because I never access these functions from different threads at the same time
-	
+
 	auto compfree = [](void* handle){tjDestroy(handle); };
 
 	static std::unique_ptr<void, decltype(compfree)> _jpegCompressor;
@@ -25,11 +35,11 @@ void RemoteDesktop::Image::Compress(){
 
 	auto maxsize = tjBufSize(Width, Height, set);
 	long unsigned int _jpegSize = maxsize;
-	
+
 	if (compressBuffer.capacity() < maxsize) compressBuffer.reserve(maxsize + 16);
 
 	auto t = Timer(true);
-	
+
 	auto ptr = (unsigned char*)compressBuffer.data();
 	if (tjCompress2(_jpegCompressor.get(), (unsigned char*)data.data(), Width, 0, Height, TJPF_BGRX, &ptr, &_jpegSize, set, Image_Settings::Quality, TJFLAG_FASTDCT | TJFLAG_NOREALLOC) == -1) {
 		DEBUG_MSG("Err msg %", tjGetErrorStr());
@@ -39,7 +49,8 @@ void RemoteDesktop::Image::Compress(){
 	memcpy(data.data(), ptr, _jpegSize);
 
 	t.Stop();
-	//DEBUG_MSG("Time Taken Compress %", std::to_string(t.Elapsed_milli()));
+	//DEBUG_MSG("Time Taken Compress %, size %", std::to_string(t.Elapsed_milli()), _jpegSize);
+
 	Compressed = true;
 }
 void RemoteDesktop::Image::Decompress(){
@@ -50,9 +61,9 @@ void RemoteDesktop::Image::Decompress(){
 	static std::unique_ptr<void, decltype(compfree)> _jpegDecompressor;
 	static std::vector<unsigned char> decompressBuffer;
 	if (_jpegDecompressor.get() == nullptr) _jpegDecompressor = std::unique_ptr<void, decltype(compfree)>(tjInitDecompress(), compfree);
-	
+
 	size_t maxsize = Width * Height * Pixel_Stride;
-	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize+16);
+	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize + 16);
 
 	int jpegSubsamp = 0;
 	auto outwidth = 0;
@@ -86,31 +97,30 @@ RemoteDesktop::Image RemoteDesktop::Image::Create_from_Compressed_Data(char* d, 
 RemoteDesktop::Image RemoteDesktop::Image::Clone() const{
 	auto retimg(Create_from_Compressed_Data((char*)data.data(), data.size(), Height, Width));
 	retimg.Compressed = Compressed;
-		return retimg;
+	return retimg;
 }
 
 
 RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image& first, Image& second){
+	assert(first.Height == second.Height);
+	assert(first.Width == second.Width);
+	assert(first.Pixel_Stride == second.Pixel_Stride);
+
 	int top = -1;
 	int bottom = -1;
 	int left = -1;
 	int right = -1;
-
-
-	auto even = (first.Width % first.Pixel_Stride);
-	auto totalwidth = first.Width - even; //subtract any extra bits to ensure I dont go over the array bounds
-	auto stide = (first.Width * first.Pixel_Stride);
+	//all images are aligned on a 32 bit boundary so this will not overrun the arrays
+	auto first_data = (int*)first.data.data();
+	auto second_data = (int*)second.data.data();
 
 	for (int y = 0; y < first.Height; y++)
 	{
-		auto linea = (int*)(first.data.data() + (stide *y));
-		auto lineb = (int*)(second.data.data() + (stide *y));
-
-		for (int x = 0; x < totalwidth; x += 4)
+		for (int x = 0; x < first.Width; x += 4)
 		{
-
-			auto la = linea[x] + linea[x + 1] + linea[x + 2] + linea[x + 3];
-			auto lb = lineb[x] + lineb[x + 1] + lineb[x + 2] + lineb[x + 3];
+			auto offset = x + (y * first.Width);
+			auto la = first_data[offset] + first_data[offset + 1] + first_data[offset + 2] + first_data[offset + 3];
+			auto lb = second_data[offset] + second_data[offset + 1] + second_data[offset + 2] + second_data[offset + 3];
 			if (la != lb)
 			{
 				auto tmpx = x;
@@ -136,11 +146,8 @@ RemoteDesktop::Rect RemoteDesktop::Image::Difference(Image& first, Image& second
 				{
 					right = tmpx + 1;
 				}
-
 			}
-
 		}
-
 	}
 
 
@@ -202,7 +209,7 @@ void RemoteDesktop::Image::Copy(Image& src_img, int dst_left, int dst_top, int d
 	auto wmod = dst_width - (src_img.Width + dst_left);
 	if (wmod < 0) src_img.Width += wmod;
 
-	auto dstend = dst + (dst_height* dst_width*4)+ 1;//this is the traditional end
+	auto dstend = dst + (dst_height* dst_width * 4) + 1;//this is the traditional end
 
 	auto copysrcstide = src_img.Width * src_img.Pixel_Stride;
 
@@ -217,14 +224,14 @@ void RemoteDesktop::Image::Copy(Image& src_img, int dst_left, int dst_top, int d
 }
 void RemoteDesktop::Image::Save(std::string outfile){
 	assert(!Compressed);
-	
+
 	BITMAPINFOHEADER   bi;
 	memset(&bi, 0, sizeof(bi));
 	bi.biSize = sizeof(BITMAPINFOHEADER);
 	bi.biWidth = Width;
 	bi.biHeight = -Height;
 	bi.biPlanes = 1;
-	bi.biBitCount = Pixel_Stride*8;
+	bi.biBitCount = Pixel_Stride * 8;
 	bi.biCompression = BI_RGB;
 	bi.biXPelsPerMeter = 0;
 	bi.biYPelsPerMeter = 0;

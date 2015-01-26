@@ -44,7 +44,7 @@ bool InstallService(PWSTR pszServiceName,
 
 	std::wstring tmp(szPath);
 	tmp = L"\"" + tmp + L"\"";
-	wcsncpy_s(szPath, tmp.c_str(), tmp.size());
+	wcsncpy_s(szPath, tmp.c_str(), tmp.size()+1);
 
 	auto schSCManager = RAIISC_HANDLE(OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE));
 	if (schSCManager.get() == nullptr) {

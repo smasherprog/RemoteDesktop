@@ -4,9 +4,6 @@
     <Filter Include="Compression">
       <UniqueIdentifier>{3177129f-fe86-4bfe-a122-49e2daa513af}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Desktop_Capture">
-      <UniqueIdentifier>{1fb5394a-8ab5-4b65-a6aa-d40df2042c49}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Network">
       <UniqueIdentifier>{7cc09a20-7661-414c-83a1-04285a73e6a7}</UniqueIdentifier>
     </Filter>
@@ -24,6 +21,9 @@
     </Filter>
     <Filter Include="Network\Concrete">
       <UniqueIdentifier>{77ee62b7-5ac3-45e0-a308-43bc04b9a2ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Desktop">
+      <UniqueIdentifier>{1fb5394a-8ab5-4b65-a6aa-d40df2042c49}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -98,7 +98,6 @@
     </ClInclude>
     <ClInclude Include="Clipboard.h" />
     <ClInclude Include="Clipboard_Monitor.h" />
-    <ClInclude Include="Desktop_Monitor.h" />
     <ClInclude Include="MouseCommon.h" />
     <ClInclude Include="INetwork.h">
       <Filter>Network\Interface</Filter>
@@ -134,7 +133,7 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="VirtualScreen.h">
-      <Filter>Desktop_Capture</Filter>
+      <Filter>Desktop</Filter>
     </ClInclude>
     <ClInclude Include="Concurrent_Queue.h">
       <Filter>Utilities</Filter>
@@ -144,6 +143,12 @@
     </ClInclude>
     <ClInclude Include="Gateway_Socket.h">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Desktop_Monitor.h">
+      <Filter>Desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="Desktop_Background.h">
+      <Filter>Desktop</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -200,7 +205,6 @@
     </ClCompile>
     <ClCompile Include="Clipboard.cpp" />
     <ClCompile Include="Clipboard_Monitor.cpp" />
-    <ClCompile Include="Desktop_Monitor.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="Network_Client.cpp">
       <Filter>Network\Concrete</Filter>
@@ -233,13 +237,19 @@
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="VirtualScreen.cpp">
-      <Filter>Desktop_Capture</Filter>
+      <Filter>Desktop</Filter>
     </ClCompile>
     <ClCompile Include="Network_GatewayServer.cpp">
       <Filter>Network\Concrete</Filter>
     </ClCompile>
     <ClCompile Include="Gateway_Socket.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Desktop_Monitor.cpp">
+      <Filter>Desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="Desktop_Background.cpp">
+      <Filter>Desktop</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

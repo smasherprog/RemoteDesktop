@@ -132,7 +132,9 @@ void RemoteDesktop::Network_Client::_Run(std::shared_ptr<SocketHandler>& socket)
 			}
 		}
 		if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - timer).count() > 1000){
-			if (RemoteDesktop::SocketHandler::CheckState(socket) == RemoteDesktop::Network_Return::FAILED) break;// get out of the loop and try reconnecting
+			if (RemoteDesktop::SocketHandler::CheckState(socket) == RemoteDesktop::Network_Return::FAILED) {
+				break;// get out of the loop and try reconnecting
+			}
 			timer = std::chrono::high_resolution_clock::now();
 		}
 

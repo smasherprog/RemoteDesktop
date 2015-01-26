@@ -106,7 +106,7 @@ void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 
 	NetworkMsg msg;
-	KeyEvent_Header h;
+	KeyEvent_Header h = { };
 	h.VK = VK;
 	h.down = down == true ? 0 : -1;
 	msg.push_back(h);
@@ -114,7 +114,7 @@ void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 }
 void RemoteDesktop::Client::MouseEvent(unsigned int action, int x, int y, int wheel){
 	NetworkMsg msg;
-	MouseEvent_Header h;
+	MouseEvent_Header h = {};
 	h.HandleID = 0;
 	h.Action = action;
 	h.pos.left = x;

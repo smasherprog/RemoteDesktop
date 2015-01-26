@@ -13,7 +13,6 @@ namespace RemoteDesktop{
 
 	class SocketHandler;
 	struct Packet_Header;
-	class Image;
 	class Rect;
 	class ClipboardMonitor;
 	struct Clipboard_Data;
@@ -21,29 +20,26 @@ namespace RemoteDesktop{
 	class GatewayConnect_Dialog;
 	class NewConnect_Dialog;
 	class INetwork;
-	class VirtualScreen;
-	struct Screen;
-
+	class Screen;
+	class DesktopBackground;
 
 	class Server{
 
 		std::mutex _ClientLock;
 		std::vector<std::shared_ptr<SocketHandler>> _PendingNewClients; 
 		std::vector<std::shared_ptr<SocketHandler>> _NewClients;
-	
-		std::unique_ptr<MouseCapture> mousecapturing;
 		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
-		std::unique_ptr<INetwork> _NetworkServer;
+		std::shared_ptr<INetwork> _NetworkServer;
 		
 		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
 		std::unique_ptr<SystemTray> _SystemTray;
+	//	std::unique_ptr<DesktopBackground> _DesktopBackground;
 
-		std::unique_ptr<VirtualScreen> _VirtualScreen;
+		void _HandleNewClients(Screen& screen, std::vector<std::shared_ptr<SocketHandler>>& newclients);
+		void _HandleResolutionChanged(const Screen& screen);
+		void _Handle_ScreenChanged(const Screen& img, const Rect& rect);
 
-		void _HandleNewClients(Screen& screen, int index, std::vector<std::shared_ptr<SocketHandler>>& newclients);
-		bool _HandleResolutionUpdates(Screen& screen, Screen& lastscreen, int index);
-		void _Handle_ScreenUpdates(Image& img, Rect& rect, int index);
-		void _Handle_MouseUpdates(const std::unique_ptr<MouseCapture>& mousecapturing);
+		void _Handle_MouseChanged(const MouseCapture& mousecapturing);
 		void _Handle_UAC_Permission();
 
 		void _Handle_MouseUpdate(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh);

@@ -26,10 +26,10 @@ bool RemoteDesktop::IsUserAdmin(){
 	HANDLE hTok = nullptr;
 	if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hTok))
 	{
-		DEBUG_MSG("Cannot open thread token, trying process token [%].", GetLastError());
+		DEBUG_MSG("Cannot open thread token, trying process token %", GetLastError());
 		if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hTok))
 		{
-			DEBUG_MSG("Cannot open process token, quitting [%].", GetLastError());
+			DEBUG_MSG("Cannot open process token, quitting %", GetLastError());
 			return false;
 		}
 	}
@@ -61,21 +61,26 @@ bool RemoteDesktop::IsUserAdmin(std::wstring username){
 bool RemoteDesktop::IsUserAdmin(HANDLE hTok){
 
 	bool found;
-	DWORD i, l;
-	PSID pAdminSid = nullptr;
+	DWORD  l(0);
+	
 	SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
 
-	BYTE rawGroupList[4096];
-	TOKEN_GROUPS& groupList = *((TOKEN_GROUPS *)rawGroupList);
-
-	// normally, I should get the size of the group list first, but ...
-	l = sizeof(rawGroupList);
-	if (!GetTokenInformation(hTok, TokenGroups, &groupList, l, &l))
+	if (!GetTokenInformation(hTok, TokenGroups, NULL, 0, &l))
+	{
+		auto dwResult = GetLastError();
+		if (dwResult != ERROR_INSUFFICIENT_BUFFER) {
+			printf("GetTokenInformation Error %u\n", dwResult);
+			return false;
+		}
+	}
+	std::vector<char> buffer;
+	buffer.reserve(l);
+	if (!GetTokenInformation(hTok, TokenGroups, buffer.data(), l, &l))
 	{
 		DEBUG_MSG("Cannot get group list from token [%].", GetLastError());
 		return false;
 	}
-
+	PSID pAdminSid = nullptr;
 	// here, we cobble up a SID for the Administrators group, to compare to.
 	if (!AllocateAndInitializeSid(&ntAuth, 2, SECURITY_BUILTIN_DOMAIN_RID,
 		DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pAdminSid))
@@ -83,22 +88,21 @@ bool RemoteDesktop::IsUserAdmin(HANDLE hTok){
 		DEBUG_MSG("Cannot create SID for Administrators  [%].", GetLastError());
 		return false;
 	}
-
+	PTOKEN_GROUPS groupList = (PTOKEN_GROUPS)buffer.data();
 	// now, loop through groups in token and compare
 	found = 0;
-	for (i = 0; i < groupList.GroupCount; ++i)
+	for (auto i = 0; i < groupList->GroupCount; ++i)
 	{
-		if (EqualSid(pAdminSid, groupList.Groups[i].Sid))
+		if (EqualSid(pAdminSid, groupList->Groups[i].Sid))
 		{
 			found = true;
 			break;
 		}
 	}
-
-	FreeSid(pAdminSid);
+	if (pAdminSid) FreeSid(pAdminSid);
 	return found;
 }
-bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
+bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc) {
 	if (IsElevated()) return false;//allready elevated
 	if (!IsUserAdmin()) return false;// cannot elevate process anyway
 	//we have the power.. TRY TO ELVATE!!!
@@ -113,7 +117,8 @@ bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc){
 	wchar_t szPath[MAX_PATH];
 	std::wstring tmp(argv[0]);
 	tmp = L"\"" + tmp + L"\"";
-	wcsncpy_s(szPath, tmp.c_str(), tmp.size());
+	
+	wcsncpy_s(szPath, tmp.c_str(), tmp.size() + 1);
 
 	sei.lpVerb = L"runas";
 	sei.lpFile = szPath;
@@ -166,4 +171,41 @@ bool RemoteDesktop::LaunchProcess(wchar_t* commandline, const wchar_t* user, con
 	if (lpEnvironment) DestroyEnvironmentBlock(lpEnvironment);
 
 	return success;
+}
+bool RemoteDesktop::TryToElevate(std::wstring user, std::wstring pass){
+	HANDLE token = NULL;
+	if (user.size() < 2 || pass.size() < 2) return false;
+	auto splits = split(user, L'\\');
+	bool authenticated = false;
+	if (splits.size() == 2){
+		authenticated = LogonUser(splits[1].c_str(), splits[0].c_str(), pass.c_str(), LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token) == TRUE;
+	}
+	else {
+		authenticated = LogonUser(user.c_str(), NULL, pass.c_str(), LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token) == TRUE;
+	}
+	if (authenticated){
+
+		auto isadmin = IsUserAdmin(token);
+		if (!isadmin && splits.size() == 2){//check domain controller for admin group
+			isadmin = IsUserAdmin(user);
+		}
+		if (isadmin && !IsElevated()) {
+			wchar_t szPath[MAX_PATH];
+			GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+			std::wstring tmp(szPath);
+			tmp = L"\"" + tmp + L"\"";
+			wcsncpy_s(szPath, tmp.c_str(), tmp.size()+1);
+			wchar_t cmndargs[] = L" -delayed_run";
+			wcscat_s(szPath, cmndargs);
+
+			if (splits.size() == 2){
+				return LaunchProcess(szPath, splits[1].c_str(), splits[0].c_str(), pass.c_str(), token);
+			}
+			else {
+				return LaunchProcess(szPath, user.c_str(), NULL, pass.c_str(), token);
+			}
+		}
+	}
+	if (token != nullptr) CloseHandle(token);
+	return false;
 }

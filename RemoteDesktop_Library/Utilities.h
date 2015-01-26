@@ -54,8 +54,8 @@ namespace _INTERNAL{
 	template<typename T, typename... Args>
 	void xsprintf(std::string& result, const char *s, T value, Args... args)
 	{
-		
-		while (s!=nullptr && *s) {
+
+		while (s != nullptr && *s) {
 			if (*s == '%') {
 				if (*(s + 1) == '%') {
 					++s;
@@ -83,7 +83,9 @@ struct my_equal {
 private:
 	const std::locale& loc_;
 };
-
+template<typename T>void ZEROMEMORY(T& obj){
+	memset(&obj, 0, sizeof(T));
+}
 // find substring (case insensitive)
 template<typename T>
 int find_substr(const T& str1, const T& str2, const std::locale& loc = std::locale())
@@ -186,12 +188,40 @@ template<class T>T StripPath(const T& file){// this will only strip off the enti
 }
 
 // trim from start
-template<class T>T &ltrim(T &s) { s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace)))); return s; }
+inline std::string ltrim(std::string &s) {
+	if (s.empty())
+		return s;
+	std::size_t first = s.find_first_not_of(' ');
+	return s.substr(first, s.size() - first);
+}
+inline std::wstring ltrim(std::wstring &s) {
+	if (s.empty())
+		return s;
+	std::size_t first = s.find_first_not_of(L' ');
+	return s.substr(first, s.size() - first);
+}
 // trim from end
-template<class T>T &rtrim(T &s) { s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end()); return s; }
-// trim from both ends
-template<class T>T &trim(T &s) { return ltrim(rtrim(s)); }
+inline std::wstring rtrim(std::wstring &s) {
+	if (s.empty())
+		return s;
+	std::size_t last = s.find_last_not_of(L' ');
+	return s.substr(0, last- s.size());
 
+}
+// trim from both ends
+inline std::string trim(std::string &s) {
+	if (s.empty())
+		return s;
+	std::size_t last = s.find_last_not_of(' ');
+	return s.substr(0, last - s.size());
+}
+inline std::wstring trim(std::wstring &s) {
+	if (s.empty())
+		return s;
+	std::size_t first = s.find_first_not_of(L' ');
+	std::size_t last = s.find_last_not_of(L' ');
+	return s.substr(first, last - first + 1);
+}
 inline bool ContainsPath(const std::string& str){
 	std::string::size_type po = str.find_last_of('\\');
 	if (po == std::string::npos) po = str.find_last_of('/');// couldnt find it with the double slashes, try a single forward slash

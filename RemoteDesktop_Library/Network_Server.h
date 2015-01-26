@@ -40,7 +40,7 @@ namespace RemoteDesktop{
 		virtual int Connection_Count() const override { 
 			auto s(_Sockets.lock()); 
 			if (!s) return 0; 
-			return s->size() <= 1 ? 0 : s->size();
+			return s->size() == 0 ? 0 : s->size()-1;
 		}
 	};
 

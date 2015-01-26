@@ -75,7 +75,8 @@ void RemoteDesktop::StandardSocketSetup(SOCKET socket){
 	ioctlsocket(socket, FIONBIO, &iMode);
 	int optLen = sizeof(int);
 	int optVal = 64 * 1024;
-	setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char *)&optVal, optLen);
+	setsockopt(socket, SOL_SOCKET, SO_SNDBUF, (char *)&optVal, optLen);	
+	//setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char *)&optVal, optLen);
 	//set no delay 
 	BOOL nodly = TRUE;
 	if (setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (char*)&nodly, sizeof(nodly)) == SOCKET_ERROR){
@@ -87,40 +88,54 @@ SOCKET RemoteDesktop::Connect(std::wstring port, std::wstring host){
 	if (!StartupNetwork()) return INVALID_SOCKET;
 	std::chrono::milliseconds dura(1000);
 	std::this_thread::sleep_for(dura);
+
 	SOCKET ConnectSocket = INVALID_SOCKET;
 	struct addrinfoW *result = NULL, *ptr = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = AF_INET;//ipv4 right meow
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 
 	// Resolve the server address and port
 
-	auto iResult = GetAddrInfoW(host.c_str(), port.c_str(), &hints, &result);
-	if (iResult != 0) return INVALID_SOCKET;
-
+	if (GetAddrInfoW(host.c_str(), port.c_str(), &hints, &result) != 0) return INVALID_SOCKET;
 	// Attempt to connect to an address until one succeeds
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-		// Create a SOCKET for connecting to server
 		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
 		if (ConnectSocket == INVALID_SOCKET) return INVALID_SOCKET;
+		StandardSocketSetup(ConnectSocket);
 		// Connect to server.
-		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-		if (iResult == SOCKET_ERROR) {
-			closesocket(ConnectSocket);
-			ConnectSocket = INVALID_SOCKET;
-			DEBUG_MSG("Server Down....");
-			continue;
+		connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+		u_long iMode = 0;
+		ioctlsocket(ConnectSocket, FIONBIO, &iMode);
+		TIMEVAL Timeout;
+		Timeout.tv_sec = 5;//5 second timeout
+		Timeout.tv_usec = 0;
+		fd_set Write, Err;
+		FD_ZERO(&Write);
+		FD_ZERO(&Err);
+		FD_SET(ConnectSocket, &Write);
+		FD_SET(ConnectSocket, &Err);
+
+		select(0, NULL, &Write, &Err, &Timeout);
+
+		if (FD_ISSET(ConnectSocket, &Write)) {
+			//set socket back to non blocking and return true!!
+			iMode = 1;
+			ioctlsocket(ConnectSocket, FIONBIO, &iMode);
+			DEBUG_MSG("Connect Success!");
+			break;
 		}
-		else DEBUG_MSG("Connect Success!");
-		break;
+
+		closesocket(ConnectSocket);
+		ConnectSocket = INVALID_SOCKET;
+		DEBUG_MSG("Server Down....");
 	}
 
 	FreeAddrInfoW(result);
 
 	if (ConnectSocket == INVALID_SOCKET) return INVALID_SOCKET;
-	StandardSocketSetup(ConnectSocket);
 
 	auto newevent(RAIIHANDLE(WSACreateEvent()));
 
@@ -202,7 +217,7 @@ std::string RemoteDesktop::GetIP(){
 	while (pOriginalPtr != NULL)
 	{
 		// Print the Ip Addresses
-		PIP_ADDR_STRING pAddressList = &(pOriginalPtr->IpAddressList); 
+		PIP_ADDR_STRING pAddressList = &(pOriginalPtr->IpAddressList);
 		PIP_ADDR_STRING gatewaystr = &(pOriginalPtr->GatewayList);
 		auto gateway = std::string(gatewaystr->IpAddress.String);
 		if (gateway.size() > 5){
@@ -210,7 +225,7 @@ std::string RemoteDesktop::GetIP(){
 			break;
 		}
 		pOriginalPtr = pOriginalPtr->Next;
-	} 
+	}
 
 	if (pAdapterInfo)
 		free(pAdapterInfo);

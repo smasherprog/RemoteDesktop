@@ -19,37 +19,17 @@ namespace RemoteDesktop{
 	class Image{
 
 		std::vector<char> data;
-
+		void GetNewBuffer();
 	public:
 
 		Image(const Image& other) = delete;
-		Image() {
-			if (!INTERNAL::BufferCache.empty()){
-				std::lock_guard<std::mutex> lock(INTERNAL::BufferCacheLock);
-				if (!INTERNAL::BufferCache.empty()){
-					data = std::move(INTERNAL::BufferCache.back());
-					INTERNAL::BufferCache.pop_back();
-				}
-			}
-		}
+		Image() { GetNewBuffer(); }
 		explicit Image(char* d, int h, int w) :Pixel_Stride(4), Height(h), Width(w) {
-			if (!INTERNAL::BufferCache.empty()){
-				std::lock_guard<std::mutex> lock(INTERNAL::BufferCacheLock);
-				if (!INTERNAL::BufferCache.empty()){
-					data = std::move(INTERNAL::BufferCache.back());
-					INTERNAL::BufferCache.pop_back();
-				}
-			}
+			GetNewBuffer();
 			data.resize(Pixel_Stride*Height*Width); memcpy(data.data(), d, Pixel_Stride);
 		}
 		explicit Image(int h, int w) : Pixel_Stride(4), Height(h), Width(w)  {
-			if (!INTERNAL::BufferCache.empty()){
-				std::lock_guard<std::mutex> lock(INTERNAL::BufferCacheLock);
-				if (!INTERNAL::BufferCache.empty()){
-					data = std::move(INTERNAL::BufferCache.back());
-					INTERNAL::BufferCache.pop_back();
-				}
-			}
+			GetNewBuffer();
 			data.resize(Pixel_Stride*Height*Width);
 		}
 		Image(Image&& other) :data(std::move(other.data)), Height(std::move(other.Height)), Width(std::move(other.Width)), Compressed(std::move(other.Compressed)){
