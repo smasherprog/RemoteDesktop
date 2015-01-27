@@ -24,6 +24,10 @@ extern "C" {
 	DLLEXPORT void __stdcall SendSettings(void* client, int img_quality, bool gray, bool shareclip);
 	DLLEXPORT RemoteDesktop::Traffic_Stats __stdcall get_TrafficStats(void* client);
 		
+	//CALLBACKS
+	DLLEXPORT void __stdcall SetOnElevateFailed(void* client, void(__stdcall * func)());
+	DLLEXPORT void __stdcall SetOnElevateSuccess(void* client, void(__stdcall * func)());
+
 }
 
 #endif

@@ -3,6 +3,7 @@
 #include "..\libjpeg-turbo\turbojpeg.h"
 #include <memory>
 #include "Timer.h"
+#include "Handle_Wrapper.h"
 
 std::vector<std::vector<char>> RemoteDesktop::INTERNAL::BufferCache;
 std::mutex RemoteDesktop::INTERNAL::BufferCacheLock;
@@ -243,12 +244,12 @@ void RemoteDesktop::Image::Save(std::string outfile){
 void RemoteDesktop::SaveBMP(BITMAPINFOHEADER bi, char* imgdata, std::string dst){
 	BITMAPFILEHEADER   bmfHeader;
 	// A file is created, this is where we will save the screen capture.
-	HANDLE hFile = CreateFileA(dst.c_str(),
+	auto hFile(RAIIHANDLE(CreateFileA(dst.c_str(),
 		GENERIC_WRITE,
 		0,
 		NULL,
 		CREATE_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL, NULL);
+		FILE_ATTRIBUTE_NORMAL, NULL)));
 
 	// Add the size of the headers to the size of the bitmap to get the total file size
 	DWORD dwSizeofDIB = bi.biSizeImage + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
@@ -263,10 +264,7 @@ void RemoteDesktop::SaveBMP(BITMAPINFOHEADER bi, char* imgdata, std::string dst)
 	bmfHeader.bfType = 0x4D42; //BM   
 
 	DWORD dwBytesWritten = 0;
-	WriteFile(hFile, (LPSTR)&bmfHeader, sizeof(BITMAPFILEHEADER), &dwBytesWritten, NULL);
-	WriteFile(hFile, (LPSTR)&bi, sizeof(BITMAPINFOHEADER), &dwBytesWritten, NULL);
-	WriteFile(hFile, (LPSTR)imgdata, bi.biSizeImage, &dwBytesWritten, NULL);
-
-	CloseHandle(hFile);
-
+	WriteFile(hFile.get(), (LPSTR)&bmfHeader, sizeof(BITMAPFILEHEADER), &dwBytesWritten, NULL);
+	WriteFile(hFile.get(), (LPSTR)&bi, sizeof(BITMAPINFOHEADER), &dwBytesWritten, NULL);
+	WriteFile(hFile.get(), (LPSTR)imgdata, bi.biSizeImage, &dwBytesWritten, NULL);
 }

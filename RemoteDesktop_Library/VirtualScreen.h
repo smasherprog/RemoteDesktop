@@ -33,7 +33,7 @@ namespace RemoteDesktop{
 
 		bool CreateCaptureBitmap();
 		void ReorderScreens();
-		void clear();
+		
 
 	public:
 		VirtualScreen();
@@ -47,7 +47,7 @@ namespace RemoteDesktop{
 
 		static int XOffset_to_Zero;
 		static int YOffset_to_Zero;
-		
+		void clear();
 		void Update();
 		//take points which are in virtual space and translate to pixel screen space
 		static void Map_to_ScreenSpace(long& x, long& y);

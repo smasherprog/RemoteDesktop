@@ -6,11 +6,15 @@
 #include <iostream>
 #include "Wtsapi32.h"
 #include "Sddl.h"
+#include "Utilities.h"
 
 RemoteDesktop::User_Info_Header RemoteDesktop::GetUserInfo(){
 	DEBUG_MSG("GetUserInfo");
 	static RemoteDesktop::User_Info_Header CachedUserInfo = { 0 };
-	if (wcsnlen_s(CachedUserInfo.name, ARRAYSIZE(CachedUserInfo.name)) > 2) return CachedUserInfo;//return a copy
+	if (wcsnlen_s(CachedUserInfo.name, ARRAYSIZE(CachedUserInfo.name)) > 2) {
+		std::wstring username = CachedUserInfo.name;
+		if(find_substr(username, std::wstring(L"system")) == -1) return CachedUserInfo;//return a copy
+	}
 	DWORD len = UNAMELEN; 
 	GetComputerNameExW(ComputerNameDnsDomain, CachedUserInfo.domain, &len);
 	len = MAX_COMPUTERNAME_LENGTH + 1;

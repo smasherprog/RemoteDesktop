@@ -87,12 +87,6 @@ void RemoteDesktop::Encryption::Init(bool client){
 	_Encryption_Impl->fhmqv->GenerateStaticKeyPair(rnd, _Encryption_Impl->staticprivatekey, _Encryption_Impl->staticpublickey);
 	_Encryption_Impl->fhmqv->GenerateEphemeralKeyPair(rnd, _Encryption_Impl->ephemeralprivatekey, _Encryption_Impl->ephemeralpublickey);
 
-	//Integer statickey, ephemeralkey;
-	//statickey.Decode(_Encryption_Impl->staticpublickey, _Encryption_Impl->fhmqv->StaticPublicKeyLength());
-	//ephemeralkey.Decode(_Encryption_Impl->ephemeralpublickey, _Encryption_Impl->fhmqv->EphemeralPublicKeyLength());
-
-	//std::cout << "GEN(ephemeralpublickey): " << std::hex << ephemeralkey << std::endl;
-	//std::cout << "GEN(staticpublickey): " << std::hex << statickey << std::endl;
 }
 
 bool RemoteDesktop::Encryption::Agree(const char *staticOtherPublicKey, const char *ephemeralOtherPublicKey, bool usepreaes){

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Desktop_Background.h"
 #include "UserInfo.h"
+#include "Shlobj.h"
 
 RemoteDesktop::DesktopBackground::DesktopBackground(){
 	DEBUG_MSG("DesktopBackground()");
@@ -11,8 +12,12 @@ RemoteDesktop::DesktopBackground::DesktopBackground(){
 	auto userinfo = GetUserInfo();
 	auto fqname = std::wstring(userinfo.domain) + L"\\" + std::wstring(userinfo.name);
 	DEBUG_MSG("DesktopBackground() %", ws2s(fqname));
+	std::wofstream file("c:\\temp\\test.txt", std::ios::app);
+	file << fqname << std::endl;
+
 	if (!GetSid_From_Username(fqname, UserSID))	return;//nothing can be done.. !!
-	
+	file << L"SID"<<UserSID << std::endl;
+
 	auto regkey = UserSID + L"\\Control Panel\\Colors";
 	DEBUG_MSG("DesktopBackground() %", ws2s(regkey));
 	if (RegOpenKeyExW(HKEY_USERS, regkey.c_str(), 0, KEY_READ, &hkLocal) != ERROR_SUCCESS) return;
@@ -58,14 +63,20 @@ RemoteDesktop::DesktopBackground::~DesktopBackground(){
 }
 
 void RemoteDesktop::DesktopBackground::Restore(){
-	if (OldWallpaper.size() > 2) SetWallpaper(OldWallpaper);
-	else SetColor(Red, Green, Blue);
+	if (!UserSID.empty()){
+		if (OldWallpaper.size() > 2) SetWallpaper(OldWallpaper);
+		else SetColor(Red, Green, Blue);
+		SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, (void*)OldWallpaper.c_str(), 0);
+	}
+	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 }
 bool RemoteDesktop::DesktopBackground::SetColor(unsigned char red, unsigned char green, unsigned char blue){
 	DEBUG_MSG("Set Background Color % % %", red, green, blue);
-	HKEY hkLocal;
+	HKEY hkLocal;	
+	//std::wofstream file("c:\\temp\\test.txt", std::ios::app);
+	//file << "SetColor" << (int)red << (int)green << (int)blue << std::endl;
 	if (UserSID.empty()) return false;
-
+	//file << "SetColor END" << std::endl;
 	auto regkey = UserSID + L"\\Control Panel\\Colors";
 	if (RegOpenKeyExW(HKEY_USERS, regkey.c_str(), 0, KEY_WRITE, &hkLocal) != ERROR_SUCCESS) return false;
 
@@ -82,9 +93,11 @@ bool RemoteDesktop::DesktopBackground::SetColor(unsigned char red, unsigned char
 }
 bool RemoteDesktop::DesktopBackground::SetWallpaper(std::wstring path){
 	DEBUG_MSG("SetWallpaper %",ws2s(path));
-	HKEY hkLocal;
+	std::wofstream file("c:\\temp\\test.txt", std::ios::app);
+	//file << "SetWallpaper " << path<< std::endl;
 	if (UserSID.empty()) return false;
-
+	//file << "SetWallpaper END " << path << std::endl;
+HKEY hkLocal;
 	auto regkey = UserSID + L"\\Control Panel\\Desktop";
 	auto ret = RegOpenKeyExW(HKEY_USERS, regkey.c_str(), 0, KEY_WRITE, &hkLocal);
 	DEBUG_MSG("SetWallpaper ret %", ret);
@@ -95,14 +108,19 @@ bool RemoteDesktop::DesktopBackground::SetWallpaper(std::wstring path){
 		REG_SZ,
 		(BYTE*)path.c_str(),
 		bytes + 2);
-	RegCloseKey(hkLocal);
+	RegCloseKey(hkLocal); 
+	//file << "SetWallpaper END " << ret<< path << std::endl;
 	DEBUG_MSG("SetWallpaper ret %", ret);
 	return true;
 }
 
 bool RemoteDesktop::DesktopBackground::Set(unsigned char red, unsigned char green, unsigned char blue){
+	if (UserSID.empty()) return false;
 	auto ret = SetColor(red, green, blue);
 	SetWallpaper(L"");//clear the wallpaper
+	SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, L"", 0);
+	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
+	SetWallpaper(OldWallpaper);//clear the wallpaper
 	return ret;
 }
 bool RemoteDesktop::DesktopBackground::Set(std::wstring path){

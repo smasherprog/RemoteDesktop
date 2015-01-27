@@ -62,7 +62,18 @@ void __stdcall SendSettings(void* client,  int img_quality, bool gray, bool shar
 	h.ShareClip = shareclip;
 	c->SendSettings(h);
 }
+//CALLBACKS
 
+void __stdcall SetOnElevateFailed(void* client, void(__stdcall * func)()){
+	if (client == NULL)return;
+	auto c = (RemoteDesktop::Client*)client;
+	c->SetOnElevateFailed(func);
+}
+void __stdcall SetOnElevateSuccess(void* client, void(__stdcall * func)()){
+	if (client == NULL)return;
+	auto c = (RemoteDesktop::Client*)client;
+	c->SetOnElevateSuccess(func);
+}
 
 RemoteDesktop::Traffic_Stats __stdcall get_TrafficStats(void* client){
 	if (client == NULL){

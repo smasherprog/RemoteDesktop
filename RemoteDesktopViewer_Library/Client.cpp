@@ -106,7 +106,7 @@ void RemoteDesktop::Client::OnConnect(std::shared_ptr<SocketHandler>& sh){
 void RemoteDesktop::Client::KeyEvent(int VK, bool down) {
 
 	NetworkMsg msg;
-	KeyEvent_Header h = { };
+	KeyEvent_Header h = {};
 	h.VK = VK;
 	h.down = down == true ? 0 : -1;
 	msg.push_back(h);
@@ -225,44 +225,71 @@ void RemoteDesktop::Client::Draw(HDC hdc){
 	_Display->Draw(hdc);
 }
 
+void RemoteDesktop::Client::_Handle_ResolutionChange(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	New_Image_Header h;
+	memcpy(&h, data, sizeof(h));
+	data += sizeof(h);
+
+	Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.Height, h.Width));
+
+	_OnDisplaysChanged(h.Index, h.XOffset, h.YOffset, h.Width, h.Height);
+	auto copy = _Display;
+	if (copy) copy->Add(img, h);
+}
+void RemoteDesktop::Client::_Handle_MouseChanged(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	MouseEvent_Header h;
+	memcpy(&h, data, sizeof(h));
+	assert(header->PayloadLen == sizeof(h));
+	auto copy = _Display;
+	if (copy) copy->UpdateMouse(h);
+}
+void RemoteDesktop::Client::_Handle_UpdateRegion(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	Update_Image_Header h;
+	memcpy(&h, data, sizeof(h));
+	data += sizeof(h);
+
+	Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.rect.height, h.rect.width));
+	//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
+	auto copy = _Display;
+	if (copy) copy->Update(img, h);
+}
+void RemoteDesktop::Client::_Handle_UACBlocked(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	auto copy = _Display;
+	if (copy) copy->SetUAC_Block();
+}
+void RemoteDesktop::Client::_Handle_ElevateFailed(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	if (_OnElevateFailed) _OnElevateFailed();
+}
+void RemoteDesktop::Client::_Handle_ElevateSuccess(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh){
+	if (_OnElevateSuccess) _OnElevateSuccess();
+}
+
 void RemoteDesktop::Client::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<SocketHandler>& sh) {
 	auto t = Timer(true);
-	if (header->Packet_Type == NetworkMessages::RESOLUTIONCHANGE){
-		New_Image_Header h;
-		memcpy(&h, data, sizeof(h));
-		data += sizeof(h);
+	switch (header->Packet_Type){
+	case (NetworkMessages::RESOLUTIONCHANGE):
+		_Handle_ResolutionChange(header, data, sh);
+		break;
 
-		Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.Height, h.Width));
+	case (NetworkMessages::UPDATEREGION) :
+		_Handle_UpdateRegion(header, data, sh);
+		break;
 
-		_OnDisplaysChanged(h.Index, h.XOffset, h.YOffset, h.Width, h.Height);
-		auto copy = _Display;
-		if (copy) copy->Add(img, h);
-
-	}
-	else if (header->Packet_Type == NetworkMessages::UPDATEREGION){
-		Update_Image_Header h;
-		memcpy(&h, data, sizeof(h));
-		data += sizeof(h);
-
-		Image img(Image::Create_from_Compressed_Data((char*)data, header->PayloadLen - sizeof(h), h.rect.height, h.rect.width));
-		//DEBUG_MSG("_Handle_ScreenUpdates %, %, %", rect.height, rect.width, img.size_in_bytes);
-		auto copy = _Display;
-		if (copy) copy->Update(img, h);
-
-	}
-	else if (header->Packet_Type == NetworkMessages::MOUSEEVENT){
-		MouseEvent_Header h;
-		memcpy(&h, data, sizeof(h));
-		assert(header->PayloadLen == sizeof(h));
-		auto copy = _Display;
-		if (copy) copy->UpdateMouse(h);
-	}
-	else if (header->Packet_Type == NetworkMessages::CLIPBOARDCHANGED){
+	case (NetworkMessages::MOUSEEVENT) :
+		_Handle_MouseChanged(header, data, sh);
+		break;
+	case (NetworkMessages::CLIPBOARDCHANGED) :
 		_Handle_ClipBoard(header, data, sh);
-	}
-	else if (header->Packet_Type == NetworkMessages::UAC_BLOCKED){
-		auto copy = _Display;
-		if (copy) copy->SetUAC_Block();
+		break;
+	case (NetworkMessages::UAC_BLOCKED) :
+		_Handle_UACBlocked(header, data, sh);
+		break;
+	case (NetworkMessages::ELEVATE_FAILED) :
+		_Handle_ElevateFailed(header, data, sh);
+		break;
+	case (NetworkMessages::ELEVATE_SUCCESS) :
+		_Handle_ElevateSuccess(header, data, sh);
+		break;
 	}
 
 	t.Stop();

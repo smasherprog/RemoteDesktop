@@ -140,6 +140,7 @@ void RemoteDesktop::Network_Server::_CheckForDisconnects(std::vector<WSAEVENT>& 
 			_HandleDisconnect(*beg);
 			//get the index before deletion
 			int index = beg - socketarray.begin();
+			DEBUG_MSG("Disconnecting Index %", index);
 			beg = socketarray.erase(beg);
 			WSACloseEvent(eventarray[index]);
 			eventarray.erase(eventarray.begin() + index);

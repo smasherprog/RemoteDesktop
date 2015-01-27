@@ -68,7 +68,7 @@ void RemoteDesktop::Server::_CreateSystemMenu(){
 }
 
 void RemoteDesktop::Server::_TriggerShutDown(){
-	//_DesktopBackground = nullptr;//make sure to reset the background as soon as possible
+//	_DesktopBackground = nullptr;//make sure to reset the background as soon as possible
 	_NetworkServer->Stop(false);//this will cause the main loop to stop and the program to exit
 }
 void RemoteDesktop::Server::_TriggerShutDown_and_RemoveSelf(){
@@ -247,8 +247,13 @@ void RemoteDesktop::Server::_Handle_ElevateProcess(Packet_Header* header, const 
 	assert(header->PayloadLen == sizeof(h));
 	memcpy(&h, data, sizeof(h));
 	h.Password[255] = h.Username[255] = 0;
-	if (TryToElevate(std::wstring(h.Username), std::wstring(h.Password))) _TriggerShutDown();
-	DEBUG_MSG("Got here");
+	if (TryToElevate(std::wstring(h.Username), std::wstring(h.Password))) {
+		_NetworkServer->Send(NetworkMessages::ELEVATE_SUCCESS, INetwork::Auth_Types::AUTHORIZED);
+		_TriggerShutDown();
+	}
+	else {
+		_NetworkServer->Send(NetworkMessages::ELEVATE_FAILED, INetwork::Auth_Types::AUTHORIZED);
+	}
 }
 
 void RemoteDesktop::Server::OnReceive(Packet_Header* header, const char* data, std::shared_ptr<RemoteDesktop::SocketHandler>& sh) {
@@ -312,19 +317,19 @@ void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHa
 	auto a = _NetworkServer;
 
 	if (a){
-		if (a->Connection_Count() <= 1) {
-			//_DesktopBackground = nullptr;
+		if (a->Connection_Count() <= 2) {//the client count is going to be elevated by 1 since the disconnect is not complete until after the call
+		//	_DesktopBackground = nullptr;
 		}
 	}
 	else {
-		//_DesktopBackground = nullptr;
+	//	_DesktopBackground = nullptr;
 	}
 }
 
 void RemoteDesktop::Server::_HandleNewClients(Screen& screen, std::vector<std::shared_ptr<SocketHandler>>& newclients){
 	if (newclients.empty()) return;
-//	if (!_DesktopBackground) _DesktopBackground = std::make_unique<DesktopBackground>();
-//	_DesktopBackground->Set(0, 0, 0);//black background
+	//if (!_DesktopBackground) _DesktopBackground = std::make_unique<DesktopBackground>();
+	//_DesktopBackground->Set(0, 0, 0);//black background
 	auto sendimg = screen.Image->Clone();
 	sendimg.Compress();
 	NetworkMsg msg;
@@ -461,12 +466,14 @@ void RemoteDesktop::Server::_Run() {
 		}
 
 		if (_NetworkServer->Connection_Count() <= 0) {
+
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));//sleep if there are no clients connected.
 			continue;
 		}
 
 		auto t1 = Timer(true);
 		if (!_DesktopMonitor->Is_InputDesktopSelected()) {
+			virtualscreen->clear();
 			if (!_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT)){
 				_Handle_UAC_Permission();
 			}

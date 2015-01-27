@@ -10,14 +10,12 @@ bool RemoteDesktop::IsElevated() {
 	BOOL fRet = FALSE;
 	HANDLE hToken = NULL;
 	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+		auto threadtok(RAIIHANDLE(hToken));//make sure its destoryed properly
 		TOKEN_ELEVATION Elevation;
 		DWORD cbSize = sizeof(TOKEN_ELEVATION);
 		if (GetTokenInformation(hToken, TokenElevation, &Elevation, sizeof(Elevation), &cbSize)) {
 			fRet = Elevation.TokenIsElevated;
 		}
-	}
-	if (hToken) {
-		CloseHandle(hToken);
 	}
 	return fRet == TRUE;
 }
@@ -51,18 +49,21 @@ bool RemoteDesktop::IsUserAdmin(std::wstring username){
 	auto splits = split(username, L'\\');
 	if (splits.size() == 2) rc = NetUserGetInfo(splits[0].c_str(), splits[1].c_str(), 1, (LPBYTE *)&info);
 	else rc = NetUserGetInfo(NULL, username.c_str(), 1, (LPBYTE *)&info);
-	if (rc != NERR_Success)
+	if (rc != NERR_Success){
+		NetApiBufferFree(info);
 		return false;
-
-	auto found = info->usri1_priv == USER_PRIV_ADMIN;
-	NetApiBufferFree(info);
-	return found;
+	}
+	else {
+		auto found = info->usri1_priv == USER_PRIV_ADMIN;
+		NetApiBufferFree(info); 
+		return found;
+	}
 }
 bool RemoteDesktop::IsUserAdmin(HANDLE hTok){
 
 	bool found;
 	DWORD  l(0);
-	
+
 	SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
 
 	if (!GetTokenInformation(hTok, TokenGroups, NULL, 0, &l))
@@ -117,7 +118,7 @@ bool RemoteDesktop::TryToElevate(LPWSTR* argv, int argc) {
 	wchar_t szPath[MAX_PATH];
 	std::wstring tmp(argv[0]);
 	tmp = L"\"" + tmp + L"\"";
-	
+
 	wcsncpy_s(szPath, tmp.c_str(), tmp.size() + 1);
 
 	sei.lpVerb = L"runas";
@@ -183,6 +184,7 @@ bool RemoteDesktop::TryToElevate(std::wstring user, std::wstring pass){
 	else {
 		authenticated = LogonUser(user.c_str(), NULL, pass.c_str(), LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &token) == TRUE;
 	}
+	auto handle(RAIIHANDLE(token));
 	if (authenticated){
 
 		auto isadmin = IsUserAdmin(token);
@@ -194,7 +196,7 @@ bool RemoteDesktop::TryToElevate(std::wstring user, std::wstring pass){
 			GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
 			std::wstring tmp(szPath);
 			tmp = L"\"" + tmp + L"\"";
-			wcsncpy_s(szPath, tmp.c_str(), tmp.size()+1);
+			wcsncpy_s(szPath, tmp.c_str(), tmp.size() + 1);
 			wchar_t cmndargs[] = L" -delayed_run";
 			wcscat_s(szPath, cmndargs);
 
@@ -206,6 +208,5 @@ bool RemoteDesktop::TryToElevate(std::wstring user, std::wstring pass){
 			}
 		}
 	}
-	if (token != nullptr) CloseHandle(token);
 	return false;
 }
