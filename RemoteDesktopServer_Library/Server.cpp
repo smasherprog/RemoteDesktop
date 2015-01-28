@@ -68,7 +68,7 @@ void RemoteDesktop::Server::_CreateSystemMenu(){
 }
 
 void RemoteDesktop::Server::_TriggerShutDown(){
-//	_DesktopBackground = nullptr;//make sure to reset the background as soon as possible
+	_DesktopBackground = nullptr;//make sure to reset the background as soon as possible
 	_NetworkServer->Stop(false);//this will cause the main loop to stop and the program to exit
 }
 void RemoteDesktop::Server::_TriggerShutDown_and_RemoveSelf(){
@@ -315,21 +315,21 @@ void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHa
 	}
 	//ensure lifetime of networkserver
 	auto a = _NetworkServer;
-
+	_DesktopBackground = nullptr;
 	if (a){
 		if (a->Connection_Count() <= 2) {//the client count is going to be elevated by 1 since the disconnect is not complete until after the call
-		//	_DesktopBackground = nullptr;
+			_DesktopBackground = nullptr;
 		}
 	}
 	else {
-	//	_DesktopBackground = nullptr;
+		_DesktopBackground = nullptr;
 	}
 }
 
 void RemoteDesktop::Server::_HandleNewClients(Screen& screen, std::vector<std::shared_ptr<SocketHandler>>& newclients){
 	if (newclients.empty()) return;
-	//if (!_DesktopBackground) _DesktopBackground = std::make_unique<DesktopBackground>();
-	//_DesktopBackground->Set(0, 0, 0);//black background
+	if (!_DesktopBackground) _DesktopBackground = std::make_unique<DesktopBackground>();
+	_DesktopBackground->Set(0, 0, 0);//black background
 	auto sendimg = screen.Image->Clone();
 	sendimg.Compress();
 	NetworkMsg msg;
