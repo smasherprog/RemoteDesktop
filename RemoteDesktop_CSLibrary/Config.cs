@@ -17,9 +17,9 @@ namespace RemoteDesktop_CSLibrary
 
         public static string Port { get { return "443"; } }
         public static string Gateway { get { return "localhost"; } }
-        public static string AuthenticationUrl { get { return "http://localhost/Support/Authenticate"; } }
+        public static string AuthenticationUrl { get { return "http://localhost:3406/Support/Authenticate"; } }
         public static string SignalRHubName { get { return "ProxyHub"; } }
-        public static string SignalRHubUrl { get { return "http://localhost"; } }
+        public static string SignalRHubUrl { get { return "http://localhost:3406"; } }
         public static int AuthenticationTimeout { get { return 10000; } }//in ms
 
 

@@ -32,6 +32,7 @@ bool InstallService(PWSTR pszServiceName,
 	PWSTR pszAccount,
 	PWSTR pszPassword)
 {
+
 	UninstallService(pszServiceName);
 	//std::ofstream file("c:\\users\\slee\\desktop\\text.txt", std::ios::app);
 	wchar_t szPath[MAX_PATH];
@@ -75,7 +76,7 @@ bool InstallService(PWSTR pszServiceName,
 			return false;
 		}
 		else {
-			RemoteDesktop::EventLog::WriteLog(L"Service Installed " + std::wstring(pszServiceName), RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		//	RemoteDesktop::EventLog::WriteLog(L"Service Installed " + std::wstring(pszServiceName), RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
 		//	file << "Service is installed" << std::endl;
 			//wprintf(L"%s is installed.\n", pszServiceName);
 
@@ -316,7 +317,7 @@ void UninstallService(PWSTR pszServiceName)
 				wprintf(L"DeleteService failed w/err 0x%08lx\n", GetLastError());*/
 			}
 			else {
-				RemoteDesktop::EventLog::WriteLog(L"Service uninstalled " + std::wstring(pszServiceName), RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+				//RemoteDesktop::EventLog::WriteLog(L"Service uninstalled " + std::wstring(pszServiceName), RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
 			//	file << "Service uninstalled" << std::endl;
 				Sleep(3000);//pause here on success
 			}

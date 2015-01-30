@@ -21,7 +21,8 @@ RemoteDesktop::NetworkProcessor::~NetworkProcessor(){
 void RemoteDesktop::NetworkProcessor::_Run(){
 	DesktopMonitor _DesktopMonitor;
 	while (_Running){
-		if (!_DesktopMonitor.Is_InputDesktopSelected()) _DesktopMonitor.Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
+		
+		if (!DesktopMonitor::Is_InputDesktopSelected()) _DesktopMonitor.Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
 		auto socket(_Queue.pop());
 		if (socket) RemoteDesktop::SocketHandler::ProcessReceived(socket, _Receive_callback ,_Onconnect_callback);
 	}

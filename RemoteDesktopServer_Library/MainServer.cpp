@@ -75,6 +75,7 @@ void RemoteDesktop::Startup(LPWSTR* argv, int argc, bool reverseconnect_to_gatew
 		//in which case, try to launch the program normally.
 #if !_DEBUG
 		if (ret == IDYES){
+
 			//the below line was added so that in cases where UAC is required to access the network, it will activate the pop up as early as possible
 			if (!InstallService(
 				Service_Name(),               // Name of service

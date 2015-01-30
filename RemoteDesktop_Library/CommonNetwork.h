@@ -135,6 +135,13 @@ namespace RemoteDesktop{
 		long long UncompressedSendBPS, UncompressedRecvBPS;
 	};
 
+	inline void Validate(User_Info_Header& obj){
+		obj.computername[ARRAYSIZE(obj.computername) - 1] = L'\n';
+		obj.domain[ARRAYSIZE(obj.domain) - 1] = L'\n';
+		obj.full_name[ARRAYSIZE(obj.full_name) - 1] = L'\n';
+		obj.ip_addr[ARRAYSIZE(obj.ip_addr) - 1] = L'\n';
+		obj.name[ARRAYSIZE(obj.name) - 1] = L'\n';
+	}
 }
 
 

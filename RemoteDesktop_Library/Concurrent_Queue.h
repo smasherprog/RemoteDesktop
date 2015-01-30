@@ -53,7 +53,7 @@ namespace RemoteDesktop{
 		void ShutDown(){
 			_Running = false;
 			cond_.notify_all();
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			cond_.notify_all();
 		}
 	private:

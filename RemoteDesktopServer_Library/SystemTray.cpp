@@ -168,7 +168,6 @@ void RemoteDesktop::SystemTray::_Run(){
 	MSG msg;
 	while (_Running && (GetMessage(&msg, Hwnd, 0, 0) != 0))
 	{
-
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}

@@ -10,7 +10,7 @@ RemoteDesktop::Global_Settings::Global_Settings(){
 	wcsncpy_s(Service_Display_Name, L"Remote Access Tool", ARRAYSIZE(Service_Display_Name));
 	wcsncpy_s(DefaultPort, L"443", ARRAYSIZE(DefaultPort));
 	wcsncpy_s(DefaultGateway, L"localhost", ARRAYSIZE(DefaultGateway));
-	wcsncpy_s(DefaultProxyGetSessionURL, L"http://localhost/Support/GetID", ARRAYSIZE(DefaultProxyGetSessionURL));
+	wcsncpy_s(DefaultProxyGetSessionURL, L"http://localhost:3406/Support/GetID", ARRAYSIZE(DefaultProxyGetSessionURL));
 	wcsncpy_s(DisclaimerMessage, L"Do you agree to allow a support technician to connection to your computer?", ARRAYSIZE(DisclaimerMessage));
 	wcsncpy_s(Unique_ID, L"", ARRAYSIZE(Unique_ID));
 	wcsncpy_s(Last_UserConnectName, L"", ARRAYSIZE(Last_UserConnectName));

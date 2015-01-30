@@ -21,7 +21,6 @@ namespace RemoteDesktop{
 	class NewConnect_Dialog;
 	class INetwork;
 	class Screen;
-	class DesktopBackground;
 
 	class Server{
 
@@ -33,7 +32,7 @@ namespace RemoteDesktop{
 		
 		std::unique_ptr<ClipboardMonitor> _ClipboardMonitor;
 		std::unique_ptr<SystemTray> _SystemTray;
-		std::unique_ptr<DesktopBackground> _DesktopBackground;
+
 
 		void _HandleNewClients(Screen& screen, std::vector<std::shared_ptr<SocketHandler>>& newclients);
 		void _HandleResolutionChanged(const Screen& screen);

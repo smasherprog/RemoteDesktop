@@ -5,9 +5,10 @@
 #include "Gateway.h"
 #include "NetworkProcessor.h"
 #include <chrono>
+#include "Desktop_Monitor.h"
 
 RemoteDesktop::Network_Client::Network_Client(){
-
+	_DesktopMonitor = std::make_unique<DesktopMonitor>();
 }
 RemoteDesktop::Network_Client::~Network_Client(){
 	Stop(true);
@@ -77,7 +78,10 @@ void RemoteDesktop::Network_Client::_HandleViewerDisconnect(std::weak_ptr<Socket
 	_ShouldDisconnect = true;
 }
 void RemoteDesktop::Network_Client::_HandleDisconnect(std::shared_ptr<SocketHandler>& s){
-	if (_Running && OnDisconnect) OnDisconnect(s);
+	if (_Running && OnDisconnect) {
+		if (!DesktopMonitor::Is_InputDesktopSelected()) _DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
+		OnDisconnect(s);
+	}
 	_ShouldDisconnect = true;
 }
 void RemoteDesktop::Network_Client::_HandleReceive(Packet_Header* p, const char* d, std::shared_ptr<SocketHandler>& s){

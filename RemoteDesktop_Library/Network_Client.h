@@ -6,6 +6,7 @@
 
 namespace RemoteDesktop{
 	class SocketHandler;
+	class DesktopMonitor;
 
 	class Network_Client : public INetwork{
 
@@ -19,6 +20,7 @@ namespace RemoteDesktop{
 		void Setup(std::wstring port, std::wstring host);
 
 		std::weak_ptr<SocketHandler> _Socket;
+		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
 
 		void _HandleViewerDisconnect(std::weak_ptr<SocketHandler>& ptr);
 

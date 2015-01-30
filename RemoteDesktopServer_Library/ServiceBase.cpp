@@ -196,7 +196,7 @@ void CServiceBase::Start(DWORD dwArgc, PWSTR *pszArgv)
 	}
 	catch (DWORD dwError)
 	{
-		RemoteDesktop::EventLog::WriteLog(L"Service Start", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service Start Error " + std::to_wstring(dwError), RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 		
 		// Set the service status to be stopped.
 		SetServiceStatus(SERVICE_STOPPED, dwError);
@@ -205,7 +205,7 @@ void CServiceBase::Start(DWORD dwArgc, PWSTR *pszArgv)
 	{
 		// Log the error.
 
-		RemoteDesktop::EventLog::WriteLog(L"Service failed to start.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service Start unknown Error", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 		// Set the service status to be stopped.
 		SetServiceStatus(SERVICE_STOPPED);
@@ -259,7 +259,7 @@ void CServiceBase::Stop()
 	{
 		// Log the error.
 
-		RemoteDesktop::EventLog::WriteLog(L"Service Stop", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service Stop Error " + std::to_wstring(dwError), RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 		// Set the orginal service status.
 		SetServiceStatus(dwOriginalState);
@@ -267,7 +267,7 @@ void CServiceBase::Stop()
 	catch (...)
 	{
 		// Log the error.
-		RemoteDesktop::EventLog::WriteLog(L"Service failed to stop.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service Stop Unknown Error ", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 		// Set the orginal service status.
 		SetServiceStatus(dwOriginalState);
@@ -315,7 +315,7 @@ void CServiceBase::Pause()
 	{
 		// Log the error.
 
-		RemoteDesktop::EventLog::WriteLog(L"Service Pause", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service Pause", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 		// Tell SCM that the service is still running.
 		SetServiceStatus(SERVICE_RUNNING);
@@ -324,7 +324,7 @@ void CServiceBase::Pause()
 	{
 		// Log the error.
 
-		RemoteDesktop::EventLog::WriteLog(L"Service failed to pause.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to pause.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 		// Tell SCM that the service is still running.
 		SetServiceStatus(SERVICE_RUNNING);
@@ -370,7 +370,7 @@ void CServiceBase::Continue()
 	{
 		// Log the error.
 
-		RemoteDesktop::EventLog::WriteLog(L"Service Continue", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service Continue", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 		// Tell SCM that the service is still paused.
 		SetServiceStatus(SERVICE_PAUSED);
@@ -379,7 +379,7 @@ void CServiceBase::Continue()
 	{
 		// Log the error.
 
-		RemoteDesktop::EventLog::WriteLog(L"Service failed to resume.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to resume.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 		// Tell SCM that the service is still paused.
 		SetServiceStatus(SERVICE_PAUSED);
@@ -421,13 +421,13 @@ void CServiceBase::Shutdown()
 	{
 		// Log the error.
 
-		RemoteDesktop::EventLog::WriteLog(L"Service Shutdown", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service Shutdown", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 	}
 	catch (...)
 	{
 		// Log the error.
-		RemoteDesktop::EventLog::WriteLog(L"Service failed to shut down.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICE);
+		RemoteDesktop::EventLog::WriteLog(L"Service failed to shut down.", RemoteDesktop::EventLog::EventType::INFORMATIONAL, RemoteDesktop::EventLog::EventCategory::NETWORK_CATEGORY, RemoteDesktop::EventLog::EventID::SERVICEERROR);
 
 	}
 }

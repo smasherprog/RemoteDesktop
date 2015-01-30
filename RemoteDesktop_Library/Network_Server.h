@@ -9,11 +9,11 @@
 namespace RemoteDesktop{
 
 	class SocketHandler;
-
+	class DesktopMonitor;
 	class Network_Server : public INetwork{
 
 		void _Run();
-
+		std::unique_ptr<DesktopMonitor> _DesktopMonitor;
 		std::wstring _Host, _Port;
 		std::thread _BackgroundWorker;
 		int MaxConnectAttempts = DEFAULTMAXCONNECTATTEMPTS;

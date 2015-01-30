@@ -5,9 +5,11 @@
 #include <string>
 #include "NetworkProcessor.h"
 #include <chrono>
+#include "Desktop_Monitor.h"
 
 RemoteDesktop::Network_Server::Network_Server(){
 	DEBUG_MSG("Starting Server");
+	_DesktopMonitor = std::make_unique<DesktopMonitor>();
 }
 RemoteDesktop::Network_Server::~Network_Server(){
 	Stop(true);
@@ -84,7 +86,7 @@ void RemoteDesktop::Network_Server::_Run(){
 RemoteDesktop::Network_Return RemoteDesktop::Network_Server::Send(RemoteDesktop::NetworkMessages m, const RemoteDesktop::NetworkMsg& msg, Auth_Types to_which_type){
 	auto sockarr(_Sockets.lock());
 	if (sockarr){
-	
+
 		for (size_t beg = 1; beg < sockarr->size() && beg < sockarr->capacity() - 1; beg++){
 			auto s(sockarr->at(beg));//get a copy
 			if (s) {
@@ -101,7 +103,10 @@ void RemoteDesktop::Network_Server::_HandleConnect(std::shared_ptr<SocketHandler
 	if (_Running && OnConnected)  OnConnected(s);
 }
 void RemoteDesktop::Network_Server::_HandleDisconnect(std::shared_ptr<SocketHandler>& s){
-	if (_Running && OnDisconnect) OnDisconnect(s);
+	if (_Running && OnDisconnect) {
+		if (!DesktopMonitor::Is_InputDesktopSelected()) _DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
+		OnDisconnect(s);
+	}
 }
 void RemoteDesktop::Network_Server::_HandleReceive(Packet_Header* p, const char* d, std::shared_ptr<SocketHandler>& s){
 	if (_Running && OnReceived) OnReceived(p, d, s);

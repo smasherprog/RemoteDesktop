@@ -68,7 +68,6 @@ void RemoteDesktop::Server::_CreateSystemMenu(){
 }
 
 void RemoteDesktop::Server::_TriggerShutDown(){
-	_DesktopBackground = nullptr;//make sure to reset the background as soon as possible
 	_NetworkServer->Stop(false);//this will cause the main loop to stop and the program to exit
 }
 void RemoteDesktop::Server::_TriggerShutDown_and_RemoveSelf(){
@@ -215,11 +214,17 @@ void RemoteDesktop::Server::_Handle_ConnectionRequest(Packet_Header* header, con
 	sh->Authorized = false;
 	assert(header->PayloadLen == sizeof(sh->Connection_Info));
 	memcpy(&sh->Connection_Info, data, sizeof(sh->Connection_Info));
+	Validate(sh->Connection_Info);
 	auto uname = std::wstring(sh->Connection_Info.full_name);
 	if (uname.size() > 2){
 		DEBUG_MSG("Connect Request from %", ws2s(uname));
-		//EventLog::WriteLog(msgs, EventLog::EventType::INFORMATIONAL, EventLog::EventCategory::NETWORK_CATEGORY, EventLog::EventID::DISCONNECT);
-		//EventLog::WriteLog(uname + L" is attempted to connect to this machine");
+		std::vector<std::wstring> msgs;
+		msgs.push_back(uname + L" is attempting to connect to this machine. Details Below:");
+		msgs.push_back(std::wstring(L"Computer: ") + std::wstring(sh->Connection_Info.computername));
+		msgs.push_back(std::wstring(L"Domain: ") + std::wstring(sh->Connection_Info.domain));
+		msgs.push_back(std::wstring(L"Full Name: ") + std::wstring(sh->Connection_Info.full_name));
+		msgs.push_back(std::wstring(L"IP Address: ") + std::wstring(sh->Connection_Info.ip_addr));
+		EventLog::WriteLog(msgs, EventLog::EventType::INFORMATIONAL, EventLog::EventCategory::NETWORK_CATEGORY, EventLog::EventID::CONNECT_ATTEMPT);
 		std::wstring lastauthuser = GetLast_UserConnectName();
 		//close the gateway dialog in any case
 		auto a = _GatewayConnect_Dialog;
@@ -313,23 +318,11 @@ void RemoteDesktop::Server::OnDisconnect(std::shared_ptr<RemoteDesktop::SocketHa
 		auto con = usname + L" has Disconnected from your machine . . .";
 		_SystemTray->Popup(L"Connection Disconnected", con.c_str(), 2000);
 	}
-	//ensure lifetime of networkserver
-	auto a = _NetworkServer;
-	_DesktopBackground = nullptr;
-	if (a){
-		if (a->Connection_Count() <= 2) {//the client count is going to be elevated by 1 since the disconnect is not complete until after the call
-			_DesktopBackground = nullptr;
-		}
-	}
-	else {
-		_DesktopBackground = nullptr;
-	}
+
 }
 
 void RemoteDesktop::Server::_HandleNewClients(Screen& screen, std::vector<std::shared_ptr<SocketHandler>>& newclients){
 	if (newclients.empty()) return;
-	if (!_DesktopBackground) _DesktopBackground = std::make_unique<DesktopBackground>();
-	_DesktopBackground->Set(0, 0, 0);//black background
 	auto sendimg = screen.Image->Clone();
 	sendimg.Compress();
 	NetworkMsg msg;
@@ -417,6 +410,7 @@ void RemoteDesktop::Server::_ShowGatewayDialog(int id){
 	_GatewayConnect_Dialog->Show(id);
 }
 void RemoteDesktop::Server::Listen(std::wstring port, std::wstring host){
+
 	_NetworkServer = std::make_shared<Network_Server>();
 	_NetworkServer->OnConnected = std::bind(&RemoteDesktop::Server::OnConnect, this, std::placeholders::_1);
 	_NetworkServer->OnReceived = std::bind(&RemoteDesktop::Server::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -425,6 +419,7 @@ void RemoteDesktop::Server::Listen(std::wstring port, std::wstring host){
 	_Run();
 }
 void RemoteDesktop::Server::ReverseConnect(std::wstring port, std::wstring host, std::wstring gatewayurl){
+
 	_NetworkServer = std::make_shared<Network_Client>();
 	_NetworkServer->OnConnected = std::bind(&RemoteDesktop::Server::OnConnect, this, std::placeholders::_1);
 	_NetworkServer->OnReceived = std::bind(&RemoteDesktop::Server::OnReceive, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -438,8 +433,10 @@ void RemoteDesktop::Server::ReverseConnect(std::wstring port, std::wstring host,
 
 void RemoteDesktop::Server::_Run() {
 
+	
 	//switch to input desktop 
 	_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT);
+	auto _DesktopBackground = std::make_unique<DesktopBackground>();
 
 	auto virtualscreen(std::make_unique<VirtualScreen>());
 	virtualscreen->OnResolutionChanged = DELEGATE(&RemoteDesktop::Server::_HandleResolutionChanged);
@@ -466,13 +463,15 @@ void RemoteDesktop::Server::_Run() {
 		}
 
 		if (_NetworkServer->Connection_Count() <= 0) {
-
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));//sleep if there are no clients connected.
+			_DesktopBackground->Restore();//black background
 			continue;
 		}
+	
+		_DesktopBackground->HideWallpaper();//black background
 
 		auto t1 = Timer(true);
-		if (!_DesktopMonitor->Is_InputDesktopSelected()) {
+		if (!DesktopMonitor::Is_InputDesktopSelected()) {
 			virtualscreen->clear();
 			if (!_DesktopMonitor->Switch_to_Desktop(DesktopMonitor::Desktops::INPUT)){
 				_Handle_UAC_Permission();

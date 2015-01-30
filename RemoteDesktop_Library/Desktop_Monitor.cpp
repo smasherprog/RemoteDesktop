@@ -39,9 +39,13 @@ HDESK Switch_to_Desktop(int desired_desktop, HDESK currentdesk){
 	}
 	return desktop;
 }
+bool RemoteDesktop::DesktopMonitor::Switch_to_Desktop(int desired_desktop){
+	auto h = ::Switch_to_Desktop(desired_desktop, m_hDesk);
+	if (h != nullptr) m_hDesk = h;
+	return h != nullptr;
+}
 
-
-int RemoteDesktop::DesktopMonitor::get_InputDesktop() const{
+int RemoteDesktop::DesktopMonitor::get_InputDesktop(){
 	auto inputdesktop = RAIIHDESKTOP(OpenInputDesktop(0, FALSE, GENERIC_READ));
 	if (inputdesktop.get() == NULL) {
 		return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
@@ -55,14 +59,14 @@ int RemoteDesktop::DesktopMonitor::get_InputDesktop() const{
 	else if (find_substr(name, std::string("winlogon")) != -1) return (RemoteDesktop::DesktopMonitor::Desktops::WINLOGON | RemoteDesktop::DesktopMonitor::Desktops::INPUT);
 	return (RemoteDesktop::DesktopMonitor::Desktops::SCREENSAVER | RemoteDesktop::DesktopMonitor::Desktops::INPUT);
 }
-bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected() const{
+bool RemoteDesktop::DesktopMonitor::Is_InputDesktopSelected(){
 	auto inp = get_InputDesktop();
 	if ((inp&RemoteDesktop::DesktopMonitor::Desktops::INPUT) == 0) {
 		return false;
 	}
 	return (inp & get_ThreadDesktop()) != 0;
 }
-int RemoteDesktop::DesktopMonitor::get_ThreadDesktop() const{
+int RemoteDesktop::DesktopMonitor::get_ThreadDesktop(){
 	HDESK threaddesktop = GetThreadDesktop(GetCurrentThreadId());
 	if (threaddesktop == NULL) return RemoteDesktop::DesktopMonitor::Desktops::DEFAULT;
 
@@ -74,8 +78,4 @@ int RemoteDesktop::DesktopMonitor::get_ThreadDesktop() const{
 	else if (find_substr(name, std::string("winlogon")) != -1) return RemoteDesktop::DesktopMonitor::Desktops::WINLOGON;
 	return RemoteDesktop::DesktopMonitor::Desktops::SCREENSAVER;
 }
-bool RemoteDesktop::DesktopMonitor::Switch_to_Desktop(int desired_desktop){
-	auto h = ::Switch_to_Desktop(desired_desktop, m_hDesk);
-	if (h != nullptr) m_hDesk = h;
-	return h != nullptr;
-}
+

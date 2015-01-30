@@ -12,9 +12,10 @@ namespace RemoteDesktop{
 		DesktopMonitor();
 		~DesktopMonitor();
 		bool Switch_to_Desktop(int desired_desktop);
-		int get_InputDesktop() const;
-		int get_ThreadDesktop() const;
-		bool Is_InputDesktopSelected() const;
+
+		static int get_InputDesktop();
+		static int get_ThreadDesktop();
+		static bool Is_InputDesktopSelected();
 
 	};
 };

@@ -27,7 +27,7 @@
     <ProductName>Remote Access Tool</ProductName>
     <PublisherName>Remote Access Tool</PublisherName>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>68</ApplicationRevision>
+    <ApplicationRevision>72</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
@@ -79,7 +79,7 @@
     <ApplicationIcon>icon1.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>false</GenerateManifests>
+    <GenerateManifests>true</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <SignManifests>false</SignManifests>

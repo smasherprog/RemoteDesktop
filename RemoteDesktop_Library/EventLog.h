@@ -18,9 +18,12 @@ namespace RemoteDesktop{
 			NETWORK_CATEGORY = 1
 		};	
 		enum EventID{
-			SERVICE =100,
-			CONNECT = 103,
-			DISCONNECT = 104
+			SERVICESTART = 101,
+			SERVICESTOP = 102,
+			SERVICEERROR = 103,
+			CONNECT_ATTEMPT = 104,
+			CONNECT = 105,
+			DISCONNECT = 106
 		};
 		~EventLog();
 		EventLog(std::wstring name);
