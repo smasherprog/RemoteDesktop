@@ -1,4 +1,4 @@
-Remote Dekstop Viewer, similiar to VNC. (so far VISTA and is supported) <br/>
+Remote Dekstop Viewer, similiar to VNC. (so far VISTA Through Win10 are supported) <br/>
 This is my own creation of a VNC-Like application written in c++. <br/>
 <br/>
 I originally wrote this in c#, but the performance was pretty bad and unreliable. So, I am rewriting it in c++.
