@@ -1,3 +1,7 @@
+<h3>Note:</h3>
+<p>I no longer support this library as it was written for windows only. There are however great libraries available which allow cross platform development that I am embracing. Please help with the new project for a better VNC-like application designed to run on Windows, Mac and Linux.</p>
+<h3>Goto https://github.com/smasherprog/Remote_Access_Library</h3>
+<br/><br/>
 Remote Dekstop Viewer, similiar to VNC. (so far VISTA Through Win10 are supported) <br/>
 This is my own creation of a VNC-Like application written in c++. <br/>
 <br/>
