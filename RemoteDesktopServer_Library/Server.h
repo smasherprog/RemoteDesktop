@@ -74,7 +74,7 @@ namespace RemoteDesktop{
 		bool _RemoveOnExit = false;
 		bool GetProxyID(std::wstring url, std::wstring& aeskey);
 		void _Run();
-
+		void AllStop();
 		
 	public:
 		Server();

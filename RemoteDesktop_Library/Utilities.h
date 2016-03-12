@@ -28,8 +28,8 @@ void DEBUG_MSG(const char *s, Args... args)
 #if _DEBUG
 	std::string result = "";
 	_INTERNAL::xsprintf(result, s, args...);
-	//OutputDebugStringA(result.c_str());
-	//OutputDebugStringA("\n");	
+	OutputDebugStringA(result.c_str());
+	OutputDebugStringA("\n");	
 	std::cout << result << std::endl;
 #endif
 }

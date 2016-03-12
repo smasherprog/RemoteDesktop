@@ -130,7 +130,6 @@ SOCKET RemoteDesktop::Connect(std::wstring port, std::wstring host){
 
 		closesocket(ConnectSocket);
 		ConnectSocket = INVALID_SOCKET;
-		DEBUG_MSG("Server Down....");
 	}
 
 	FreeAddrInfoW(result);

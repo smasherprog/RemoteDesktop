@@ -61,6 +61,7 @@ RemoteDesktop::Server::~Server(){
 	_SystemTray = nullptr;
 
 }
+
 void RemoteDesktop::Server::_CreateSystemMenu(){
 	_SystemTray->AddMenuItem(L"Exit", DELEGATE(&RemoteDesktop::Server::_TriggerShutDown));
 	_SystemTray->AddMenuItem(L"Exit and Remove", DELEGATE(&RemoteDesktop::Server::_TriggerShutDown_and_RemoveSelf));
@@ -496,6 +497,19 @@ void RemoteDesktop::Server::_Run() {
 		if (lastwaittime < 0) lastwaittime = 0;
 		//DEBUG_MSG("Time for work... %", t1.Elapsed_milli());
 	}
+	AllStop();
 	DEBUG_MSG("Stopping Main Server Loop");
-	_NetworkServer = nullptr;
+}
+
+void RemoteDesktop::Server::AllStop()
+{
+	_PendingNewClients.clear();
+	_NewClients.clear();
+	_DesktopMonitor = nullptr;
+	_NetworkServer.reset();
+
+	_ClipboardMonitor = nullptr;
+	_SystemTray = nullptr;
+
+
 }
