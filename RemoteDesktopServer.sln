@@ -1,10 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_Library", "RemoteDesktop_Library\RemoteDesktop_Library.vcxproj", "{D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cryptlib", "cryptopp\cryptlib.vcxproj", "{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RemoteDesktop_ServerP2P", "RemoteDesktop_ServerP2P\RemoteDesktop_ServerP2P.vcxproj", "{A7E8BD14-EB3F-4CEA-876B-790218414B70}"
 EndProject
@@ -31,14 +29,6 @@ Global
 		{D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37}.Release|Win32.Build.0 = Release|Win32
 		{D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37}.Release|x64.ActiveCfg = Release|x64
 		{D75E5AD6-EE2A-46CE-8EAF-9BD3D5777B37}.Release|x64.Build.0 = Release|x64
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Debug|Win32.ActiveCfg = Debug|Win32
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Debug|Win32.Build.0 = Debug|Win32
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Debug|x64.ActiveCfg = Debug|x64
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Debug|x64.Build.0 = Debug|x64
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Release|Win32.ActiveCfg = Release|Win32
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Release|Win32.Build.0 = Release|Win32
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Release|x64.ActiveCfg = Release|x64
-		{3423EC9A-52E4-4A4D-9753-EDEBC38785EF}.Release|x64.Build.0 = Release|x64
 		{A7E8BD14-EB3F-4CEA-876B-790218414B70}.Debug|Win32.ActiveCfg = Debug|Win32
 		{A7E8BD14-EB3F-4CEA-876B-790218414B70}.Debug|Win32.Build.0 = Debug|Win32
 		{A7E8BD14-EB3F-4CEA-876B-790218414B70}.Debug|x64.ActiveCfg = Debug|x64

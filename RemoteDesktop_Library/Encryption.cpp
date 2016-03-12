@@ -16,12 +16,12 @@ using CryptoPP::GCM;
 using CryptoPP::OID;
 using namespace CryptoPP::ASN1;
 
-#include "..\cryptopp\fhmqv.h"
-#include "..\cryptopp\eccrypto.h"
+#include "fhmqv.h"
+#include "cryptopp/eccrypto.h"
 using CryptoPP::ECP;
 using CryptoPP::FHMQV;
 
-#include "..\cryptopp\secblock.h"
+#include "cryptopp/secblock.h"
 using CryptoPP::SecByteBlock;
 
 namespace RemoteDesktop{

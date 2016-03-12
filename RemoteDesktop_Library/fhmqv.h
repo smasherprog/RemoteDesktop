@@ -1,9 +1,10 @@
 #ifndef CRYPTOPP_FHMQV_H
 #define CRYPTOPP_FHMQV_H
 
-#include "gfpcrypt.h"
-#include "algebra.h"
-#include "sha.h"
+#include "cryptopp/gfpcrypt.h"
+#include "cryptopp/algebra.h"
+#include "cryptopp/sha.h"
+#include "cryptopp/eccrypto.h"
 #include <assert.h>
 
 NAMESPACE_BEGIN(CryptoPP)
@@ -273,6 +274,12 @@ private:
 };
 
 typedef FHMQV_Domain<DL_GroupParameters_GFP_DefaultSafePrime> FullyHashedMQV;
+
+template <class EC, class COFACTOR_OPTION = CPP_TYPENAME DL_GroupParameters_EC<EC>::DefaultCofactorOption, class HASH = SHA256>
+struct FHMQV
+{
+	typedef FHMQV_Domain<DL_GroupParameters_EC<EC>, COFACTOR_OPTION, HASH> Domain;
+};
 
 NAMESPACE_END
 
