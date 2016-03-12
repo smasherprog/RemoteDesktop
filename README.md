@@ -15,10 +15,6 @@ Viewer --Used to connect to a Server and view desktop, transfer files, control t
 Server --Ran on a machine that you want to connect to. <br/>
 Gateway Server --this is used to bridge connections between Viewer and Server when one or both are behind firewalls and cannot directly connect to each other.<br/>
 <br/>
-Before Building, you must unzip the jpegturbo libraries. I prebuilt debug/release for 32 and 64 bit Static /MT options. The .lib files are in libjpeg-turbo\prebuiltlibs_movetolibfolder.zip.  Unzip the 86 and 64 folders into the ROOT Folder\lib\       So, when building projects the libraries will be linked in properly. <br/>
-<br/>
-After this, you are ready to go!<br/>
-<br/>
 To use the Viewer, just open the solution, ensure the RemoteDesktop_Viewer project is set as startup project and build. THe output will be a program that you can use to connect to other computers, but you need to build the server first!<br/>
 <br/>
 To build the server, open the server solution, set the RemoteDesktop_ServerP2P as startup project and build. There are two EXE's that are build in the server solution: one is used for the Gateway Server, the P2P one is used when the Gateway server is not needed. <br/>
