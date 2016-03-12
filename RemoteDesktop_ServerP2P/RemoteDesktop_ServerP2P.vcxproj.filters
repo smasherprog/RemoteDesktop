@@ -28,4 +28,7 @@
   <ItemGroup>
     <ResourceCompile Include="RemoteDesktop_ServerP2P.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

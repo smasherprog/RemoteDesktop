@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Image.h"
-#include "..\libjpeg-turbo\turbojpeg.h"
+#include "turbojpeg.h"
 #include <memory>
 #include "Timer.h"
 #include "Handle_Wrapper.h"
@@ -28,9 +28,8 @@ void RemoteDesktop::Image::Compress(){
 
 	auto compfree = [](void* handle){tjDestroy(handle); };
 
-	static std::unique_ptr<void, decltype(compfree)> _jpegCompressor;
-	if (_jpegCompressor.get() == nullptr) _jpegCompressor = std::unique_ptr<void, decltype(compfree)>(tjInitCompress(), compfree);
-	static std::vector<char> compressBuffer;
+	auto _jpegCompressor(std::unique_ptr<void, decltype(compfree)>(tjInitCompress(), compfree));
+	std::vector<char> compressBuffer;
 
 	auto set = Image_Settings::GrazyScale ? TJSAMP_GRAY : TJSAMP_420;
 
@@ -57,11 +56,9 @@ void RemoteDesktop::Image::Compress(){
 void RemoteDesktop::Image::Decompress(){
 	if (!Compressed) return;//already done
 
-	//I Kind of cheat below by using static variables. . .  This means the compress and decompress functions are NOT THREAD SAFE, but this isnt a problem yet
 	auto compfree = [](void* handle){tjDestroy(handle); };
-	static std::unique_ptr<void, decltype(compfree)> _jpegDecompressor;
-	static std::vector<unsigned char> decompressBuffer;
-	if (_jpegDecompressor.get() == nullptr) _jpegDecompressor = std::unique_ptr<void, decltype(compfree)>(tjInitDecompress(), compfree);
+	auto _jpegDecompressor(std::unique_ptr<void, decltype(compfree)>(tjInitDecompress(), compfree));
+	std::vector<unsigned char> decompressBuffer;
 
 	size_t maxsize = Width * Height * Pixel_Stride;
 	if (decompressBuffer.capacity() < maxsize) decompressBuffer.reserve(maxsize + 16);

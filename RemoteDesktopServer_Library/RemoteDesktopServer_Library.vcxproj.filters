@@ -104,4 +104,7 @@
   <ItemGroup>
     <ResourceCompile Include="RemoteDesktopServer_Library.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

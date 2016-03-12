@@ -44,4 +44,7 @@
   <ItemGroup>
     <ResourceCompile Include="RemoteDesktopViewer_Library.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>
